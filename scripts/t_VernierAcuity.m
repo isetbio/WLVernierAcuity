@@ -75,10 +75,10 @@ vcAddObject(sceneA); vcAddObject(sceneM); sceneWindow;
 
 % This is the scene luminance at the different sample points on the display
 sz = sceneGet(sceneM,'size');
-plotScene(sceneM,'luminance hline',[1,round(sz(1)/2)]);
+scenePlot(sceneM,'luminance hline',[1,round(sz(1)/2)]);
 
 % This is the full spectral radiance on the same line
-plotScene(sceneM,'radiance hline',[1,round(sz(1)/2)]);
+scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 
 
 %% Compute Irradiance with Optics Wavefront
@@ -115,9 +115,9 @@ oi = oiSet(oi, 'name', sprintf('Human WVF %.1f mm', pupilSize));
 
 % This is the standard model based on the Thibos AO estimates of the human
 % wavefront function
-plotOI(oi,'psf 550');
+oiPlot(oi,'psf 550');
 nPoints = 50;
-plotOI(oi,'ls wavelength',[],nPoints);
+oiPlot(oi,'ls wavelength',[],nPoints);
 
 
 %% compute irradiance map (optical image)
@@ -134,10 +134,10 @@ vcAddObject(oiA); vcAddObject(oiM); oiWindow;
 
 % This is the scene luminance at the different sample points on the display
 sz = sceneGet(oiA,'size');
-plotOI(oiA,'illuminance hline',[1,round(sz(1)/2)]);
+oiPlot(oiA,'illuminance hline',[1,round(sz(1)/2)]);
 
 % This is the full spectral radiance on the same line
-plotOI(oiA,'irradiance hline',[1,round(sz(1)/2)]);
+oiPlot(oiA,'irradiance hline',[1,round(sz(1)/2)]);
 view(89.5,55);
 % Notice that the short-wavelength light is spread a lot more at the
 % retinal surface than the middle wavelength light.
