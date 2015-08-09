@@ -1,18 +1,18 @@
 %% t_VernierAcuity
-%    This turtorial script uses biological and computational methods to
-%    explain vernier acuity (super acuity) in human vision
 %
-%    Vernier acuity (or positional acuity) is a measurement of sensitivity
-%    of human eye in detecting mis-alignment of simple object (lines, etc.)
+% This tutorial script uses biological and computational methods to analyze
+% vernier acuity (super acuity) in human vision
 %
-%    In this script, we compute the irradiance and human cone absorptions
-%    for a scene with two mis-aligned lines. Then, we try to discriminate
-%    the aligned and mis-aligned cases by using first order statistics and
-%    machine learning classifiers
+% Vernier acuity (or positional acuity) is a measurement of sensitivity of
+% human eye in detecting mis-alignment of simple object (lines, etc.)
+%
+% In this script, we compute the irradiance and human cone absorptions for
+% a scene with two mis-aligned lines. Then, we try to discriminate the
+% aligned and mis-aligned cases by using first order statistics and machine
+% learning classifiers
 %
 %  HJ/BW, ISETBIO TEAM, 2015
 
-%% Init
 %  Initialize a new session
 ieInit;
 
@@ -50,11 +50,11 @@ vcNewGraphWin([], 'tall');
 subplot(2,1,1); imshow(imgA); title('Aligned Image');
 subplot(2,1,2); imshow(imgM); title('Misaligned Image');
 
-%% Create Vernier Scene in its full radiance representation
+%% Create Vernier Scene (full display radiance representation)
 %
-%  In the section, we create a vernier scene radiance image by specifying a
-%  image on some calibrated displays. This method makes each of the
-%  parameters explicit. This provides flexibility for scripting. 
+%  We create a vernier scene radiance image by specifying a image on some
+%  calibrated displays. This method makes each of the parameters explicit.
+%  This provides flexibility for scripting.
 %
 %  Another way to create a vernier scene with default parameters is to call 
 %
@@ -69,7 +69,9 @@ subplot(2,1,2); imshow(imgM); title('Misaligned Image');
 sceneA = sceneFromFile(imgA, 'rgb', meanLum, d, wave, doSub); % aligned
 sceneM = sceneFromFile(imgM, 'rgb', meanLum, d, wave, doSub); % mis-aligned
 
-vcAddObject(sceneA); vcAddObject(sceneM); sceneWindow;
+vcAddObject(sceneA); 
+vcAddObject(sceneM); 
+sceneWindow;
 
 %% Examine some of the scene properties
 
@@ -144,19 +146,10 @@ view(89.5,55);
 % The long-wavelength is spread a little bit more.
 
 %% Compute Photon Absorptions of Human Cone Receptors
-%    In this section, we compute the human cone absorption samples with
-%    fixational eye movement.
 
-%  set retinal cone parameters, but no eye movements
-params.humanConeDensities = [0 0.6 0.3 0.1]; % cone spatial density KLMS
-params.wave = wave; % wavelength
-
-%  create human sensor
-cones = sensorCreate('human', [], params);
-
-%  adjust sensor size
+% Compute the human cone absorption samples with fixational eye movement.
+cones = sensorCreate('human');
 cones = sensorSetSizeToFOV(cones, sceneGet(sceneA, 'fov'), sceneA, oiA);
-
 cones = sensorCompute(cones,oiM);
 vcAddObject(cones); sensorWindow('scale',1);
 
@@ -184,48 +177,45 @@ ylabel('Normalized cone absorptions');
 xlabel('Position (um)');
 
 %% Analysis with eye movements
+nFrames = 50;        % Number of exposures samples
 
-% Set up eye movement parameters
-sampTime = 0.001; % sample time interval
-cones = sensorSet(cones, 'time interval', sampTime);
-cones = sensorSet(cones,'exp time',sampTime);
+expTime = sensorGet(cones, 'exp time');   % Usually about 50 ms
+emDuration = 0.001;
+emPerExposure = expTime / emDuration;
+sensor = sensorSet(cones, 'exp time', emDuration);
 
-% Eye movement type flag
-% Each entry is a type of eye movement
-% Tremor, drift, microsaccade
+% Generate eyemovement
+p.nSamples = nFrames * 50;
+p.emFlag   = [1 1 1];       % Include tremor drift and saccade
+p.totTime = 0.200;
+cones = eyemoveInit(cones, p);
 
-params.emFlag = [1 1 1]; 
-
-% This is how long we run the sequence for
-params.totTime = 0.500;  % set total time, 200 ms
-
-% Attach the eye movement parameters to the cone array object
-cones = eyemoveInit(cones, params);
-
-% For demo, we enlarge the eye movement tremo
-tremor = sensorGet(cones,'em tremor');
-tremor.amplitude = tremor.amplitude*5;
-cones = sensorSet(cones,'em tremor',tremor);
+% % We could enlarge the eye movement tremor
+% tremor = sensorGet(cones,'em tremor');
+% tremor.amplitude = tremor.amplitude*2;
+% cones = sensorSet(cones,'em tremor',tremor);
 
 % Generate the eye movement sequence
 cones = emGenSequence(cones);
 
-% Show the eye movement positions
-p = sensorGet(cones,'sensor positions');
+% The coneAbsorptions function is an interface to sensorCompute. Notice
+% that when we make an eye movement video we call coneAbsorptions, not
+% sensorCompute.
+cones = coneAbsorptions(cones, oiA, 2);
 
+% Show the eye movement positions
+ePos = sensorGet(cones,'sensor positions');
 vcNewGraphWin;
-plot(p(:,1),p(:,2),'-o')
+plot(ePos(:,1),ePos(:,2),'-o')
 xlabel('Cone position');
 ylabel('Cone Position')
-set(gca,'xlim',[-15 15],'ylim',[-15 15]);
+% set(gca,'xlim',[-15 15],'ylim',[-15 15]);
 grid on
 
-%% Show the cone absorptions each millisecond
+fprintf('%d eye positions\n',size(ePos,1))
+fprintf('%d integration periods\n',nFrames);
 
-% Notice that when we make an eye movement video we call coneAbsorptions,
-% not sensorCompute.  The coneAbsorptions function is an interface to
-% sensorCompute
-cones = coneAbsorptions(cones,oiM);
+%% Show the cone absorptions each millisecond
 
 % Get the time series out from the cone photon data
 absorptions = sensorGet(cones,'photons');
@@ -235,37 +225,41 @@ absorptions = sensorGet(cones,'photons');
 %   mplay(absorptions,'intensity',10);
 
 vcNewGraphWin;
-vObj = VideoWriter('coneAbsorptions.avi');
-open(vObj);
+% vObj = VideoWriter('coneAbsorptions.avi');
+% open(vObj);
 colormap(gray);
 nframes = size(absorptions,3);
 % Record the movie
 mx = max(absorptions(:));
 for j = 1:nframes 
-    image(absorptions(:,:,j)*(255/mx)); drawnow;
-    F = getframe;
-    writeVideo(vObj,F);
+    image(absorptions(:,:,j)*(200/mx)); drawnow;
+%     F = getframe;
+%     writeVideo(vObj,F);
 end
-close(vObj);
+% close(vObj);
 fprintf('Max cone absorptions %.0f\n',mx);
 
-%% Temporal integration from Rieke applied to the cone absorptions
-[cones,adaptedData] = coneAdapt(cones,'rieke');
+%% Temporal dynamics applied to the cone absorptions
+
+% At the moment, this does not work properly.  The adaptation from the
+% Rieke model blows up and everything saturates.
+% [cones,adaptedData] = coneAdapt(cones,'rieke');
+[cones,adaptedData] = coneAdapt(cones,'felice');
 adaptedData = ieScale(adaptedData,0,1);
 
 vcNewGraphWin;
-vObj = VideoWriter('coneVoltage.avi');
-open(vObj);
+% vObj = VideoWriter('coneVoltage.avi');
+%  open(vObj);
 colormap(gray);
 nframes = size(adaptedData,3);
 % Record the movie
 mx = max(adaptedData(:));
 for j = 1:nframes 
-    image(255*adaptedData(:,:,j)); drawnow;
-    F = getframe;
-    writeVideo(vObj,F);
+    image(200*adaptedData(:,:,j)); drawnow;
+%     F = getframe;
+%     writeVideo(vObj,F);
 end
-close(vObj);
+%  close(vObj);
 
 
 %%
