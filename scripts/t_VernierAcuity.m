@@ -27,7 +27,7 @@ viewDist = 2; % viewing distance in meters
 d = displaySet(d, 'viewing distance', viewDist);
 
 %% Create the the RGB image
-imgSz    = [200 80]; % image size in pixels
+imgSz    = [100 80]; % image size in pixels
 barColor = [1 1 1]; % RGB value for foreground bar
 bgColor  = [0.5 0.5 0.5]; % Background color
 barWidth = 3; % width of the bar in pixels
@@ -47,8 +47,8 @@ imgA = img; imgM = img; % A for aligned, M for mis-aligned
 imgM(1:imgSz(1)/2, :,:) = circshift(img(1:imgSz(1)/2, :,:), [0 offset 0]);
         
 vcNewGraphWin([], 'tall'); 
-subplot(2,1,1); imshow(imgA); title('Aligned Image');
-subplot(2,1,2); imshow(imgM); title('Misaligned Image');
+subplot(2,1,1); imshow(imgA); axis image; title('Aligned Image');
+subplot(2,1,2); imshow(imgM); axis image; title('Misaligned Image');
 
 %% Create Vernier Scene (full display radiance representation)
 %
@@ -140,7 +140,7 @@ oiPlot(oiA,'illuminance hline',[1,round(sz(1)/2)]);
 
 % This is the full spectral radiance on the same line
 oiPlot(oiA,'irradiance hline',[1,round(sz(1)/2)]);
-view(89.5,55);
+view(135,23);
 % Notice that the short-wavelength light is spread a lot more at the
 % retinal surface than the middle wavelength light.
 % The long-wavelength is spread a little bit more.
@@ -219,6 +219,7 @@ fprintf('%d integration periods\n',nFrames);
 
 % Get the time series out from the cone photon data
 absorptions = sensorGet(cones,'photons');
+absorptions = ieScale(absorptions,150);
 
 % This should work, but it depends on having a later version of Matlab than
 % 2013b
@@ -230,11 +231,10 @@ vcNewGraphWin;
 colormap(gray);
 nframes = size(absorptions,3);
 % Record the movie
-mx = max(absorptions(:));
-for j = 1:nframes 
-    image(absorptions(:,:,j)*(200/mx)); drawnow;
+for j = 1:3:nframes 
+    image(absorptions(:,:,j)); drawnow;
 %     F = getframe;
-%     writeVideo(vObj,F);
+%     writegit puVideo(vObj,F);
 end
 % close(vObj);
 fprintf('Max cone absorptions %.0f\n',mx);
@@ -243,9 +243,12 @@ fprintf('Max cone absorptions %.0f\n',mx);
 
 % At the moment, this does not work properly.  The adaptation from the
 % Rieke model blows up and everything saturates.
-% [cones,adaptedData] = coneAdapt(cones,'rieke');
-[cones,adaptedData] = coneAdapt(cones,'felice');
-adaptedData = ieScale(adaptedData,0,1);
+[cones,adaptedData] = coneAdapt(cones,'rieke');
+% To check:  Other adaptation methods
+% [cones,adaptedData] = coneAdapt(cones,'felice');
+
+% The adapted data values are all negative current.
+adaptedData = 150*ieScale(adaptedData,0,1);
 
 vcNewGraphWin;
 % vObj = VideoWriter('coneVoltage.avi');
@@ -253,11 +256,12 @@ vcNewGraphWin;
 colormap(gray);
 nframes = size(adaptedData,3);
 % Record the movie
-mx = max(adaptedData(:));
-for j = 1:nframes 
-    image(200*adaptedData(:,:,j)); drawnow;
-%     F = getframe;
-%     writeVideo(vObj,F);
+for j = 1:5:nframes
+    image(adaptedData(:,:,j));
+    title(sprintf('Frame %d',j));
+    drawnow;
+    %     F = getframe;
+    %     writeVideo(vObj,F);
 end
 %  close(vObj);
 
