@@ -1,4 +1,4 @@
-function s = vernierAcuity(params)
+function [s, params] = vernierAcuity(params)
 %% vernierAcuity
 %    Compute vernier acuity for test case defined by params
 %
@@ -46,7 +46,7 @@ try vDist = params.scene.vDist; catch, vDist = 1.0; end
 
 %  compute image size
 ppi = displayGet(d, 'dpi');
-imgFov = params.scene.fov;
+try imgFov = params.scene.fov; catch, imgFov = [0.5 0.5]; end
 if iscalar(imgFov), imgFov = [imgFov, imgFov]; end
 imgSz  = round(tand(imgFov)*vDist*39.37*ppi);   % number of pixels in image
 imgFov = atand(max(imgSz)/ppi/39.37/vDist);     % Actual fov
@@ -103,8 +103,7 @@ try sensorFov = params.sensor.fov; catch, sensorFov = [.2 .2]; end
 if isscalar(sensorFov), sensorFov = [sensorFov, sensorFov]; end
 try nFrames = params.sensor.nFrames; catch, nFrames = 5000; end
 try density = params.sensor.density; catch, density = [0 .6 .3 .1]; end
-cone = coneCreate;
-cone.spatialDensity = density;
+cone = coneCreate('human', 'spatial density', density);
 sensor = sensorCreate('human', [], cone);
 
 %  Set exposure time to 1 ms
@@ -155,13 +154,13 @@ s.absorption.weights = reshape(mean(w, 2), sz);
 
 %% SVM using the adapted cone current
 % With cone noise added
-p.addNoise = true;
+try p.addNoise = params.sensor.adapt_noise; catch, p.addNoise = true; end
 
-[~, adapted1] = coneAdapt(sensor1,'rieke',params);
-adapted1 = adapted1(:,:,1:50:end);
+[~, adapted1] = coneAdapt(sensor1, 'rieke', p);
+adapted1 = adapted1(:, :, 1:emPerExposure:end);
 s.adaptation.data{1} = adapted1;
 
-[~,adapted2] = coneAdapt(sensor2,'rieke',params);
+[~,adapted2] = coneAdapt(sensor2, 'rieke', params);
 adapted2 = adapted2(:, :, 1:emPerExposure:end);
 s.adaptation.data{2} = adapted2;
 
@@ -169,11 +168,35 @@ s.adaptation.data{2} = adapted2;
 data = cat(1, RGB2XWFormat(adapted1)', RGB2XWFormat(adapted2)');
 
 % Perform the classification
-[acc, w] = svmClassifyAcc(data, labels, nFolds, 'linear');
+[acc, w] = svmClassifyAcc(data, labels, nFolds, method, opts);
 
 % store classification results
 s.adaptation.acc = acc(1);
 s.adaptation.err = acc(2);
 s.adaptation.weights = reshape(mean(w, 2), sz);
+
+%% Record experiment params
+if nargout > 1
+    params.scene.d = d;
+    params.scene.fov = imgFov;
+    params.scene.vDist = vDist;
+    params.scene.barWidth = p.barWidth;
+    params.scene.offset = p.offset;
+    params.scene.bgColor = p.bgColor;
+    params.scene.barColor = p.barColor;
+    params.scene.meanLum = p.meanLum;
+    
+    params.oi.defocus = defocus;
+    params.oi.pupil_d = pupilSize;
+    
+    params.sensor.density = density;
+    params.sensor.fov = sensorFov;
+    params.sensor.adapt_noise = p.addNoise;
+    params.sensor.nFrames = nFrames;
+    
+    params.svm.opts = opts;
+    params.svm.nFolds = nFolds;
+    params.svm.method = method;
+end
 
 end
