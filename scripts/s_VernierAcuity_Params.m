@@ -33,7 +33,42 @@ for vDist = 0.2:0.1:0.6
 end
 
 %% Test defocus
+cprintf('*Keyword', 'Defocus Effect\n')
+params.scene.vDist = 0.5;
+
+for defocus = -3:0.5:1
+    % run simulation
+    params.oi.defocus = defocus;
+    eval(command);
+    
+    % print progress info
+    fprintf('\t(%.1f diopter) ', defocus)
+    fprintf('Absorption Acc: %.2f%%', s.absorption.acc*100)
+    fprintf('\tAdaptation Acc: %.2f%%\n', s.adaptation.acc*100)
+    
+    % save data
+    fname = sprintf('~/VernierResults/defocus/defocus_%.1f.mat', defocus);
+    save(fname, 's', 'params', 'command');
+end
 
 %% Test SNR
+cprintf('*Keyword', 'Test SNR')
+params.oi.defocus = 0;
+mean_lum = [1, 5, 10, 20, 100, 200, 1000];
+
+for ii = 1 : length(mean_lum)
+    % run simulation
+    params.scene.meanLum = mean_lum(ii);
+    eval(command)
+    
+    % print progress info
+    fprintf('\t(%.1f cd/m2) ', mean_lum(ii))
+    fprintf('Absorption Acc: %.2f%%', s.absorption.acc*100)
+    fprintf('\tAdaptation Acc: %.2f%%\n', s.adaptation.acc*100)
+    
+    % save data
+    fname = sprintf('~/VernierResults/snr/snr_%d.mat', mean_lum(ii));
+    save(fname, 's', 'params', 'command');
+end
 
 %% Test line Contrast
