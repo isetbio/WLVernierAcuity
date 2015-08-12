@@ -8,7 +8,7 @@
 %% Init Parameters
 ieInit;
 d = displayCreate('LCD-Apple');
-d = displaySet(d, 'ppi', 1000);
+d = displaySet(d, 'dpi', 1000);
 
 params.scene.d = d;
 params.sensor.density = [0 1.0 0 0]; % monochrome with only L cones
@@ -16,7 +16,7 @@ params.sensor.density = [0 1.0 0 0]; % monochrome with only L cones
 command = '[s, params] = vernierAcuity(params);';
 
 %% Test viewing distance
-cprintf('*Keyword', 'Viewing Distance Effect');
+cprintf('*Keyword', 'Viewing Distance Effect\n');
 for vDist = 0.2:0.1:0.6
     % run simulation
     params.scene.vDist = vDist;

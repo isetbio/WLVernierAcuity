@@ -47,7 +47,7 @@ try vDist = params.scene.vDist; catch, vDist = 1.0; end
 %  compute image size
 ppi = displayGet(d, 'dpi');
 try imgFov = params.scene.fov; catch, imgFov = [0.5 0.5]; end
-if iscalar(imgFov), imgFov = [imgFov, imgFov]; end
+if isscalar(imgFov), imgFov = [imgFov, imgFov]; end
 imgSz  = round(tand(imgFov)*vDist*39.37*ppi);   % number of pixels in image
 imgFov = atand(max(imgSz)/ppi/39.37/vDist);     % Actual fov
 
@@ -101,7 +101,7 @@ OIs{2} = oiCompute(scene{2}, oi);
 %  Load sensor parameters
 try sensorFov = params.sensor.fov; catch, sensorFov = [.2 .2]; end
 if isscalar(sensorFov), sensorFov = [sensorFov, sensorFov]; end
-try nFrames = params.sensor.nFrames; catch, nFrames = 5000; end
+try nFrames = params.sensor.nFrames; catch, nFrames = 3000; end
 try density = params.sensor.density; catch, density = [0 .6 .3 .1]; end
 cone = coneCreate('human', 'spatial density', density);
 sensor = sensorCreate('human', [], cone);
@@ -122,17 +122,17 @@ sensor = eyemoveInit(sensor, p);
 s.sensor = sensor;
 
 % Compute the cone absopritons
-sensor = coneAbsorptions(sensor, OIs{1});
+sensor1 = coneAbsorptions(sensor, OIs{1});
 
 % Store the photon samples and add photons in one exposure time
-pSamples1 = sensorGet(sensor, 'photons');
+pSamples1 = sensorGet(sensor1, 'photons');
 pSamples1 = sum(reshape(pSamples1, [sz nFrames emPerExposure]), 4);
 s.absorption.data{1} = pSamples1;
 
 % Compute cone absorptions for the second stimulus and store photon
 % absorptions
-sensor = coneAbsorptions(sensor, OIs{2});
-pSamples2 = sensorGet(sensor, 'photons');
+sensor2 = coneAbsorptions(sensor, OIs{2});
+pSamples2 = sensorGet(sensor2, 'photons');
 pSamples2 = sum(reshape(pSamples2, [sz nFrames emPerExposure]), 4);
 s.absorption.data{2} = pSamples2;
 
