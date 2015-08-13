@@ -14,11 +14,11 @@
 ieInit;
 
 %% Create the RGB images for testing
-
-% The img values are in DAC or linear RGB ????
-
-
-[~,p] = imageVernier(p);   % Mainly to get the parameters
+% The RGB images here are actually DAC, not linear RGB. They will be
+% converted into linear RGB by display gamma in vcReadImage line 180.
+% Though inputs should be DAC values, they can still be in range 0~1. They
+% will be converted to quantized levels in vcReadImage line 160~176
+[~, p] = imageVernier();   % Mainly to get the parameters
 
 p.bgColor = 0.5;
 p.offset = 0;
@@ -60,7 +60,6 @@ vcAddObject(sceneM);
 sceneWindow;
 
 %% Examine some of the scene properties
-
 % This is the scene luminance at the different sample points on the display
 sz = sceneGet(sceneM,'size');
 scenePlot(sceneM,'luminance hline',[1,round(sz(1)/2)]);
@@ -68,7 +67,11 @@ scenePlot(sceneM,'luminance hline',[1,round(sz(1)/2)]);
 % This is the full spectral radiance on the same line
 scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 
-%% Suppose use a different display?  Let's suppose a CRT
+% vcNewGraphWin; 
+% ph = sceneGet(sceneM, 'photons'); ph = squeeze(ph(:, 1, :));
+% colormap('hot'); imagesc(ph);
+
+%% Use a different display? Let's suppose a CRT
 dpi = 85;
 d = displayCreate('crt','dpi',dpi);
 viewDist = 0.3;  % Set the subject's viewing distance in meters
@@ -87,7 +90,7 @@ scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 vcAddObject(sceneM); sceneWindow;
 
 %% A pair of blue lines
-
+%
 % We could use this one to understand what happens with S-cones
 % I would like to have the function that provides an S-cone direction for a
 % display
@@ -97,16 +100,16 @@ vcAddObject(sceneM); sceneWindow;
 rgb2lms = displayGet(d,'rgb2lms');
 
 % To find the S cone isolating direction we calculate
-% rgb*rgb2lms = [0 0 1] 
-sconeRGB = [0,0,1]*inv(rgb2lms);
-sconeRGB = sconeRGB/(2*max(sconeRGB));
-p.barColor = [0.5 0.5 .5] + sconeRGB ;
-p.barColor = ieLUTLinear(p.barColor,displayGet(d,'inverse gamma'));
+sconeRGB = [0,0,1]*inv(rgb2lms); %#ok
+sconeRGB = sconeRGB/(2.5*max(sconeRGB));
+p.barColor = [.5 .5 .5] + sconeRGB;
+
+% Convert linear RGB to DAC values
+p.barColor = ieLUTLinear(p.barColor, displayGet(d,'inverse gamma'))/255;
 
 imgM = imageVernier(p);
 sceneM = sceneFromFile(imgM, 'rgb', [], d); % mis-aligned
 scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 vcAddObject(sceneM); sceneWindow;
-
 
 %%
