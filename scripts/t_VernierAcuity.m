@@ -187,7 +187,6 @@ sensor = sensorSet(cones, 'exp time', emDuration);
 % Generate eyemovement
 p.nSamples = nFrames * 50;
 p.emFlag   = [1 1 1];       % Include tremor drift and saccade
-p.totTime = 0.200;
 cones = eyemoveInit(cones, p);
 
 % % We could enlarge the eye movement tremor
@@ -195,13 +194,13 @@ cones = eyemoveInit(cones, p);
 % tremor.amplitude = tremor.amplitude*2;
 % cones = sensorSet(cones,'em tremor',tremor);
 
-% Generate the eye movement sequence
-cones = emGenSequence(cones);
+% Generate the eye movement sequence again
+% cones = emGenSequence(cones);
 
 % The coneAbsorptions function is an interface to sensorCompute. Notice
 % that when we make an eye movement video we call coneAbsorptions, not
 % sensorCompute.
-cones = coneAbsorptions(cones, oiA, 2);
+cones = coneAbsorptions(cones, oiA);
 
 % Show the eye movement positions
 ePos = sensorGet(cones,'sensor positions');

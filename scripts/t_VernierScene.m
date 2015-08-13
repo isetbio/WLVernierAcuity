@@ -5,12 +5,7 @@
 %
 %  HJ/BW, ISETBIO TEAM, 2015
 
-
-% Deal with the cone isolation stuff.
-% Make a scenePlot case where it looks like a spectrogram with position on
-% the x-axis and wavelength on the y-axis.
-
-%  Initialize a new ISETBIO session
+%% Initialize a new ISETBIO session
 ieInit;
 
 %% Create the RGB images for testing
