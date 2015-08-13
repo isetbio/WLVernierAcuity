@@ -1,6 +1,6 @@
-%% s_barWidthTest
+%% barWidthTest
 %
-%  This is just a test scritp. Nothing special.
+%  This is just a test script. Nothing special.
 %
 % (HJ) April, 2014
 

@@ -1,6 +1,7 @@
 function [s, params] = vernierAcuity(params)
-%% vernierAcuity
-%    Compute vernier acuity for test case defined by params
+% Compute vernier acuity for test case defined by params
+%
+%  [s, params] = vernierAcuity (params)
 %
 %  Inputs:
 %    params.scene.d            - display structure
@@ -36,6 +37,9 @@ function [s, params] = vernierAcuity(params)
 %    s.adaptation.err          - svm cross validation standard variation
 %    s.adaptation.weights      - svm weights
 %    s.adaptation.data         - cell array of cone current
+%
+% Examples:
+%    See the v_vernier   
 %
 % HJ/BW, ISETBIO TEAM, 2015
 

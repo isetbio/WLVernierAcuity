@@ -1,7 +1,9 @@
 function [jndDist, acc, err, tDist] = coVernierAcuity(params)
-%% function coVernierAcuity(params)
+%% coVernierAcuity(params)
 %    Compute just noticeable difference of vernier acuity under certain
 %    conditions
+%
+% Deprecate
 %
 %  Inputs:
 %    params: parameter structure, could include:
