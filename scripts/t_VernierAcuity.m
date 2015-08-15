@@ -236,7 +236,7 @@ for j = 1:3:nframes
 %     writegit puVideo(vObj,F);
 end
 % close(vObj);
-fprintf('Max cone absorptions %.0f\n',mx);
+fprintf('Max cone absorptions %.0f\n',max(absorptions(:)));
 
 %% Temporal dynamics applied to the cone absorptions
 

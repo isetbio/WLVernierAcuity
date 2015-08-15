@@ -51,6 +51,8 @@ oiPlot(oi, 'irradiance hline', [1 20]);
 pupilSize = 3; % pupil size in mm
 zCoefs = wvfLoadThibosVirtualEyes(pupilSize);
 
+wave = oiGet(oi,'wave');
+
 %  Create wavefront structure
 wvf = wvfCreate('wave', wave, 'zcoeffs', zCoefs, 'name', 'human optics');
 wvf = wvfSet(wvf, 'calc pupil size', pupilSize); 
@@ -63,7 +65,7 @@ wvf = wvfSet(wvf, 'calc pupil size', pupilSize);
 % if we need to use defocus in diopters, use wvfDefocusDioptersToMicrons to
 % do the conversion
 defocus = -2.0; % diopters
-zDefocus = wvfDefocusDioptersToMicrons(defocus); 
+zDefocus = wvfDefocusDioptersToMicrons(defocus,pupilSize); 
 wvf = wvfSet(wvf, 'zcoeffs', zDefocus, {'defocus'});
 
 % compute psf and convert to optical image structure

@@ -28,7 +28,7 @@ vcAddObject(oi); oiWindow;
 sensor = sensorCreate('human');
 
 % adjust cone mosaic size
-sensor = sensorSetSizeToFOV(sensor, sceneGet(sceneA, 'fov'), sceneA, oiA);
+sensor = sensorSetSizeToFOV(sensor, sceneGet(scene, 'fov'), scene, oi);
 
 % compute cone absorptions
 sensor = sensorCompute(sensor,oi);
@@ -74,7 +74,7 @@ sensor = eyemoveInit(sensor, p);
 % The coneAbsorptions function is an interface to sensorCompute. Notice
 % that when we make an eye movement video we call coneAbsorptions, not
 % sensorCompute.
-cones = coneAbsorptions(cones, oi);
+cones = coneAbsorptions(sensor, oi);
 
 % Show the eye movement positions
 ePos = sensorGet(cones,'sensor positions');
