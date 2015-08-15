@@ -5,7 +5,7 @@
 %
 %  HJ/BW, ISETBIO TEAM, 2015
 
-%% Initialize a new ISETBIO session
+% Initialize a new ISETBIO session
 ieInit;
 
 %% Create the RGB images for testing
@@ -15,7 +15,8 @@ ieInit;
 % will be converted to quantized levels in vcReadImage line 160~176
 [~, p] = imageVernier();   % Mainly to get the parameters
 
-p.bgColor = 0.5;
+p.pattern = 0.5*ones(1,65); p.pattern(33) = 1;
+% p.bgColor = 0.5;
 p.offset = 0;
 imgA = imageVernier(p);
 
@@ -59,7 +60,11 @@ sceneWindow;
 sz = sceneGet(sceneM,'size');
 scenePlot(sceneM,'luminance hline',[1,round(sz(1)/2)]);
 
-% This is the full spectral radiance on the same line
+% This is the full spectral radiance of the same line shown as a
+% spectrogram
+scenePlot(sceneM,'radiance hline image',[1,round(sz(1)/2)]);
+
+% Here the same data are shown as a surface plot
 scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 
 % vcNewGraphWin; 
@@ -82,29 +87,50 @@ scenePlot(sceneM,'luminance hline',[1,round(sz(1)/2)]);
 % This is the full spectral radiance on the same line
 scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 
-vcAddObject(sceneM); sceneWindow;
+ieAddObject(sceneM); sceneWindow;
 
-%% A pair of blue lines
+%% A pair of mainly S-cone lines
 %
-% We could use this one to understand what happens with S-cones
-% I would like to have the function that provides an S-cone direction for a
-% display
+% We fine the S-cone isolating direction and use the RGB in that direction
+%
+
+p.pattern = 0.5*ones(1,65); p.pattern(32:34) = 1;
 
 % This converts the linear RGB values into LMS.
 % This maps [r,g,b]* rgb2lms = [L,M,S]
-rgb2lms = displayGet(d,'rgb2lms');
+% rgb2lms = displayGet(d,'rgb2lms');
+sConeIsolating = unitLength([0 0 1]*displayGet(d,'lms2rgb'));
+img = image1d(p.pattern,'rgb',sConeIsolating,'mean',0.5);
 
-% To find the S cone isolating direction we calculate
-sconeRGB = [0,0,1]*inv(rgb2lms); %#ok
-sconeRGB = sconeRGB/(2.5*max(sconeRGB));
-p.barColor = [.5 .5 .5] + sconeRGB;
+% This converts the linear RGB values into LMS.
+% This maps [r,g,b]* rgb2lms = [L,M,S]
+% rgb2lms = displayGet(d,'rgb2lms');
+sConeIsolating = unitLength([0 0 1]*displayGet(d,'lms2rgb'));
 
-% Convert linear RGB to DAC values
-p.barColor = ieLUTLinear(p.barColor, displayGet(d,'inverse gamma'))/255;
+% We are calculating as if we have a linear gamma table, for simplicity
+dLinear = displaySet(d,'gtable','linear');
+scene = sceneFromFile(img, 'rgb', [], dLinear); % mis-aligned
+scenePlot(scene,'radiance hline',[1,round(sz(1)/2)]);
+ieAddObject(scene); sceneWindow;
 
-imgM = imageVernier(p);
-sceneM = sceneFromFile(imgM, 'rgb', [], d); % mis-aligned
-scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
-vcAddObject(sceneM); sceneWindow;
+%% Notice that when we render the scene through the human optics 
+%  onto a cone mosaic, a thin line is not that great at cone-isolation
+%  This is because of chromatic aberration
+
+%
+oi = oiCreate('wvf human');
+oi = oiCompute(oi,scene);
+ieAddObject(oi); oiWindow;
+
+%
+cones = sensorCreate('human');
+cones = sensorSetSizeToFOV(cones,sceneGet(scene,'fov'),scene,oi);
+cones = sensorSet(cones,'noiseflag',0);
+cones = sensorCompute(cones,oi);
+ieAddObject(cones); sensorWindow('scale',1);
+
+row = round(sensorGet(cones,'rows')/2);
+sensorPlot(cones,'photons hline',[row,1]);
+
 
 %%

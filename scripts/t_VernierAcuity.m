@@ -35,7 +35,7 @@ offset   = 1; % mis-alignment size in pixels, converted to deg later
 
 doSub = false; % rendering scene at pixel level (no subpixel rendering)
 wave  = 400:10:700; % wavelength sample points
-meanLum = [];  % adjustment to scene mean luminance - don't adjust it
+meanLum = 10;  % adjustment to scene mean luminance - don't adjust it
 
 img = zeros([imgSz 3]);
 barIndx = (1:barWidth) - floor((barWidth+1)/2) + imgSz(2)/2;
@@ -200,7 +200,7 @@ cones = eyemoveInit(cones, p);
 % The coneAbsorptions function is an interface to sensorCompute. Notice
 % that when we make an eye movement video we call coneAbsorptions, not
 % sensorCompute.
-cones = coneAbsorptions(cones, oiA);
+cones = coneAbsorptions(cones, oiM);  % Use oiA for aligned
 
 % Show the eye movement positions
 ePos = sensorGet(cones,'sensor positions');
