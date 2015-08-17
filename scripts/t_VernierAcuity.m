@@ -224,14 +224,31 @@ absorptions = ieScale(absorptions,150);
 % 2013b
 %   mplay(absorptions,'intensity',10);
 
+%% Movie of the cone absorptions
+
+step = 20;
+tmp = coneImageActivity(cones,[],step,false);
+
+% Show the movie
+vcNewGraphWin;
+tmp = tmp/max(tmp(:));
+for ii=1:size(tmp,4)
+    img = squeeze(tmp(:,:,:,ii));
+    imshow(img.^0.3); truesize;
+    title('Cone absorptions')
+    drawnow
+end
+
+%% Black and white version
 vcNewGraphWin;
 % vObj = VideoWriter('coneAbsorptions.avi');
 % open(vObj);
 colormap(gray);
 nframes = size(absorptions,3);
 % Record the movie
-for j = 1:3:nframes 
+for j = 1:step:nframes 
     image(absorptions(:,:,j)); drawnow;
+    title('Cone absorptions')
 %     F = getframe;
 %     writegit puVideo(vObj,F);
 end
@@ -240,29 +257,42 @@ fprintf('Max cone absorptions %.0f\n',max(absorptions(:)));
 
 %% Temporal dynamics applied to the cone absorptions
 
-% At the moment, this does not work properly.  The adaptation from the
-% Rieke model blows up and everything saturates.
 [cones,adaptedData] = coneAdapt(cones,'rieke');
-% To check:  Other adaptation methods
-% [cones,adaptedData] = coneAdapt(cones,'felice');
 
 % The adapted data values are all negative current.
-adaptedData = 150*ieScale(adaptedData,0,1);
+adaptedData = ieScale(adaptedData,0,1);
 
+step = 20;
+tmp = coneImageActivity(cones,adaptedData,step,false);
+
+% Show the movie
+vcNewGraphWin;
+tmp = tmp/max(tmp(:));
+for ii=1:size(tmp,4)
+    img = squeeze(tmp(:,:,:,ii));
+    imshow(img.^0.3); truesize;
+    title('Cone photocurrent')
+    drawnow
+end
+
+
+%% Black and white version
 vcNewGraphWin;
 % vObj = VideoWriter('coneVoltage.avi');
 %  open(vObj);
+adaptedData = 150*ieScale(adaptedData,0,1);
 colormap(gray);
 nframes = size(adaptedData,3);
 % Record the movie
-for j = 1:5:nframes
+for j = 1:step:nframes
     image(adaptedData(:,:,j));
-    title(sprintf('Frame %d',j));
+    title('Cone photocurrent');
     drawnow;
     %     F = getframe;
     %     writeVideo(vObj,F);
 end
 %  close(vObj);
+
 
 
 %%

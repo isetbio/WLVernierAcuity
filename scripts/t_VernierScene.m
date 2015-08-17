@@ -8,18 +8,25 @@
 % Initialize a new ISETBIO session
 ieInit;
 
+%% General observation about scenes
+rd = ieRdata('create');
+val = ieRdata('load data',rd,'benchHDR.mat','scene');
+ieAddObject(val.scene); sceneWindow;
+
+% Show the depth map
+
 %% Create the RGB images for testing
-% The RGB images here are actually DAC, not linear RGB. They will be
-% converted into linear RGB by display gamma in vcReadImage line 180.
-% Though inputs should be DAC values, they can still be in range 0~1. They
-% will be converted to quantized levels in vcReadImage line 160~176
+
 [~, p] = imageVernier();   % Mainly to get the parameters
 
-p.pattern = 0.5*ones(1,65); p.pattern(33) = 1;
+p.pattern = 0.5*ones(1,33); p.pattern(17) = 1;
 % p.bgColor = 0.5;
+
+% Aligned
 p.offset = 0;
 imgA = imageVernier(p);
 
+% Misaligned
 p.offset = 2;
 imgM = imageVernier(p);
         
@@ -35,6 +42,17 @@ d = displayCreate('OLED-Sony','dpi',dpi);
 viewDist = 0.3;  % Set the subject's viewing distance in meters
 d = displaySet(d, 'viewing distance', viewDist);
 
+% In general, RGB images are treated as DAC values, not linear RGB. They
+% will be converted into linear RGB by display gamma in vcReadImage line
+% 180. But we want to calculate here with linear RGB.  So we set the table
+% to linear and thus there is no difference between DAC and linear RGB.
+d = displaySet(d, 'gtable','linear');
+
+% BW2HJ: Let's fix this by adding the field to the display
+vcSESSION.imgData = imgM;
+ieAddObject(d);
+displayWindow;
+
 %% Create Vernier Scene (full display radiance representation)
 %
 %  We create a vernier scene radiance image by specifying a image on a
@@ -47,6 +65,10 @@ d = displaySet(d, 'viewing distance', viewDist);
 % properties of the display.
 sceneA = sceneFromFile(imgA, 'rgb', [], d); % aligned
 sceneM = sceneFromFile(imgM, 'rgb', [], d); % mis-aligned
+
+fov = size(imgA,2)/displayGet(d,'dots per deg');
+sceneA = sceneSet(sceneA,'fov',fov);
+sceneM = sceneSet(sceneM,'fov',fov);
 
 % Add the scenes to the database
 vcAddObject(sceneA); 
@@ -89,12 +111,54 @@ scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
 
 ieAddObject(sceneM); sceneWindow;
 
-%% A pair of mainly S-cone lines
+%% A pair of L-cone lines
 %
-% We fine the S-cone isolating direction and use the RGB in that direction
+% We find the S-cone isolating direction and use the RGB in that direction
 %
 
-p.pattern = 0.5*ones(1,65); p.pattern(32:34) = 1;
+p.pattern = 0.5*ones(1,33); p.pattern(15:17) = 1;
+
+% This converts the linear RGB values into LMS.
+% This maps [r,g,b]* rgb2lms = [L,M,S]
+% rgb2lms = displayGet(d,'rgb2lms');
+lConeIsolating = unitLength([1 0 0]*displayGet(d,'lms2rgb'));
+img = image1d(p.pattern,'rgb',lConeIsolating,'mean',0.5);
+
+% This converts the linear RGB values into LMS.
+% This maps [r,g,b]* rgb2lms = [L,M,S]
+% rgb2lms = displayGet(d,'rgb2lms');
+lConeIsolating = unitLength([1 0 0]*displayGet(d,'lms2rgb'));
+
+% We are calculating as if we have a linear gamma table, for simplicity
+dLinear = displaySet(d,'gtable','linear');
+scene = sceneFromFile(img, 'rgb', [], dLinear); % mis-aligned
+scenePlot(scene,'radiance hline',[1,round(sz(1)/2)]);
+ieAddObject(scene); sceneWindow;
+
+
+%% Render the scene through the human optics 
+
+oi = oiCreate('wvf human');
+oi = oiCompute(oi,scene);
+ieAddObject(oi); oiWindow;
+
+cones = sensorCreate('human');
+cones = sensorSetSizeToFOV(cones,sceneGet(scene,'fov'),scene,oi);
+cones = sensorSet(cones,'noiseflag',0);
+cones = sensorCompute(cones,oi);
+ieAddObject(cones); sensorWindow('scale',1);
+
+row = round(sensorGet(cones,'rows')/2);
+
+% Looks good.
+sensorPlot(cones,'photons hline',[row,1]);
+
+%% A pair of mainly S-cone lines
+%
+% We find the S-cone isolating direction and use the RGB in that direction
+%
+
+p.pattern = 0.5*ones(1,33); p.pattern(15:17) = 1;
 
 % This converts the linear RGB values into LMS.
 % This maps [r,g,b]* rgb2lms = [L,M,S]
@@ -112,6 +176,7 @@ dLinear = displaySet(d,'gtable','linear');
 scene = sceneFromFile(img, 'rgb', [], dLinear); % mis-aligned
 scenePlot(scene,'radiance hline',[1,round(sz(1)/2)]);
 ieAddObject(scene); sceneWindow;
+
 
 %% Notice that when we render the scene through the human optics 
 %  onto a cone mosaic, a thin line is not that great at cone-isolation
@@ -131,6 +196,12 @@ ieAddObject(cones); sensorWindow('scale',1);
 
 row = round(sensorGet(cones,'rows')/2);
 sensorPlot(cones,'photons hline',[row,1]);
+
+%% Does not work well when the mosaic is big.
+% 
+% Looks good for up to, say, 100 x 100
+% We should write sensorCrop()
+tmp = coneImageActivity(cones,[]);
 
 
 %%
