@@ -14,27 +14,10 @@ val = ieRdata('load data',rd,'benchHDR.mat','scene');
 ieAddObject(val.scene); sceneWindow;
 
 % Show the depth map
-
-%% Create the RGB images for testing
-
-[~, p] = imageVernier();   % Mainly to get the parameters
-
-p.pattern = 0.5*ones(1,33); p.pattern(17) = 1;
-% p.bgColor = 0.5;
-
-% Aligned
-p.offset = 0;
-imgA = imageVernier(p);
-
-% Misaligned
-p.offset = 2;
-imgM = imageVernier(p);
-        
-vcNewGraphWin([], 'tall'); 
-subplot(2,1,1); imshow(imgA); axis image; title('Aligned Image');
-subplot(2,1,2); imshow(imgM); axis image; title('Misaligned Image');
+scenePlot(val.scene,'depth map');
 
 %% Choose a display for simulation
+
 % We start with an Sony OLED display that we once calibrated.
 dpi = 110;
 d = displayCreate('OLED-Sony','dpi',dpi);
@@ -48,10 +31,14 @@ d = displaySet(d, 'viewing distance', viewDist);
 % to linear and thus there is no difference between DAC and linear RGB.
 d = displaySet(d, 'gtable','linear');
 
-% BW2HJ: Let's fix this by adding the field to the display
-vcSESSION.imgData = imgM;
-ieAddObject(d);
-displayWindow;
+% Illustrate with a nice image
+rgb = sceneGet(val.scene,'rgb image');
+d = displaySet(d,'main image',rgb);
+ieAddObject(d); displayWindow;
+
+% Now with the vernier image
+d = displaySet(d,'main image',imgM);
+ieAddObject(d); displayWindow;
 
 %% Create Vernier Scene (full display radiance representation)
 %
@@ -59,7 +46,17 @@ displayWindow;
 %  calibrated display. This method makes each of the parameters explicit.
 %  This provides flexibility for scripting.
 %
+[~, p] = imageVernier();   % Mainly to get the parameters
+p.pattern = 0.5*ones(1,33); p.pattern(17) = 1;
 
+% Aligned
+p.offset = 0;
+imgA = imageVernier(p);
+
+% Misaligned
+p.offset = 2;
+imgM = imageVernier(p);
+        
 % Create a scene with the image using the display parameters
 % The scene spectral radiance is created using the RGB image and the
 % properties of the display.
@@ -85,6 +82,7 @@ scenePlot(sceneM,'luminance hline',[1,round(sz(1)/2)]);
 % This is the full spectral radiance of the same line shown as a
 % spectrogram
 scenePlot(sceneM,'radiance hline image',[1,round(sz(1)/2)]);
+axis square
 
 % Here the same data are shown as a surface plot
 scenePlot(sceneM,'radiance hline',[1,round(sz(1)/2)]);
