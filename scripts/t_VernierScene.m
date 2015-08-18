@@ -9,7 +9,7 @@
 ieInit;
 
 %% General observation about scenes
-rd = ieRdata('create');
+rd  = ieRdata('create');
 val = ieRdata('load data',rd,'benchHDR.mat','scene');
 ieAddObject(val.scene); sceneWindow;
 
