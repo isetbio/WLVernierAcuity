@@ -20,52 +20,35 @@ ieInit;
 
 % In this example we impose a linear gamma table, though
 % in general it could be the default or anything.
-dpi = 200; d = displayCreate('LCD-Apple','dpi',dpi);
+d = displayCreate('LCD-Apple');
 % d = displaySet(d, 'gamma', repmat(linspace(0, 1, 256)', [1 3]));
 
-viewDist = 2; % viewing distance in meters
+viewDist = 2.5; % viewing distance in meters
 d = displaySet(d, 'viewing distance', viewDist);
-d = displaySet(d,'g table','linear');
-
-%%
-%  We create a vernier scene radiance image by specifying a image on a
-%  calibrated display. This method makes each of the parameters explicit.
-%  This provides flexibility for scripting.
-%
-[~, p] = imageVernier();   % Mainly to get the parameters
-p.pattern = zeros(1, p.sceneSz(2) + 1); p.pattern(p.sceneSz/2 + 1) = 1;
-
-% Aligned
-p.offset = 0;
-imgA = imageVernier(p);
-
-% Misaligned
-p.offset = 2;
-imgM = imageVernier(p);
 
 %% Create the the RGB image
-% imgSz    = [100 80]; % image size in pixels
-% barColor = [1 1 1]; % RGB value for foreground bar
-% bgColor  = [0.5 0.5 0.5]; % Background color
-% barWidth = 3; % width of the bar in pixels
-% offset   = 1; % mis-alignment size in pixels, converted to deg later
-% 
-% doSub = false; % rendering scene at pixel level (no subpixel rendering)
-% wave  = 400:10:700; % wavelength sample points
-% meanLum = 10;  % adjustment to scene mean luminance - don't adjust it
-% 
-% img = zeros([imgSz 3]);
-% barIndx = (1:barWidth) - floor((barWidth+1)/2) + imgSz(2)/2;
-% for ii = 1 : 3 % loop over color primaries (RGB)
-%     img(:, :, ii) = bgColor(ii) * ones(imgSz); % set background
-%     img(:, barIndx, ii) = barColor(ii); % set foreground bar
-% end
-% imgA = img; imgM = img; % A for aligned, M for mis-aligned
-% imgM(1:imgSz(1)/2, :,:) = circshift(img(1:imgSz(1)/2, :,:), [0 offset 0]);
-%         
-% vcNewGraphWin([], 'tall'); 
-% subplot(2,1,1); imshow(imgA); axis image; title('Aligned Image');
-% subplot(2,1,2); imshow(imgM); axis image; title('Misaligned Image');
+imgSz    = [100 80]; % image size in pixels
+barColor = [1 1 1]; % RGB value for foreground bar
+bgColor  = [0.5 0.5 0.5]; % Background color
+barWidth = 3; % width of the bar in pixels
+offset   = 1; % mis-alignment size in pixels, converted to deg later
+
+doSub = false; % rendering scene at pixel level (no subpixel rendering)
+wave  = 400:10:700; % wavelength sample points
+meanLum = 10;  % adjustment to scene mean luminance - don't adjust it
+
+img = zeros([imgSz 3]);
+barIndx = (1:barWidth) - floor((barWidth+1)/2) + imgSz(2)/2;
+for ii = 1 : 3 % loop over color primaries (RGB)
+    img(:, :, ii) = bgColor(ii) * ones(imgSz); % set background
+    img(:, barIndx, ii) = barColor(ii); % set foreground bar
+end
+imgA = img; imgM = img; % A for aligned, M for mis-aligned
+imgM(1:imgSz(1)/2, :,:) = circshift(img(1:imgSz(1)/2, :,:), [0 offset 0]);
+        
+vcNewGraphWin([], 'tall'); 
+subplot(2,1,1); imshow(imgA); axis image; title('Aligned Image');
+subplot(2,1,2); imshow(imgM); axis image; title('Misaligned Image');
 
 %% Create Vernier Scene (full display radiance representation)
 %
@@ -83,8 +66,8 @@ imgM = imageVernier(p);
 % Create a scene with the image using the display parameters
 % The scene spectral radiance is created using the RGB image and the
 % properties of the display.
-sceneA = sceneFromFile(imgA, 'rgb', meanLum, d); % aligned
-sceneM = sceneFromFile(imgM, 'rgb', meanLum, d); % mis-aligned
+sceneA = sceneFromFile(imgA, 'rgb', meanLum, d, wave, doSub); % aligned
+sceneM = sceneFromFile(imgM, 'rgb', meanLum, d, wave, doSub); % mis-aligned
 
 vcAddObject(sceneA); 
 vcAddObject(sceneM); 
@@ -143,12 +126,6 @@ oiPlot(oi,'ls wavelength',[],nPoints);
 oiA = oiCompute(sceneA, oi);
 oiM = oiCompute(sceneM, oi);
 
-% [~,rect] = oiCrop(oiA);
-% 65
-rect = [9     7    66    67];
-oiA = oiCrop(oiA,rect);
-oiM = oiCrop(oiM,rect);
-
 vcAddObject(oiA); vcAddObject(oiM); oiWindow;
 
 % Another way to do this computation is using the chromatic aberration in
@@ -170,45 +147,12 @@ view(135,23);
 
 %% Compute Photon Absorptions of Human Cone Receptors
 
-% We start from scratch to show a more efficient version of the calculation
-% and also to place the line on a gray background.
-
-dpi = 200; d = displayCreate('LCD-Apple','dpi',dpi);
-viewDist = 1; % viewing distance in meters
-d = displaySet(d, 'viewing distance', viewDist);
-d = displaySet(d,'g table','linear');
-
-[~, p] = imageVernier();   % Mainly to get the parameters
-p.pattern = 0.2*ones(1, p.sceneSz(2) + 1); p.pattern(p.sceneSz/2 + 1) = 1;
-
-meanLum = 30;
-p.offset = 0; % aligned
-sceneA = sceneFromFile(imageVernier(p), 'rgb', meanLum, d); 
-p.offset = 2; % mis-aligned
-sceneM = sceneFromFile(imageVernier(p), 'rgb', meanLum, d); 
-oi = oiCreate('wvf human');
-
-fov = 0.7*sceneGet(sceneA, 'fov');
-rect = [9     7    66    67];
-oiA = oiCrop(oiCompute(sceneA, oi),rect);
-oiM = oiCrop(oiCompute(sceneM, oi),rect);
-
 % Compute the human cone absorption samples with fixational eye movement.
 cones = sensorCreate('human');
-cones = sensorSetSizeToFOV(cones, fov, sceneA, oiA);
+cones = sensorSetSizeToFOV(cones, sceneGet(sceneA, 'fov'), sceneA, oiA);
 cones = sensorCompute(cones,oiM);
 vcAddObject(cones); sensorWindow('scale',1);
 
-%% Show the plane cone mosaic - no absorptions
-sensorConePlot(cones)
-
-%% Show the absorptions on the mosaic
-step = 1;
-tmp = coneImageActivity(cones,[],step,false);
-tmp(:,:,3) = tmp(:,:,3)*2;
-
-vcNewGraphWin;
-imagescRGB(tmp);
 %% Static analysis, without eye movements
 
 % Plot the average of the top and bottom half, looking for displacement
@@ -282,51 +226,72 @@ absorptions = ieScale(absorptions,150);
 
 %% Movie of the cone absorptions
 
-step = 3;
-p.vname = 'coneAbsorptionsRGB.avi';
-p.FrameRate = 30;
-coneImageActivity(cones,[],step,p);
+step = 20;
+tmp = coneImageActivity(cones,[],step,false);
 
-%% Black and white version of absorptions
+% Show the movie
 vcNewGraphWin;
-vObj = VideoWriter('coneAbsorptions.avi');
-open(vObj);
+tmp = tmp/max(tmp(:));
+for ii=1:size(tmp,4)
+    img = squeeze(tmp(:,:,:,ii));
+    imshow(img.^0.3); truesize;
+    title('Cone absorptions')
+    drawnow
+end
+
+%% Black and white version
+vcNewGraphWin;
+% vObj = VideoWriter('coneAbsorptions.avi');
+% open(vObj);
 colormap(gray);
 nframes = size(absorptions,3);
 % Record the movie
 for j = 1:step:nframes 
     image(absorptions(:,:,j)); drawnow;
-    F = getframe;
-    writeVideo(vObj,F);
+    title('Cone absorptions')
+%     F = getframe;
+%     writegit puVideo(vObj,F);
 end
-close(vObj);
-
+% close(vObj);
 fprintf('Max cone absorptions %.0f\n',max(absorptions(:)));
 
 %% Temporal dynamics applied to the cone absorptions
+
 [cones,adaptedData] = coneAdapt(cones,'rieke');
 
 % The adapted data values are all negative current.
-% We scale to between 0 and 1 and then make them about 100
-adaptedData = 100*ieScale(adaptedData,0,1);
+adaptedData = ieScale(adaptedData,0,1);
 
-p.vname = 'coneCurrentRGB.avi';
-coneImageActivity(cones,adaptedData,step,p);
+step = 20;
+tmp = coneImageActivity(cones,adaptedData,step,false);
+
+% Show the movie
+vcNewGraphWin;
+tmp = tmp/max(tmp(:));
+for ii=1:size(tmp,4)
+    img = squeeze(tmp(:,:,:,ii));
+    imshow(img.^0.3); truesize;
+    title('Cone photocurrent')
+    drawnow
+end
 
 
 %% Black and white version
 vcNewGraphWin;
-vObj = VideoWriter('coneCurrent.avi');
-open(vObj);
+% vObj = VideoWriter('coneVoltage.avi');
+%  open(vObj);
+adaptedData = 150*ieScale(adaptedData,0,1);
 colormap(gray);
 nframes = size(adaptedData,3);
 % Record the movie
 for j = 1:step:nframes
-    image(adaptedData(:,:,j)); drawnow;
-    F = getframe;
-    writeVideo(vObj,F);
+    image(adaptedData(:,:,j));
+    title('Cone photocurrent');
+    drawnow;
+    %     F = getframe;
+    %     writeVideo(vObj,F);
 end
-close(vObj);
+%  close(vObj);
 
 
 
