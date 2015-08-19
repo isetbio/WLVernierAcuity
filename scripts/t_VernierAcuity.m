@@ -20,7 +20,7 @@ ieInit;
 
 % In this example we impose a linear gamma table, though
 % in general it could be the default or anything.
-d = displayCreate('LCD-Apple');
+dpi = 200; d = displayCreate('LCD-Apple','dpi',dpi);
 % d = displaySet(d, 'gamma', repmat(linspace(0, 1, 256)', [1 3]));
 
 viewDist = 2; % viewing distance in meters
@@ -126,6 +126,10 @@ oiPlot(oi,'ls wavelength',[],nPoints);
 oiA = oiCompute(sceneA, oi);
 oiM = oiCompute(sceneM, oi);
 
+rect = [10    15    81   100];
+oiA = oiCrop(oiA,rect);
+oiM = oiCrop(oiM,rect);
+
 vcAddObject(oiA); vcAddObject(oiM); oiWindow;
 
 % Another way to do this computation is using the chromatic aberration in
@@ -149,10 +153,21 @@ view(135,23);
 
 % Compute the human cone absorption samples with fixational eye movement.
 cones = sensorCreate('human');
-cones = sensorSetSizeToFOV(cones, sceneGet(sceneA, 'fov'), sceneA, oiA);
+fov = 0.7*sceneGet(sceneA, 'fov');
+cones = sensorSetSizeToFOV(cones, fov, sceneA, oiA);
 cones = sensorCompute(cones,oiM);
 vcAddObject(cones); sensorWindow('scale',1);
 
+%% Show the plane cone mosaic - no absorptions
+sensorConePlot(cones)
+
+%% Show the absorptions on the mosaic
+step = 1;
+tmp = coneImageActivity(cones,[],step,false);
+tmp(:,:,3) = tmp(:,:,3)*2;
+
+vcNewGraphWin;
+imagescRGB(tmp);
 %% Static analysis, without eye movements
 
 % Plot the average of the top and bottom half, looking for displacement
@@ -226,72 +241,51 @@ absorptions = ieScale(absorptions,150);
 
 %% Movie of the cone absorptions
 
-step = 20;
-tmp = coneImageActivity(cones,[],step,false);
+step = 3;
+p.vname = 'coneAbsorptionsRGB.avi';
+p.FrameRate = 30;
+coneImageActivity(cones,[],step,p);
 
-% Show the movie
+%% Black and white version of absorptions
 vcNewGraphWin;
-tmp = tmp/max(tmp(:));
-for ii=1:size(tmp,4)
-    img = squeeze(tmp(:,:,:,ii));
-    imshow(img.^0.3); truesize;
-    title('Cone absorptions')
-    drawnow
-end
-
-%% Black and white version
-vcNewGraphWin;
-% vObj = VideoWriter('coneAbsorptions.avi');
-% open(vObj);
+vObj = VideoWriter('coneAbsorptions.avi');
+open(vObj);
 colormap(gray);
 nframes = size(absorptions,3);
 % Record the movie
 for j = 1:step:nframes 
     image(absorptions(:,:,j)); drawnow;
-    title('Cone absorptions')
-%     F = getframe;
-%     writegit puVideo(vObj,F);
+    F = getframe;
+    writeVideo(vObj,F);
 end
-% close(vObj);
+close(vObj);
+
 fprintf('Max cone absorptions %.0f\n',max(absorptions(:)));
 
 %% Temporal dynamics applied to the cone absorptions
-
 [cones,adaptedData] = coneAdapt(cones,'rieke');
 
 % The adapted data values are all negative current.
-adaptedData = ieScale(adaptedData,0,1);
+% We scale to between 0 and 1 and then make them about 100
+adaptedData = 100*ieScale(adaptedData,0,1);
 
-step = 20;
-tmp = coneImageActivity(cones,adaptedData,step,false);
-
-% Show the movie
-vcNewGraphWin;
-tmp = tmp/max(tmp(:));
-for ii=1:size(tmp,4)
-    img = squeeze(tmp(:,:,:,ii));
-    imshow(img.^0.3); truesize;
-    title('Cone photocurrent')
-    drawnow
-end
+p.vname = 'coneCurrentRGB.avi';
+coneImageActivity(cones,adaptedData,step,p);
 
 
 %% Black and white version
 vcNewGraphWin;
-% vObj = VideoWriter('coneVoltage.avi');
-%  open(vObj);
-adaptedData = 150*ieScale(adaptedData,0,1);
+vObj = VideoWriter('coneCurrent.avi');
+open(vObj);
 colormap(gray);
 nframes = size(adaptedData,3);
 % Record the movie
 for j = 1:step:nframes
-    image(adaptedData(:,:,j));
-    title('Cone photocurrent');
-    drawnow;
-    %     F = getframe;
-    %     writeVideo(vObj,F);
+    image(adaptedData(:,:,j)); drawnow;
+    F = getframe;
+    writeVideo(vObj,F);
 end
-%  close(vObj);
+close(vObj);
 
 
 
