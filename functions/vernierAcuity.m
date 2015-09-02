@@ -103,9 +103,9 @@ OIs{2} = oiCompute(scene{2}, oi);
 
 %% Create Sensor
 %  Load sensor parameters
-try sensorFov = params.sensor.fov; catch, sensorFov = [.2 .2]; end
+try sensorFov = params.sensor.fov; catch, sensorFov = [.15 .15]; end
 if isscalar(sensorFov), sensorFov = [sensorFov, sensorFov]; end
-try nFrames = params.sensor.nFrames; catch, nFrames = 3000; end
+try nFrames = params.sensor.nFrames; catch, nFrames = 5000; end
 try density = params.sensor.density; catch, density = [0 .6 .3 .1]; end
 cone = coneCreate('human', 'spatial density', density);
 sensor = sensorCreate('human', [], cone);
@@ -160,11 +160,16 @@ s.absorption.weights = reshape(mean(w, 2), sz);
 % With cone noise added
 try p.addNoise = params.sensor.adapt_noise; catch, p.addNoise = true; end
 
-[~, adapted1] = coneAdapt(sensor1, 'rieke', p);
+% [~, adapted1] = coneAdapt(sensor1, 'rieke', p);
+os = osBioPhys('noiseFlag', p.addNoise);
+os.osBioPhysCompute(sensor1);
+adapted1 = os.osBioPhysGet('ConeCurrentSignal');
 adapted1 = adapted1(:, :, 1:emPerExposure:end);
 s.adaptation.data{1} = adapted1;
 
-[~,adapted2] = coneAdapt(sensor2, 'rieke', params);
+% [~,adapted2] = coneAdapt(sensor2, 'rieke', params);
+os.osBioPhysCompute(sensor2);
+adapted2 = os.osBioPhysGet('ConeCurrentSignal');
 adapted2 = adapted2(:, :, 1:emPerExposure:end);
 s.adaptation.data{2} = adapted2;
 
