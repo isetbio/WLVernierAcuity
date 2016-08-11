@@ -13,25 +13,28 @@ p = parseInputs(varargin{:});
 
 d = p.Results.display;            % display structure
 imgFov = p.Results.imgFov;        % image field of view
-sensorFov = p.Results.spatialInt; % spatial integration
-nFrames = p.Results.nFrames;      % number of frames in training
 vDist = p.Results.vDist;          % viewing distance
-expTime = p.Results.expTime;      % exposure time
-emFlag = p.Results.emFlag;        % eye movement indicators
-sensor = p.Results.sensor;
-
 ppi = displayGet(d, 'ppi');       % display resolution
+
+% Convert to pixels and then round based on actual number of integer pixels
 imgSz  = round(tand(imgFov)*vDist*39.37*ppi);  % number of pixels in image
 imgFov = atand(imgSz/ppi/39.37/vDist);         % Actual fov
 
-% verneir scene parameters
+% Eye movement structure
+em      = p.Results.em;         % eye movement structure
+nFrames = p.Results.nFrames;    % number of frames in training
+
+% Cone mosaic exposure time.
+expTime = p.Results.expTime;      % exposure time
+
+%% Create Scene
 params.display = d;
 params.sceneSz = [imgSz imgSz];
 params.barWidth = 1;
 params.barColor = p.Results.barColor;
 params.bgColor = 0.5;
 
-% Create Scene
+% Number of pixels for the offset
 scene = cell(2, 1);
 params.offset = 0; scene{1} = sceneCreate('vernier', 'display', params);
 params.offset = 1; scene{2} = sceneCreate('vernier', 'display', params);
@@ -41,52 +44,37 @@ for ii = 1 : 2
     scene{ii} = sceneSet(scene{ii}, 'h fov', imgFov);
     scene{ii} = sceneSet(scene{ii}, 'distance', vDist);
 end
+fprintf('Scene size %d\n',sceneGet(scene{1},'size'));
 
-% Create Human Lens
+%% Create Human optics
 oi = oiCreate('wvf human');
 
 % Compute optical image
 OIs{1} = oiCompute(scene{1}, oi);
 OIs{2} = oiCompute(scene{2}, oi);
 
-% Create Sensor
-sensor = sensorSet(sensor, 'exp time', expTime);
-sensor = sensorSetSizeToFOV(sensor, sensorFov(1), scene{1}, OIs{1});
-sz = sensorGet(sensor, 'size');
+%% Create cone mosaic and eye movement sequence
 
-if all(emFlag == 0)  % no eye movement
-    sensor = sensorSet(sensor, 'sensor positions', zeros(nFrames, 2));
-    sensor = coneAbsorptions(sensor, OIs{1});
-    pSamples1 = sensorGet(sensor, 'photons');
-    
-    sensor = coneAbsorptions(sensor, OIs{2});
-    pSamples2 = sensorGet(sensor, 'photons');
-else
-    % Set exposure time to 1 ms
-    emDuration = 0.001;
-    emPerExposure = expTime / emDuration;
-    sensor = sensorSet(sensor, 'exp time', emDuration);
-    
-    % Generate eyemovement
-    params.emFlag = emFlag;
-    params.nSamples = nFrames * emPerExposure;
-    sensor = eyemoveInit(sensor, params);
-    
-    % Compute the cone absopritons
-    sensor = coneAbsorptions(sensor, OIs{1});
-    
-    % Store the photon samples and add photons in one exposure time
-    pSamples1 = sensorGet(sensor, 'photons');
-    pSamples1 = sum(reshape(pSamples1, [sz nFrames emPerExposure]), 4);
-    
-    % Compute cone absorptions for the second stimulus and store photon
-    % absorptions
-    sensor = coneAbsorptions(sensor, OIs{2});
-    pSamples2 = sensorGet(sensor, 'photons');
-    pSamples2 = sum(reshape(pSamples2, [sz nFrames emPerExposure]), 4);
-end
+cm = coneMosaic;
+cm.integrationTime = expTime;
+cm.setSizeToFOV(p.Results.spatialInt,'sceneDist',vDist,'focalLength',oiGet(oi,'optics focal length'));
+sz = cm.mosaicSize;
 
-% prepare data for SVM linear classification
+% Generate eye movements
+emPerExposure = expTime/cm.sampleTime;
+cm.emGenSequence(nFrames*emPerExposure,'em',em);
+
+%% Compute absorptions
+cm.compute(OIs{1});
+pSamples1 = cm.absorptions;
+pSamples1 = sum(reshape(pSamples1, [sz nFrames emPerExposure]), 4);
+% cm.plot('mean absorptions')
+
+cm.compute(OIs{2});
+pSamples2 = cm.absorptions;
+pSamples2 = sum(reshape(pSamples2, [sz nFrames emPerExposure]), 4);
+% cm.plot('mean absorptions')
+%% prepare data for SVM linear classification
 nFolds = 5;
 labels = [ones(nFrames,1); -1*ones(nFrames,1)];
 data = cat(1, RGB2XWFormat(pSamples1)', RGB2XWFormat(pSamples2)');
@@ -124,14 +112,13 @@ function p = parseInputs(varargin)
 p = inputParser;
 
 p.addParameter('display', displayCreate('LCD-Apple', 'dpi', 400));
-p.addParameter('imgFov', 0.5, @isnumeric);
-p.addParameter('spatialInt', 0.2, @isnumeric);
+p.addParameter('imgFov', 0.5, @isnumeric);      % Degrees
+p.addParameter('spatialInt', 0.2, @isnumeric);  % Degrees
 p.addParameter('expTime', 0.05, @isnumeric);
-p.addParameter('nFrames', 5000, @isnumeric);
+p.addParameter('nFrames', 1000, @isnumeric);
 p.addParameter('vDist', 1.0, @isnumeric);
 p.addParameter('barColor', 0.99, @isnumeric);
-p.addParameter('emFlag', [1 1 1], @isnumeric);
-p.addParameter('sensor', sensorCreate('human'));
+p.addParameter('em', emCreate, @isstruct);
 
 p.parse(varargin{:});
 

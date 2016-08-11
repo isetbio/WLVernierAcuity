@@ -5,15 +5,9 @@
 % HJ, ISETBIO TEAm, 2016
 
 %% Viewing distance
-vDistList = 0.3;  % A third of a meter
-acc = zeros(length(sampleList), 1);
 
-% compute discrimination accuracy for different viewing distance
-cprintf('*blue', 'Effects of viewing distance\n');
-for ii = 1 : length(vDistList)
-    acc(ii) = coVernier('vDist', vDistList(ii));
-    fprintf('vDist: %.1f\t Accuracy:%.2f\n', vDistList(ii), acc(ii));
-end
+acc = coVernier('vDist', 0.3);
+fprintf('vDist: %.1f\t Accuracy:%.2f\n', vDistList(ii), acc(ii));
 
 % plot
 vcNewGraphWin; plot(vDistList, acc, 'LineWidth', 2);
