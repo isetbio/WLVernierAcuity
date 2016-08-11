@@ -44,7 +44,7 @@ for ii = 1 : 2
     scene{ii} = sceneSet(scene{ii}, 'h fov', imgFov);
     scene{ii} = sceneSet(scene{ii}, 'distance', vDist);
 end
-fprintf('Scene size %d\n',sceneGet(scene{1},'size'));
+% fprintf('Scene size %d\n',sceneGet(scene{1},'size'));
 
 %% Create Human optics
 oi = oiCreate('wvf human');
@@ -57,12 +57,14 @@ OIs{2} = oiCompute(scene{2}, oi);
 
 cm = coneMosaic;
 cm.integrationTime = expTime;
-cm.setSizeToFOV(p.Results.spatialInt,'sceneDist',vDist,'focalLength',oiGet(oi,'optics focal length'));
+cm.setSizeToFOV(p.Results.spatialInt,'sceneDist', ...
+    vDist,'focalLength',oiGet(oi,'optics focal length'));
 sz = cm.mosaicSize;
 
 % Generate eye movements
 emPerExposure = expTime/cm.sampleTime;
 cm.emGenSequence(nFrames*emPerExposure,'em',em);
+cm.integrationTime = cm.sampleTime;
 
 %% Compute absorptions
 cm.compute(OIs{1});
@@ -74,6 +76,7 @@ cm.compute(OIs{2});
 pSamples2 = cm.absorptions;
 pSamples2 = sum(reshape(pSamples2, [sz nFrames emPerExposure]), 4);
 % cm.plot('mean absorptions')
+
 %% prepare data for SVM linear classification
 nFolds = 5;
 labels = [ones(nFrames,1); -1*ones(nFrames,1)];
