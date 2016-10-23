@@ -95,23 +95,23 @@ emPositions = cmosaic{1}.emPositions;
 
 %% Noise free absorptions
 
-% We create the absorptions with no noise and no eye movements
-% We do this for a 1 ms exposure.  We will assemble the movies from these 1 ms
-% noise free cases.
-cmosaic{1} = coneMosaic;
-cmosaic{2} = coneMosaic;
-cmosaic{3} = coneMosaic;
-LMS = cell(3,1);
-
-for ii=1:3
-    cmosaic{ii}.noiseFlag = false;  % There is no quantization in this case
-    cmosaic{ii}.setSizeToFOV(imgFov);
-    cmosaic{ii}.integrationTime = 0.001;   % ms
-    
-    % To account for eye movements, we need all of the L,M,S values at every
-    % position.  We pull these out when we apply the emPath, below.
-    LMS{ii} = cmosaic{ii}.computeSingleFrame(OIs{ii}, 'fullLMS', true);
-end
+% % We create the absorptions with no noise and no eye movements
+% % We do this for a 1 ms exposure.  We will assemble the movies from these 1 ms
+% % noise free cases.
+% cmosaic{1} = coneMosaic;
+% cmosaic{2} = coneMosaic;
+% cmosaic{3} = coneMosaic;
+% LMS = cell(3,1);
+% 
+% for ii=1:3
+%     cmosaic{ii}.noiseFlag = false;  % There is no quantization in this case
+%     cmosaic{ii}.setSizeToFOV(imgFov);
+%     cmosaic{ii}.integrationTime = 0.001;   % ms
+%     
+%     % To account for eye movements, we need all of the L,M,S values at every
+%     % position.  We pull these out when we apply the emPath, below.
+%     LMS{ii} = cmosaic{ii}.computeSingleFrame(OIs{ii}, 'fullLMS', true);
+% end
 
 %%  Compute the noise free full LMS.
 
@@ -146,6 +146,7 @@ for ii=1:length(oiSeq.weights);
     
 end
 cmosaic{1}.absorptions = absorptions;
+cmosaic{1}.emPositions = emPositions(1:length(oiSeq.weights),:);
 cmosaic{1}.window;
 
 
