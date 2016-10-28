@@ -11,15 +11,15 @@
 %    White line on a gray monitor background
 %    Sweep out viewing distance
 %
-% We are running in the ConeMosaicOSintegrationTime branch, which will probably
-% become the master branch before too long
+% We are running in the ConeMosaicOSintegrationTime branch, which will
+% probably become the master branch before too long
 %
-% (HJ) Jan, 2014
+% HJ/BW, ISETBIO TEAM, 2016
 
 %% Init Parameters
 ieInit;
 
-%% Make a high resolution display for a small retinal field of view
+%% Create display model
 ppi    = 500;          % points per inch
 imgFov = [.5 .5];      % image field of view
 sensorFov = [.15 .15]; % field of view of retina
@@ -27,193 +27,119 @@ nFrames = 5000;        % Number of samples
 
 vDist  = 0.3;          % viewing distance (meter)
 
-imgSz  = round(tand(imgFov)*vDist*(ppi/dpi2mperdot(1,'m')));   % number of pixels in image
-imgFov = atand(max(imgSz)/ppi/(1/dpi2mperdot(1,'m'))/vDist);   % Actual fov
+% compute number of pixels in image
+imgSz  = round(tand(imgFov)*vDist*(ppi/dpi2mperdot(1,'m')));
+
+% compute actual fov of image, should be very close to desired fov
+imgFov = atand(max(imgSz)/ppi/(1/dpi2mperdot(1,'m'))/vDist);
 
 % Create virtual display
-display = displayCreate('LCD-Apple');
-display = displaySet(display, 'dpi', ppi);
+display = displayCreate('LCD-Apple', 'dpi', ppi);
 
-%% Create two scenes
+%% Create scenes
+% In general, we want two types of scenes: one with a constant line 
+% and one with an offset. In order to handle temporal variation, we create
+% a background scene, which is a uniform field. We use the the background
+% to blend with the two scenes and get the temporal varying OI sequence.
 
-% One with a constant line and one with an offset
-scene = cell(2, 1);
+% Init scene array
+% scene{1} - constant line
+% scene{2} - two line segments with 1 pixel offset
+% scene{3} - uniform background
+scene = cell(3, 1);
 
+% Init scene parameters
 params.display = display;
 params.sceneSz = imgSz;
 params.offset  = 0;
 params.barWidth = 1;
 params.bgColor = 0.5;
-% Line in the middle
+
+% Create scene{1}: constant line
 scene{1} = sceneCreate('vernier', 'display', params);
 
-% Line offset
-params.offset = 1;  % One pixel
+% Create scene {2}: two line segments with 1 pixel offset
+params.offset = 1;  % units: pixel
 scene{2} = sceneCreate('vernier', 'display', params);
 
-% Uniform field ... we think
+% Create scene {3}: uniform field
 params.barWidth = 0;
 scene{3} = sceneCreate('vernier', 'display', params);
 
 % set scene fov
-for ii = 1 : 3
+for ii = 1 : length(scene)
     scene{ii} = sceneSet(scene{ii}, 'h fov', imgFov);
     scene{ii} = sceneSet(scene{ii}, 'distance', vDist);
 end
 
 % Show radiance image (scene)
-% vcAddObject(scene{1});
-% vcAddObject(scene{2}); sceneWindow;
+% vcAddObject(scene{1}); vcAddObject(scene{2}); sceneWindow; 
 
-% Blank . Don't panic that the appearance is not gray.
-% vcAddObject(scene{3}); sceneWindow;  
-
-%% Create Human Lens
-
-%  Create a typical human lens
-% oi = oiCreate('wvf human',pupilMM,zCoefs,wave)
-% Example:
-%   To set the defocus, we can adjust one of the zCoefs (defocus).
-%   We will rerun this with in focus and defocused case to check whether
-%   this matters.
+%% Compute human optical image
+% Create a typical human lens
+%   oi = oiCreate('wvf human',pupilMM,zCoefs,wave)
 oi = oiCreate('wvf human');
 
 % Compute optical image
-OIs{1} = oiCompute(scene{1}, oi);
-OIs{2} = oiCompute(scene{2}, oi);
-OIs{3} = oiCompute(scene{3}, oi);
+OIs = cell(length(scene), 1);
+for ii = 1 : length(OIs)
+    OIs{ii} = oiCompute(scene{ii}, oi);
+end
 
-% Show irradiance (optical image) 
-%vcAddObject(OIs{1}); oiWindow;
-%vcAddObject(OIs{2}); oiWindow;
-%vcAddObject(OIs{3}); oiWindow;
+% Build oiSequence
+tSamples = 100;  % 100 ms time sequence
+prependZeros = 20;
+weights = linspace(0, 1, tSamples/2 - prependZeros);
+weights = [zeros(1, prependZeros) weights ...
+           1-weights zeros(1, prependZeros)];
 
-%%  Generate an eye movement sequence
-cmosaic{1} = coneMosaic;
-cmosaic{1}.emGenSequence(100);         % 
-emPositions = cmosaic{1}.emPositions;
+oiSeqAligned = oiSequence(OIs{3}, OIs{1}, 0.001, weights, ...
+    'composition', 'blend');
+oiSeqOffset = oiSequence(OIs{3}, OIs{2}, 0.001, weights, ...
+    'composition', 'blend');
 
-%% Noise free absorptions
+%%  Compute absorptions
+nTrials = 1000;
+dataAligned = [];
+dataOffset = [];
 
-% % We create the absorptions with no noise and no eye movements
-% % We do this for a 1 ms exposure.  We will assemble the movies from these 1 ms
-% % noise free cases.
-% cmosaic{1} = coneMosaic;
-% cmosaic{2} = coneMosaic;
-% cmosaic{3} = coneMosaic;
-% LMS = cell(3,1);
-% 
-% for ii=1:3
-%     cmosaic{ii}.noiseFlag = false;  % There is no quantization in this case
-%     cmosaic{ii}.setSizeToFOV(imgFov);
-%     cmosaic{ii}.integrationTime = 0.001;   % ms
-%     
-%     % To account for eye movements, we need all of the L,M,S values at every
-%     % position.  We pull these out when we apply the emPath, below.
-%     LMS{ii} = cmosaic{ii}.computeSingleFrame(OIs{ii}, 'fullLMS', true);
-% end
+cMosaic = coneMosaic;
+cMosaic.setSizeToFOV(0.4 * imgFov);
+cMosaic.integrationTime = 0.001;
 
-%%  Compute the noise free full LMS.
-
-cmosaic{1}.noiseFlag = false;
-% Make sure the cone mosaic doesn't see the border
-cmosaic{1}.setSizeToFOV(0.8*imgFov);  
-cmosaic{1}.integrationTime = 0.01;   % ms
-
-oiSeq.oiFixed = OIs{3};     % Background
-oiSeq.oiVarying = OIs{2};   % Lines 1 is aligned, 2 is offsets
-w = linspace(0,1,35);
-oiSeq.weights = [0 0   w,  1 - w,  0 0];
-oiSeq.times   = (1:length(oiSeq.weights))*cmosaic{1}.integrationTime;
-
-
-% This is the computeSeq code.
-absorptions = [];
-for ii=1:length(oiSeq.weights);
+for ii = 1 : nTrials
+    cMosaic.emGenSequence(tSamples);
+    emPos = cMosaic.emPositions;
     
-    thisOI = oiAdd(oiSeq.oiFixed, oiSeq.oiVarying, [(1 - oiSeq.weights(ii)) oiSeq.weights(ii) ]);
-    % vcAddObject(thisOI); oiWindow;
-    % We want the eye movement position at a particular time
-    % emPos = emGetPosAtTime(emPositions,time);
-    % For now we just go along the sequence.
-    cmosaic{1}.emPositions = emPositions(ii,:);    % Get the (x,y) position
-    cmosaic{1}.compute(thisOI);
-    
-    % Cumulate the absorptions
-    if ii==1, absorptions = cmosaic{1}.absorptions;
-    else     absorptions = cat(3,absorptions, cmosaic{1}.absorptions);
+    % compute for each time independently
+    % will change to cMosaic.computeSeq
+    curAligned = [];
+    curOffset = [];
+    for jj = 1 : tSamples
+        cMosaic.emPositions = emPos(jj, :);
+        cMosaic.compute(oiSeqAligned.frameAtIndex(jj), ...
+            'currentFlag', false);
+        curAligned = cat(3, curAligned, cMosaic.absorptions);
+        cMosaic.compute(oiSeqOffset.frameAtIndex(jj), ...
+            'currentFlag', false);
+        curOffset = cat(3, curOffset, cMosaic.absorptions);
     end
     
-end
-cmosaic{1}.absorptions = absorptions;
-cmosaic{1}.emPositions = emPositions(1:length(oiSeq.weights),:);
-cmosaic{1}.window;
-
-
-
-%%  We might add a parameter to the window call to set a new figure
-% cmosaic{1}.window;
-
-%% Build up a movie that starts with uniform, puts on a stimulus, and ends with uniform
-
-% The total movie is always 100 ms (frames)
-% We put the stimulus on after 50 ms (frames)
-
-% One trial
-
-% We allow noise and eye movements
-% Generate enough eye movements for all of the frames 
-
-for ii= 1:3
-    cmosaic{ii}.setSizeToFOV(sensorFov);
-    
-    % This creates a series of frames, shifted by the eye movements
-    % Now add photon noise
-    padRows = (size(LMS{1},1) - cmosaic{ii}.rows) / 2;
-    padCols = (size(LMS{1},2) - cmosaic{ii}.cols) / 2;
-    absorptions = cmosaic{ii}.applyEMPath(LMS{ii},'emPath',emPositions,...
-        'padRows',padRows,'padCols',padCols);
-    cmosaic{ii}.absorptions = cmosaic{ii}.photonNoise(absorptions);
+    dataAligned = cat(1, dataAligned, curAligned(:)');
+    dataOffset = cat(1, dataOffset, curOffset(:)');
+    disp(['Trial: ' num2str(ii)]);
 end
 
+%% PCA and classification
+% pca dimension reduction
+nComponents = 50;
+coefAligned = pca(dataAligned, 'NumComponents', nComponents);
+pcaAligned = dataAligned * coefAligned;
+coefOffset = pca(dataOffset, 'NumComponents', nComponents);
+pcaOffset = dataOffset * coefOffset;
 
-%% Generate noise samples
-%  Set exposure time to 1 ms
-expTime = sensorGet(sensor, 'exp time');
-emDuration = 0.001;
-emPerExposure = expTime / emDuration;
-sensor = sensorSet(sensor, 'exp time', emDuration);
-sensor = sensorSetSizeToFOV(sensor, sensorFov(1), scene{1}, OIs{1});
-sz = sensorGet(sensor, 'size');
-
-% Generate eyemovement
-p.nSamples = nFrames * 50;
-sensor = eyemoveInit(sensor, p);
-
-% Compute the cone absopritons
-sensor = coneAbsorptions(sensor, OIs{1}, 2);
-
-% Store the photon samples and add photons in one exposure time
-pSamples1 = sensorGet(sensor, 'photons');
-pSamples1 = sum(reshape(pSamples1, [sz nFrames 50]), 4);
-
-% Compute cone absorptions for the second stimulus and store photon
-% absorptions
-sensor = coneAbsorptions(sensor, OIs{2}, 2);
-pSamples2 = sensorGet(sensor, 'photons');
-pSamples2 = sum(reshape(pSamples2, [sz nFrames 50]), 4);
-
-
-%% Do it by SVM
-% Classification
-nFolds = 10;
-labels = [ones(nFrames,1); -1*ones(nFrames,1)];
-data = cat(1, RGB2XWFormat(pSamples1)', RGB2XWFormat(pSamples2)');
-
-[acc, w] = svmClassifyAcc(data, labels, nFolds, 'linear');
-fprintf('SVM acc:%f\n',acc(1));
-
-% show weight image
-vcNewGraphWin; imagesc(reshape(mean(w, 2), sz));
-
-%%
+% svm classification
+mdl = fitcsvm([pcaAligned; pcaOffset], ...
+    [ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
+crossMDL = crossval(mdl);
+classLoss = kfoldLoss(crossMdl);
