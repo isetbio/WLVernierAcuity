@@ -87,8 +87,8 @@ for ii = 1 : length(OIs)
 end
 % vcAddObject(OIs{1}); vcAddObject(OIs{2});
 % oiWindow;
-%% Build the aligned and offset oiSequences.
 
+%% Build the aligned and offset oiSequences.
 
 % We build the stimulus using a time series of weights. Then we make a
 % linear ramp up for 30 ms, a ramp down for 30 ms, and we postpend zeros
@@ -111,8 +111,14 @@ sampleTimes = 0.001*(1:tSamples);  % Time in sec
 oiSeqAligned = oiSequence(OIs{3}, OIs{1}, ...
     sampleTimes, weights, ...
     'composition', 'blend');
+oiSeqAligned.visualize('format','movie');
 
 oiSeqOffset = oiSequence(OIs{3}, OIs{2}, ...
      sampleTimes, weights, ...
     'composition', 'blend');
+oiSeqOffset.visualize('format','movie');
+
 %%
+
+
+
