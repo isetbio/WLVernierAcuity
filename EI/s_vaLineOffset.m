@@ -21,6 +21,9 @@
 if notDefined('computeStage')
     computeStage = 'absorption';  % 'absorption', 'current'
 end
+if strcmp(computeStage, 'current')
+    error('Computing current for each time (implemented below) is wrong');
+end    
 
 %% Create display model
 ppi    = 500;          % points per inch
