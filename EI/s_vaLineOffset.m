@@ -17,7 +17,10 @@
 % HJ/BW, ISETBIO TEAM, 2016
 
 %% Init Parameters
-ieInit;
+% ieInit;
+if notDefined('computeStage')
+    computeStage = 'absorption';  % 'absorption', 'current'
+end
 
 %% Create display model
 ppi    = 500;          % points per inch
@@ -25,7 +28,9 @@ imgFov = [.5 .5];      % image field of view
 sensorFov = [.15 .15]; % field of view of retina
 nFrames = 5000;        % Number of samples
 
+if ~exist('vDist', 'var')
 vDist  = 0.3;          % viewing distance (meter)
+end
 
 % compute number of pixels in image
 imgSz  = round(tand(imgFov)*vDist*(ppi/dpi2mperdot(1,'m')));
@@ -87,19 +92,19 @@ for ii = 1 : length(OIs)
 end
 
 % Build oiSequence
-tSamples = 100;  % 100 ms time sequence
-prependZeros = 20;
+tSamples = 50;  % 100 ms time sequence
+prependZeros = 10;
 weights = linspace(0, 1, tSamples/2 - prependZeros);
 weights = [zeros(1, prependZeros) weights ...
            1-weights zeros(1, prependZeros)];
 
-oiSeqAligned = oiSequence(OIs{3}, OIs{1}, 0.001*(1:100), weights, ...
+oiSeqAligned = oiSequence(OIs{3}, OIs{1}, 0.001*(1:tSamples), weights, ...
     'composition', 'blend');
-oiSeqOffset = oiSequence(OIs{3}, OIs{2}, 0.001*(1:100), weights, ...
+oiSeqOffset = oiSequence(OIs{3}, OIs{2}, 0.001*(1:tSamples), weights, ...
     'composition', 'blend');
 
 %%  Compute absorptions
-nTrials = 1000;
+nTrials = 2000;
 dataAligned = [];
 dataOffset = [];
 
@@ -107,39 +112,57 @@ cMosaic = coneMosaic;
 cMosaic.setSizeToFOV(0.4 * imgFov);
 cMosaic.integrationTime = 0.001;
 
+emPos = zeros(tSamples, 2, nTrials);
 for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
-    emPos = cMosaic.emPositions;
-    
-    % compute for each time independently
-    % will change to cMosaic.computeSeq
-    curAligned = [];
-    curOffset = [];
-    for jj = 1 : tSamples
-        cMosaic.emPositions = emPos(jj, :);
-        cMosaic.compute(oiSeqAligned.frameAtIndex(jj), ...
-            'currentFlag', false);
-        curAligned = cat(3, curAligned, cMosaic.absorptions);
-        cMosaic.compute(oiSeqOffset.frameAtIndex(jj), ...
-            'currentFlag', false);
-        curOffset = cat(3, curOffset, cMosaic.absorptions);
-    end
-    
-    dataAligned = cat(1, dataAligned, curAligned(:)');
-    dataOffset = cat(1, dataOffset, curOffset(:)');
-    disp(['Trial: ' num2str(ii)]);
+    emPos(:, :, ii) = cMosaic.emPositions;
 end
+
+fprintf('Computing cone response: ');
+msg = '';
+for ii = 1 : tSamples
+    % compute for all trials at this time point
+    cMosaic.emPositions = squeeze(emPos(ii, :, :))';
+    if strcmp(computeStage, 'absorption')
+        % compute photon absorptions at time ii
+        cMosaic.compute(oiSeqAligned.frameAtIndex(ii), ...
+            'currentFlag', false);
+        dataAligned = cat(2, dataAligned, ...
+            reshape(cMosaic.absorptions, [], nTrials)');
+        cMosaic.compute(oiSeqOffset.frameAtIndex(ii), ...
+            'currentFlag', false);
+        dataOffset = cat(2, dataOffset, ...
+            reshape(cMosaic.absorptions, [], nTrials)');
+    elseif strcmp(computeStage, 'current')
+        % compute photo current at time ii
+        cMosaic.compute(oiSeqAligned.frameAtIndex(ii));
+        dataAligned = cat(2, dataAligned, ...
+            reshape(cMosaic.current, [], nTrials)');
+        cMosaic.compute(oiSeqOffset.frameAtIndex(ii));
+        dataOffset = cat(2, dataOffset, ...
+            reshape(cMosaic.current, [], nTrials)');
+    end     
+    
+    fprintf(repmat('\b', [1 length(msg)]));
+    msg = sprintf('%d / %d', ii, tSamples);
+    fprintf(msg);
+end
+fprintf('\n');
 
 %% PCA and classification
 % pca dimension reduction
-nComponents = 50;
+fprintf('Dimension reduction with PCA...');
+nComponents = 20;
 coefAligned = pca(dataAligned, 'NumComponents', nComponents);
 pcaAligned = dataAligned * coefAligned;
 coefOffset = pca(dataOffset, 'NumComponents', nComponents);
 pcaOffset = dataOffset * coefOffset;
+fprintf('Done\n');
 
 % svm classification
+fprintf('SVM Classification ');
 mdl = fitcsvm([pcaAligned; pcaOffset], ...
     [ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
 crossMDL = crossval(mdl);
-classLoss = kfoldLoss(crossMdl);
+classLoss = kfoldLoss(crossMDL);
+fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
