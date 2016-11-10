@@ -93,11 +93,11 @@ end
 % We build the stimulus using a time series of weights. Then we make a
 % linear ramp up for 30 ms, a ramp down for 30 ms, and we postpend zeros
 % for 20 ms.
-zTime = 30;
-rTime = 25;
+zTime = [50 150];
+rTime = 15;
 risingWeights = linspace(0, 1, rTime);   % 30 ms rising
-weights = [zeros(1, zTime) risingWeights ...
-    1-risingWeights zeros(1, zTime)];
+weights = [zeros(1, zTime(1)) risingWeights ...
+    1-risingWeights zeros(1, zTime(2))];
 % vcNewGraphWin; plot(1:tSamples, weights,'o');
 % xlabel('Time (ms)');
 

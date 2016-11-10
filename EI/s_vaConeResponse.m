@@ -10,18 +10,24 @@ cMosaic.setSizeToFOV(0.6 * imgFov);
 cMosaic.integrationTime = 0.001;
 cMosaic.emGenSequence(tSamples);
 
-%%
-
-% I put a check in compute() to call computeForOISequence()
-% The direct call to computeForOISequence() should also work.
+%% Compute the responses with eye movements
 cMosaic.compute(oiSeqOffset);
-
-cMosaic.compute(oiSeqOffset,'currentFlag',true);
-
-% Could do these calls instead
-%   cMosaic.computeForOISequence(oiSeqOffset);
-%   cMosaic.computeCurrent;
-
+cMosaic.computeCurrent;
 cMosaic.window;
 
+%% Plot the impulse response
+
+
+%% Testing
+
+scene = sceneCreate('uniform ee');
+scene = sceneSet(scene,'fov',1);
+oi = oiCreate('human');
+oi = oiCompute(oi,scene);
+
 %%
+cMosaic = coneMosaic;
+cMosaic.integrationTime = 0.001;
+cMosaic.setSizeToFOV(0.5);
+cMosaic.compute(oi);
+cMosaic.window;
