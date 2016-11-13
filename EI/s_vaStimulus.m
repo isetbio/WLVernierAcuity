@@ -43,6 +43,8 @@ display = displayCreate('LCD-Apple', 'dpi', ppi);
 % scene{3} - uniform background
 scene = cell(3, 1);
 
+clear params
+
 % Init scene parameters
 params.display = display;
 params.sceneSz = imgSz;
@@ -62,7 +64,8 @@ scene{2} = sceneSet(scene{2},'name','offset');
 
 % Create scene {3}: background field only, no line
 params.barWidth = 0;
-params.bgColor = 0.5;
+params.bgColor  = 0.5;
+params.barColor = 0;   % No line.  Needs to be set!
 scene{3} = sceneCreate('vernier', 'display', params);
 scene{3} = sceneSet(scene{3},'name','uniform');
 
@@ -73,7 +76,7 @@ for ii = 1 : length(scene)
 end
 
 % Show radiance image (scene)
-% vcAddObject(scene{1}); vcAddObject(scene{2}); sceneWindow; 
+% for ii=1:3, vcAddObject(scene{ii}); end;  sceneWindow; 
 
 %% Compute human optical image sequences
 
@@ -95,10 +98,9 @@ end
 
 %% Build the aligned and offset oiSequences.
 
-% We build the stimulus using a time series of weights. Then we make a
-% linear ramp up for 30 ms, a ramp down for 30 ms, and we postpend zeros
-% for 20 ms.
-zTime = [50 75];
+% We build the stimulus using a time series of weights. We have the mean
+% field on for a while, then rise/fall, then mean field.
+zTime = [50, 100];   % Mean field beginning and end (ms)
 rTime = 15;
 risingWeights = linspace(0, 1, rTime);   % 30 ms rising
 weights = [zeros(1, zTime(1)) risingWeights ...

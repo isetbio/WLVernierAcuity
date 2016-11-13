@@ -11,6 +11,7 @@ cMosaic = coneMosaic('os',osLinear);
 cMosaic.setSizeToFOV(0.6 * imgFov);
 cMosaic.integrationTime = 0.001;
 cMosaic.emGenSequence(tSamples);
+cMosaic.os.noiseFlag = true;
 
 %% Compute the responses with eye movements
 cMosaic.compute(oiSeqOffset);
@@ -18,10 +19,9 @@ cMosaic.name = 'offset';
 cMosaic.computeCurrent;
 cMosaic.window;
 
-[lmsF, meancurrent] = cMosaic.os.linearFilters(cMosaic);
-
 %% Plot the impulse response
 
+[~, meancurrent] = cMosaic.os.linearFilters(cMosaic);
 cMosaic.plot('os current filters','meancurrent',meancurrent);
 
 %% Testing
