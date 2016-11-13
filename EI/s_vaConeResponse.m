@@ -5,18 +5,24 @@
 s_vaStimulus;
 
 %%
-cMosaic = coneMosaic;
+cMosaic = coneMosaic('os',osLinear);
+% cMosaic = coneMosaic('os',osBioPhys);
+
 cMosaic.setSizeToFOV(0.6 * imgFov);
 cMosaic.integrationTime = 0.001;
 cMosaic.emGenSequence(tSamples);
 
 %% Compute the responses with eye movements
 cMosaic.compute(oiSeqOffset);
+cMosaic.name = 'offset';
 cMosaic.computeCurrent;
 cMosaic.window;
 
+[lmsF, meancurrent] = cMosaic.os.linearFilters(cMosaic);
+
 %% Plot the impulse response
 
+cMosaic.plot('os current filters','meancurrent',meancurrent);
 
 %% Testing
 
