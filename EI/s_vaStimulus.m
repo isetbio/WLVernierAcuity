@@ -65,7 +65,6 @@ scene{2} = sceneSet(scene{2},'name','offset');
 % Create scene {3}: background field only, no line
 params.barWidth = 0;
 params.bgColor  = 0.5;
-params.barColor = 0;   % No line.  Needs to be set!
 scene{3} = sceneCreate('vernier', 'display', params);
 scene{3} = sceneSet(scene{3},'name','uniform');
 
