@@ -53,12 +53,12 @@ end
 %%
 
 tic
-[dataOffset]  = cMosaic.compute(aligned,'emPaths',emPaths);
+dataAligned  = cMosaic.compute(aligned,'emPaths',emPaths);
 toc
 % cMosaic.window;
 
 tic
-[dataAligned] = cMosaic.compute(offset,'emPaths',emPaths);
+dataOffset = cMosaic.compute(offset,'emPaths',emPaths);
 toc
 % cMosaic.window;
 
@@ -69,14 +69,36 @@ toc
 % pixels, without any particular structure.  Every trial is then treated as
 % the entries for the PCA analysis.  But the differences between the trials
 % are mainly pixel-wise random.  So, we get very little savings.
-dataOffset  = reshape(dataOffset,nTrials,[]);
-dataAligned = reshape(dataAligned,nTrials,[]);
+% dataOffset  = reshape(dataOffset,nTrials,[]);
+% dataAligned = reshape(dataAligned,nTrials,[]);
 
 % This one asks whether we can replace the images by a smaller set of basis
 % functions, and then we analyze the weights of these basis functions as a
 % functon of time.
 % Reshape dataAligned and dataOffset into matrices whos columns are images.
 % Apply PCA, below.
+
+% This is my effort.  Looks great!  The first 25 images look like the
+% stimuli.
+foo = reshape(dataOffset,100,37*37,[]);
+
+foo = reshape(dataAligned,100,37*37,[]);
+
+foo = permute(foo,[1 3 2]);
+foo = reshape(foo,100*110,[]);
+foo = bsxfun(@minus,foo, mean(foo,1));
+[V,D] = eig(foo'*foo); 
+D = diag(D);   % The last values are the biggest.
+
+vcNewGraphWin; semilogy(D)
+
+for ii=1:25
+    colormap(gray(256));
+    img = reshape(V(:,end-ii),37,37);
+    imagesc(img);
+    pause(1);
+end
+
 
 %%
 
