@@ -40,7 +40,7 @@ cMosaic.window;
 
 %% Show the photocurrent, without or with noise
 
-cMosaic.os.noiseFlag = false;
+cMosaic.os.noiseFlag = true;
 cMosaic.computeCurrent;
 cMosaic.window;
 

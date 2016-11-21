@@ -154,6 +154,7 @@ fprintf('\n');
 
 %% PCA and classification
 % pca dimension reduction
+
 fprintf('Dimension reduction with PCA...');
 nComponents = 20;
 coefAligned = pca(dataAligned, 'NumComponents', nComponents);
@@ -169,3 +170,5 @@ mdl = fitcsvm([pcaAligned; pcaOffset], ...
 crossMDL = crossval(mdl);
 classLoss = kfoldLoss(crossMDL);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
+
+
