@@ -28,7 +28,7 @@ clear vparams;
 vparams(2) = vernierP;
 vparams(2).name = 'offset'; vparams(2).bgColor = 0; vparams(2).offset = 5;
 vparams(1) = vparams(2);
-vparams(1).barWidth = 0; vparams(1).bgColor = 0.5; vparams(1).name = 'uniform';
+vparams(1).barWidth = 0; vparams(1).bgColor = 0.1; vparams(1).name = 'uniform';
 
 offset = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams);
 offset.visualize;
@@ -38,7 +38,8 @@ aligned = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams
 aligned.visualize;
 
 %%  Compute absorptions
-nTrials = 100;
+nTrials = 3;
+tSamples = aligned.length;
 
 cMosaic = coneMosaic;
 cMosaic.setSizeToFOV(0.4 * oiGet(aligned.oiFixed,'fov'));
@@ -57,12 +58,6 @@ dataAligned  = cMosaic.compute(aligned,'emPaths',emPaths);
 toc
 % cMosaic.window;
 
-tic
-dataOffset = cMosaic.compute(offset,'emPaths',emPaths);
-toc
-% cMosaic.window;
-
-
 %%  What PCA coefficient model should we use?
 
 % This one simply strings out the time series points from all of the
@@ -80,12 +75,82 @@ toc
 
 % This is my effort.  Looks great!  The first 25 images look like the
 % stimuli.
+
+% Make a matrix with time x image (each row is an image).
+vcNewGraphWin;
+foo = zeros(nTrials*tSamples,37*37);
+for tt = 1:nTrials
+    lst = (1:tSamples) + (tSamples)*(tt-1);
+    thisTrial = squeeze(dataAligned(tt,:,:,:));
+    thisTrial = permute(thisTrial,[3 1 2]);
+    thisTrial = reshape(thisTrial,tSamples,[]);
+    foo(lst,:) = thisTrial;
+end
+
+% foo = reshape(dataAligned,nTrials,37*37,[]);
+% foo = permute(foo,[1 3 2]);
+% foo = reshape(foo,nTrials*110,[]);
+
+% There are a couple of weird blanks.
+% The ordering is not what I expect and doesn't correspond to the time
+% series.
+vcNewGraphWin;
+for ii=size(foo,1)
+    imagesc(reshape(foo(ii,:),37,37)); 
+    drawnow; title(sprintf('%d',ii)); 
+    pause(0.2); 
+end
+
+% Subtract the mean image from every row
+foo = bsxfun(@minus,foo, mean(foo,1));
+
+% Calculate the eigenvectors of the covariance matrix
+[V,D] = eig(foo'*foo); 
+
+% Show the eigenvalues.  The last values are the biggest.
+D = diag(D);   
+vcNewGraphWin; semilogy(D)
+
+% Plot the largest eigenvectors as an image.
+nComponents = 20;
+for ii=1:nComponents
+    colormap(gray(256));
+    img = reshape(V(:,end-ii),37,37);
+    imagesc(img);
+    pause(0.2);
+end
+
+% Doesn't explain a lot of the variance.  But most of the variance is
+% photon noise.  So, not sure what to think.
+sum(D(end-nComponents:end)) / sum(D)
+
+% The coefficient for the largest terms can be
+%
+%    coef = foo*V(:,largestNComponents);
+%
+% The matrix coef will be time x nComponents
+% The reconstruction of the original image will be
+%
+%   reconstructed  = V(:largestNComponents)*coef'; 
+%                  = coef*V(:,largestNComponents)';  % time x nPixels
+%
+%   reshape(reconstructed)
+%
+% Where reconstructed will be time x
+
+
+%%
+tic
+dataOffset = cMosaic.compute(offset,'emPaths',emPaths);
+toc
+% cMosaic.window;
+
 foo = reshape(dataOffset,100,37*37,[]);
-
-foo = reshape(dataAligned,100,37*37,[]);
-
 foo = permute(foo,[1 3 2]);
 foo = reshape(foo,100*110,[]);
+nComponents = 10;
+[coefOffset,~,~,~,explainedOffset] = pca(foo, 'NumComponents', nComponents);
+
 foo = bsxfun(@minus,foo, mean(foo,1));
 [V,D] = eig(foo'*foo); 
 D = diag(D);   % The last values are the biggest.
@@ -98,7 +163,6 @@ for ii=1:25
     imagesc(img);
     pause(1);
 end
-
 
 %%
 
