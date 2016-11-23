@@ -28,7 +28,7 @@ clear vparams;
 vparams(2) = vernierP;
 vparams(2).name = 'offset'; vparams(2).bgColor = 0; vparams(2).offset = 5;
 vparams(1) = vparams(2);
-vparams(1).barWidth = 0; vparams(1).bgColor = 0.1; vparams(1).name = 'uniform';
+vparams(1).barWidth = 0; vparams(1).bgColor = 0.5; vparams(1).name = 'uniform';
 
 offset = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams);
 offset.visualize;
@@ -38,7 +38,7 @@ aligned = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams
 aligned.visualize;
 
 %%  Compute absorptions
-nTrials = 3;
+nTrials = 1;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
@@ -52,9 +52,12 @@ for ii = 1 : nTrials
 end
 
 %%
+% cMosaic.emGenSequence(aligned.length);
+% cMosaic.compute(aligned); cMosaic.window;
+%%
 
 tic
-dataAligned  = cMosaic.compute(aligned,'emPaths',emPaths);
+dataAligned  = cMosaic.compute(offset,'emPaths',emPaths);
 toc
 % cMosaic.window;
 
@@ -91,17 +94,16 @@ end
 % foo = permute(foo,[1 3 2]);
 % foo = reshape(foo,nTrials*110,[]);
 
-% There are a couple of weird blanks.
-% The ordering is not what I expect and doesn't correspond to the time
-% series.
-vcNewGraphWin;
-for ii=size(foo,1)
-    imagesc(reshape(foo(ii,:),37,37)); 
+%%
+mx = max(foo(:));
+vcNewGraphWin; colormap(gray(mx));
+for ii=1:size(foo,1)
+    image(reshape(foo(ii,:),37,37)); 
     drawnow; title(sprintf('%d',ii)); 
-    pause(0.2); 
+    pause(0.05); 
 end
 
-% Subtract the mean image from every row
+%% Subtract the mean image from every row
 foo = bsxfun(@minus,foo, mean(foo,1));
 
 % Calculate the eigenvectors of the covariance matrix
@@ -111,16 +113,17 @@ foo = bsxfun(@minus,foo, mean(foo,1));
 D = diag(D);   
 vcNewGraphWin; semilogy(D)
 
-% Plot the largest eigenvectors as an image.
-nComponents = 20;
+% Plot the largest eigenvectors as an image.  Only one or two matter.
+vcNewGraphWin; colormap(gray)
+nComponents = 5;
 for ii=1:nComponents
     colormap(gray(256));
     img = reshape(V(:,end-ii),37,37);
     imagesc(img);
-    pause(0.2);
+    pause(1);
 end
 
-% Doesn't explain a lot of the variance.  But most of the variance is
+%% Doesn't explain a lot of the variance.  But most of the variance is
 % photon noise.  So, not sure what to think.
 sum(D(end-nComponents:end)) / sum(D)
 
