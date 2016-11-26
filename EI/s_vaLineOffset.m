@@ -107,7 +107,7 @@ oiSeqOffset = oiSequence(OIs{3}, OIs{2}, 0.001*(1:tSamples), weights, ...
     'composition', 'blend');
 
 %%  Compute absorptions
-nTrials = 2000;
+nTrials = 200;
 dataAligned = [];
 dataOffset = [];
 
@@ -168,7 +168,9 @@ fprintf('SVM Classification ');
 mdl = fitcsvm([pcaAligned; pcaOffset], ...
     [ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
 crossMDL = crossval(mdl);
-classLoss = kfoldLoss(crossMDL);
+
+func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
 
