@@ -30,15 +30,15 @@ vparams(2).name = 'offset'; vparams(2).bgColor = 0; vparams(2).offset = 5;
 vparams(1) = vparams(2);
 vparams(1).barWidth = 0; vparams(1).bgColor = 0.5; vparams(1).name = 'uniform';
 
-offset = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams);
+offset = oisCreate('vernier','add', weights,'tparams',vparams,'sparams',sparams);
 offset.visualize;
 
 vparams(2).name = 'aligned'; vparams(2).offset = 0;
-aligned = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams);
+aligned = oisCreate('vernier','add', weights,'tparams',vparams,'sparams',sparams);
 aligned.visualize;
 
 %%  Compute absorptions
-nTrials = 1;
+nTrials = 2;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
@@ -51,15 +51,19 @@ for ii = 1 : nTrials
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
 
-%%
-% cMosaic.emGenSequence(aligned.length);
-% cMosaic.compute(aligned); cMosaic.window;
-%%
+%% For aligned or offset
 
 tic
-dataAligned  = cMosaic.compute(offset,'emPaths',emPaths);
+cMosaic.os.noiseFlag = true;
+[absorptions, current] = cMosaic.compute(aligned, ...
+    'emPaths',emPaths, ...
+    'currentFlag',true);
 toc
 % cMosaic.window;
+
+%% Choose which data to analyze
+
+outData = current;
 
 %%  What PCA coefficient model should we use?
 
@@ -80,21 +84,20 @@ toc
 % stimuli.
 
 % Make a matrix with time x image (each row is an image).
-vcNewGraphWin;
 foo = zeros(nTrials*tSamples,37*37);
 for tt = 1:nTrials
     lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(dataAligned(tt,:,:,:));
+    thisTrial = squeeze(outData(tt,:,:,:));
     thisTrial = permute(thisTrial,[3 1 2]);
     thisTrial = reshape(thisTrial,tSamples,[]);
     foo(lst,:) = thisTrial;
 end
 
-% foo = reshape(dataAligned,nTrials,37*37,[]);
-% foo = permute(foo,[1 3 2]);
-% foo = reshape(foo,nTrials*110,[]);
 
-%%
+%% For current, we need to flip the sign for visualization
+
+
+%  foo = abs(foo);
 mx = max(foo(:));
 vcNewGraphWin; colormap(gray(mx));
 for ii=1:size(foo,1)
@@ -123,8 +126,9 @@ for ii=1:nComponents
     pause(1);
 end
 
-%% Doesn't explain a lot of the variance.  But most of the variance is
-% photon noise.  So, not sure what to think.
+%% Doesn't explain a lot of the variance.  
+%
+% But most of the variance is photon noise.  So, not sure what to think.
 sum(D(end-nComponents:end)) / sum(D)
 
 % The coefficient for the largest terms can be
@@ -171,8 +175,8 @@ end
 
 fprintf('Dimension reduction with PCA...');
 nComponents = 30;
-[coefAligned,~,~,~,explainedAligned] = pca(dataAligned, 'NumComponents', nComponents);
-pcaAligned  = dataAligned * coefAligned;
+[coefAligned,~,~,~,explainedAligned] = pca(absorptions, 'NumComponents', nComponents);
+pcaAligned  = absorptions * coefAligned;
 sum(explainedAligned(1:30))
 
 coefOffset  = pca(dataOffset, 'NumComponents', nComponents);
