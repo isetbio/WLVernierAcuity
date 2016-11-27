@@ -21,27 +21,30 @@ ieInit
 
 %% Init Parameters
 
+% Think about the time series here.
 stimWeights = ieScale(fspecial('gaussian',[1,50],15),0,1);
 weights = [zeros(1, 30), stimWeights, zeros(1, 30)];
 
 clear sparams;
-sparams.fov = 0.5;
+sparams.fov      = 0.35;
 
 clear vparams; 
 vparams(2) = vernierP;
-vparams(2).name = 'offset'; vparams(2).bgColor = 0; vparams(2).offset = 5;
+vparams(2).name = 'offset'; vparams(2).bgColor = 0; vparams(2).offset = 1;
 vparams(1) = vparams(2);
 vparams(1).barWidth = 0; vparams(1).bgColor = 0.5; vparams(1).name = 'uniform';
 
-offset = oisCreate('vernier','add', weights,'tparams',vparams,'sparams',sparams);
-offset.visualize;
+offset = oisCreate('vernier','add', weights,...
+    'tparams',vparams,'sparams',sparams);
+% offset.visualize;
 
 vparams(2).name = 'aligned'; vparams(2).offset = 0;
-aligned = oisCreate('vernier','add', weights,'tparams',vparams,'sparams',sparams);
-aligned.visualize;
+aligned = oisCreate('vernier','add', weights,...
+    'tparams',vparams,'sparams',sparams);
+% aligned.visualize;
 
 %%  Compute absorptions
-nTrials = 5;
+nTrials = 200;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
@@ -60,9 +63,9 @@ for ii = 1 : nTrials
 end
 
 cMosaic.os.noiseFlag = true;
-[alignedA, alignedC] = cMosaic.compute(aligned, ...
+alignedA = cMosaic.compute(aligned, ...
     'emPaths',emPaths, ...
-    'currentFlag',true);
+    'currentFlag',false);
 
 % Separate eye movements
 emPaths = zeros(nTrials, tSamples, 2);
@@ -72,10 +75,12 @@ for ii = 1 : nTrials
 end
 
 cMosaic.os.noiseFlag = true;
-[offsetA, offsetC] = cMosaic.compute(offset, ...
+offsetA = cMosaic.compute(offset, ...
     'emPaths',emPaths, ...
-    'currentFlag',true);
+    'currentFlag',false);
 toc
+rows = cMosaic.rows;
+cols = cMosaic.cols;
 
 % cMosaic.window;
 
@@ -89,7 +94,7 @@ toc
 % We want (trial*Time) x (space)
 %
 % Make a matrix with time x image (each row is an image).
-imgListAligned = zeros(nTrials*tSamples,37*37);
+imgListAligned = zeros(nTrials*tSamples,rows*cols);
 for tt = 1:nTrials
     lst = (1:tSamples) + (tSamples)*(tt-1);
     thisTrial = squeeze(alignedA(tt,:,:,:));
@@ -98,7 +103,7 @@ for tt = 1:nTrials
     imgListAligned(lst,:) = thisTrial;
 end
 
-imgListOffset = zeros(nTrials*tSamples,37*37);
+imgListOffset = zeros(nTrials*tSamples,rows*cols);
 for tt = 1:nTrials
     lst = (1:tSamples) + (tSamples)*(tt-1);
     thisTrial = squeeze(offsetA(tt,:,:,:));
@@ -113,7 +118,7 @@ end
 % mx = max(imgListOffset(:));
 % vcNewGraphWin; colormap(gray(mx));
 % for ii=1:size(imgListOffset,1)
-%     image(reshape(imgListOffset(ii,:),37,37)); 
+%     image(reshape(imgListOffset(ii,:),rows*cols)); 
 %     drawnow; title(sprintf('%d',ii)); 
 %     pause(0.05); 
 % end
@@ -121,29 +126,29 @@ end
 %% Home grown not-centered PCA
 
 % We make bases for each type of stimulus and then concatenate them.
-nComponents = 5;
-[U,S,V] = svd(imgListAligned,'econ');
+nComponents = 3;
+[~,~,V] = svd(imgListAligned,'econ');
 imageBasis = V(:,1:nComponents);
 
-[U,S,V] = svd(imgListOffset,'econ');
+[~,~,V] = svd(imgListOffset,'econ');
 imageBasis = cat(2,imageBasis,V(:,1:nComponents));
 
-vcNewGraphWin; colormap(gray(256))
-for ii=1:(2*nComponents)
-    imagesc(reshape(imageBasis(:,ii),37,37));
-    pause(0.5);
-end
+% vcNewGraphWin; colormap(gray(256))
+% for ii=1:(2*nComponents)
+%     imagesc(reshape(imageBasis(:,ii),rows*cols));
+%     pause(0.5);
+% end
 
 imgList = cat(1,imgListAligned,imgListOffset);
 weights  = imgList * imageBasis;   %
-plot(weights);
+% plot(weights);
 
 %% Let's reconstruct the approximate absorption sequence
 % 
 % recon = imageBasis*weights';
 % vcNewGraphWin; colormap(gray(round(max(recon(:)))));
 % for ii=1:size(recon,2)
-%     image(reshape(recon(:,ii),37,37));
+%     image(reshape(recon(:,ii),rows*cols));
 %     title(sprintf('%d',ii));
 %     pause(0.1);
 % end
