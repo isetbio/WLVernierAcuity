@@ -25,7 +25,6 @@ ieInit
 tseries = ieScale(fspecial('gaussian',[1,150],30),0,1);
 
 display = displayCreate('LCD-Apple');
-display = displaySet(display,'dpi',100);  % 200 DPI
 
 clear sparams;  % Scene parameters in general
 sparams.fov      = 0.35;  % Deg
@@ -36,7 +35,7 @@ clear vparams;
 for ii = 3:-1:1
     vparams(ii) = vernierP;
     vparams(ii).display = display;
-    vparams(ii).sceneSz =[150 150];
+    vparams(ii).sceneSz =[50 50];  % This controls offset
 end
 
 % Uniform field
