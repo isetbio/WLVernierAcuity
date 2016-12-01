@@ -18,10 +18,10 @@ vparams(2).name = 'offset'; vparams(2).bgColor = 0;
 vparams(1) = vparams(2);
 vparams(1).barWidth = 0; vparams(1).bgColor = 0.5; vparams(1).name = 'uniform';
 
-offset = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams);
+offset = oisCreate('vernier','add', weights,'tparams',vparams,'sparams',sparams);
 
 vparams(2).name = 'aligned'; vparams(2).offset = 0;
-aligned = oisCreate('vernier','add', weights,'hparams',vparams,'sparams',sparams);
+aligned = oisCreate('vernier','add', weights,'tparams',vparams,'sparams',sparams);
 
 %% That's all we need
 

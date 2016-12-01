@@ -62,3 +62,33 @@ cMosaic.plot('os current filters','meancurrent',meancurrent);
 % cMosaic.setSizeToFOV(0.5);
 % cMosaic.compute(oi);
 % cMosaic.window;
+
+%% Compute the bipolar response
+ 
+bp = bipolar(cMosaic);
+bp.set('sRFcenter',1);
+bp.set('sRFsurround',1);
+bp.compute(cMosaic);
+ 
+% bp.plot('movie response')
+ 
+%% Set RGC mosaic parameters
+ 
+clear params innerRetinaSU
+cellType = 'onParasol';
+% cellType = 'offParasol';
+params.name = 'macaque phys';
+params.eyeSide = 'left'; 
+params.eyeRadius = sqrt(sum(0.^2)); 
+% params.fov = fov;
+params.eyeAngle = 0; ntrials = 0;
+ 
+% Create RGC object
+innerRetinaSU = ir(bp, params);
+innerRetinaSU.mosaicCreate('type',cellType,'model','GLM');
+ 
+nTrials = 1; innerRetinaSU = irSet(innerRetinaSU,'numberTrials',nTrials);
+ 
+%% Compute the inner retina response
+ 
+innerRetinaSU = irCompute(innerRetinaSU, bp); 
