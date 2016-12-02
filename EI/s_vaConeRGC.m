@@ -44,24 +44,10 @@ cMosaic.os.noiseFlag = true;
 cMosaic.computeCurrent;
 cMosaic.window;
 
-%% Plot the impulse response
+save coneMosaic cMosaic
 
-[~, meancurrent] = cMosaic.os.linearFilters(cMosaic);
-cMosaic.plot('os current filters','meancurrent',meancurrent);
-
-%% Testing
-% 
-% scene = sceneCreate('uniform ee');
-% scene = sceneSet(scene,'fov',1);
-% oi = oiCreate('human');
-% oi = oiCompute(oi,scene);
-% 
-% %%
-% cMosaic = coneMosaic;
-% cMosaic.integrationTime = 0.001;
-% cMosaic.setSizeToFOV(0.5);
-% cMosaic.compute(oi);
-% cMosaic.window;
+%%
+load coneMosaic
 
 %% Compute the bipolar response
  
@@ -74,23 +60,29 @@ bp.compute(cMosaic);
  
 %% Set RGC mosaic parameters
  
-clear params innerRetinaSU
+clear params 
+clear innerRetinaSU
+
 cellType = 'onParasol';
 % cellType = 'offParasol';
+
 params.name = 'macaque phys';
 params.eyeSide = 'left'; 
 params.eyeRadius = sqrt(sum(0.^2)); 
-% params.fov = fov;
 params.eyeAngle = 0; ntrials = 0;
- 
+% params.fov = fov;
+
 % Create RGC object
 innerRetinaSU = ir(bp, params);
 innerRetinaSU.mosaicCreate('type',cellType,'model','GLM');
  
-nTrials = 1; innerRetinaSU = irSet(innerRetinaSU,'numberTrials',nTrials);
+nTrials = 1; 
+innerRetinaSU = irSet(innerRetinaSU,'numberTrials',nTrials);
  
 %% Compute the inner retina response
  
 innerRetinaSU = irCompute(innerRetinaSU, bp); 
 
 innerRetinaSU.mosaic{1}.window
+
+%%
