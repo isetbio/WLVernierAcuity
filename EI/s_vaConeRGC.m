@@ -92,3 +92,5 @@ nTrials = 1; innerRetinaSU = irSet(innerRetinaSU,'numberTrials',nTrials);
 %% Compute the inner retina response
  
 innerRetinaSU = irCompute(innerRetinaSU, bp); 
+
+innerRetinaSU.mosaic{1}.window
