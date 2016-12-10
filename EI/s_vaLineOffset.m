@@ -47,13 +47,17 @@ vparams(2).name = 'offset';  vparams(2).bgColor = 0; vparams(2).offset = 1;
 % Aligned lines
 vparams(3).name = 'aligned'; vparams(3).bgColor = 0; vparams(3).offset = 0;
 
-[offset, scenes] = oisCreate('vernier','add', tseries,'tparams',vparams([1 2]),'sparams',sparams);
+[offset, scenes] = oisCreate('vernier','add', tseries,...
+    'testParameters',vparams([1 2]),...
+    'sceneParameters',sparams);
 offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
 fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
 
 % offset.visualize;
 
-aligned = oisCreate('vernier','add', tseries,'tparams',vparams([1 3]),'sparams',sparams);
+aligned = oisCreate('vernier','add', tseries,...
+    'testParameters',vparams([1 3]),...
+    'sceneParameters',sparams);
 % aligned.visualize;
 
 %%  Compute absorptions
@@ -75,7 +79,7 @@ for ii = 1 : nTrials
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
 
-cMosaic.os.noiseFlag = true;
+cMosaic.os.noiseFlag = 'random';
 alignedA = cMosaic.compute(aligned, ...
     'emPaths',emPaths, ...
     'currentFlag',false);
@@ -87,7 +91,7 @@ for ii = 1 : nTrials
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
 
-cMosaic.os.noiseFlag = true;
+cMosaic.os.noiseFlag = 'random';
 offsetA = cMosaic.compute(offset, ...
     'emPaths',emPaths, ...
     'currentFlag',false);
