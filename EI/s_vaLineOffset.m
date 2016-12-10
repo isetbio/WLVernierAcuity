@@ -1,18 +1,19 @@
-%% s_vaLineOffset2 - Will become LineOffset again.  Just simplifying.
+%% s_vaLineOffset
 %
 %    Testing if people can see the difference between two cases:
 %      1) A straight line
 %      2) Two straight lines with 1 pixel apart
-%    Vernier Acuity shows the positional acuity is around 6 sec of arc
+%
+%  Vernier acuity in human shows the positional acuity is around 6 sec of
+%  arc. Here, we are analyzing stimulus, optics, and eye movements and
+%  basing the calculation on absorptions.
+%
+%  In a separate script, we will try the photocurrent.
 %
 % In this case we try
-%
 %    Standard retinal parameters
 %    White line on a gray monitor background
 %    Sweep out viewing distance
-%
-% We are running in the ConeMosaicOSintegrationTime branch, which will
-% probably become the master branch before too long
 %
 % HJ/BW, ISETBIO TEAM, 2016
 
@@ -21,8 +22,12 @@ ieInit
 
 %% Init Parameters
 
-% Gaussian time series
-tseries = ieScale(fspecial('gaussian',[1,150],30),0,1);
+% Gaussian time series.
+std = 0.5;
+tseries = ieScale(gausswin(150,1/std),0,1);
+% vcNewGraphWin; plot(tseries);
+
+% tseries = ieScale(fspecial('gaussian',[1,150],40),0,1);
 
 display = displayCreate('LCD-Apple');
 
@@ -35,7 +40,7 @@ clear vparams;
 for ii = 3:-1:1
     vparams(ii) = vernierP;
     vparams(ii).display = display;
-    vparams(ii).sceneSz =[50 50];  % This controls offset
+    vparams(ii).sceneSz =[100 100];  % This controls offset
 end
 
 % Uniform field
@@ -47,16 +52,21 @@ vparams(2).name = 'offset';  vparams(2).bgColor = 0; vparams(2).offset = 1;
 % Aligned lines
 vparams(3).name = 'aligned'; vparams(3).bgColor = 0; vparams(3).offset = 0;
 
-[offset, scenes] = oisCreate('vernier','add', tseries,'tparams',vparams([1 2]),'sparams',sparams);
+[offset, scenes] = oisCreate('vernier','add', tseries, ...
+    'testParameters',vparams([1 2]),...
+    'sceneParameters',sparams);
 offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
 fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
 
 % offset.visualize;
 
-aligned = oisCreate('vernier','add', tseries,'tparams',vparams([1 3]),'sparams',sparams);
+aligned = oisCreate('vernier','add', tseries,...
+    'testParameters',vparams([1 3]),...
+    'sceneParameters',sparams);
 % aligned.visualize;
 
-%%  Compute absorptions
+%%  Compute absorptions for multiple trials
+
 nTrials = 100;
 tSamples = aligned.length;
 
@@ -74,11 +84,8 @@ for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
-
-cMosaic.os.noiseFlag = true;
-alignedA = cMosaic.compute(aligned, ...
-    'emPaths',emPaths, ...
-    'currentFlag',false);
+alignedA = cMosaic.compute(aligned,'emPaths',emPaths);
+% cMosaic.window;
 
 % Separate eye movements
 emPaths = zeros(nTrials, tSamples, 2);
@@ -86,14 +93,10 @@ for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
-
-cMosaic.os.noiseFlag = true;
-offsetA = cMosaic.compute(offset, ...
-    'emPaths',emPaths, ...
-    'currentFlag',false);
-toc
-
+offsetA = cMosaic.compute(offset, 'emPaths',emPaths);
 % cMosaic.window;
+
+toc
 
 %%  Reformat the time series for the PCA analysis
 
@@ -121,6 +124,19 @@ for tt = 1:nTrials
     thisTrial = reshape(thisTrial,tSamples,[]);
     imgListOffset(lst,:) = thisTrial;
 end
+
+% Visualize one trial
+%   cMosaic.window;
+% To look at a different trial you can set
+%
+%   cMosaic.absorptions = squeeze(offsetA(50,:,:,:));
+%   cMosaic.window;
+%
+%   cMosaic.absorptions = squeeze(mean(alignedA,1));
+%   cMosaic.os.noiseFlag = 'none';
+%   cMosaic.computeCurrent;
+%   cMosaic.window;
+%
 
 % Visualize
 %
