@@ -23,6 +23,7 @@ ieInit
 %% Create the matched vernier stimuli.  
 % Parameters are in the vaStimuli function.
 
+% I need to set up some parameters here.
 [aligned, offset, scenes] = vaStimuli();
 % offset.visualize;
 % aligned.visualize;
@@ -79,27 +80,30 @@ toc
 % The rows represent time samples by number of trials. These are the
 % temporal responses across all trials and time points.
 
-rows = cMosaic.rows;
-cols = cMosaic.cols;
+imgListAligned = trial2Matrix(alignedC,cMosaic);
+imgListOffset  = trial2Matrix(offsetC,cMosaic);
 
-% Alternating between alignedC and alignedA
-imgListAligned = zeros(nTrials*tSamples,rows*cols);
-for tt = 1:nTrials
-    lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(alignedC(tt,:,:,:));
-    thisTrial = permute(thisTrial,[3 1 2]);  
-    thisTrial = reshape(thisTrial,tSamples,[]);
-    imgListAligned(lst,:) = thisTrial;
-end
-
-imgListOffset = zeros(nTrials*tSamples,rows*cols);
-for tt = 1:nTrials
-    lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(offsetC(tt,:,:,:));
-    thisTrial = permute(thisTrial,[3 1 2]);  
-    thisTrial = reshape(thisTrial,tSamples,[]);
-    imgListOffset(lst,:) = thisTrial;
-end
+% rows = cMosaic.rows;
+% cols = cMosaic.cols;
+% 
+% % Alternating between alignedC and alignedA
+% imgListAligned = zeros(nTrials*tSamples,rows*cols);
+% for tt = 1:nTrials
+%     lst = (1:tSamples) + (tSamples)*(tt-1);
+%     thisTrial = squeeze(alignedC(tt,:,:,:));
+%     thisTrial = permute(thisTrial,[3 1 2]);  
+%     thisTrial = reshape(thisTrial,tSamples,[]);
+%     imgListAligned(lst,:) = thisTrial;
+% end
+% 
+% imgListOffset = zeros(nTrials*tSamples,rows*cols);
+% for tt = 1:nTrials
+%     lst = (1:tSamples) + (tSamples)*(tt-1);
+%     thisTrial = squeeze(offsetC(tt,:,:,:));
+%     thisTrial = permute(thisTrial,[3 1 2]);  
+%     thisTrial = reshape(thisTrial,tSamples,[]);
+%     imgListOffset(lst,:) = thisTrial;
+% end
 
 % To look at a particular trial you can set
 %   cMosaic.absorptions = squeeze(offsetA(50,:,:,:));
@@ -175,5 +179,10 @@ func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
 classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
+%% Print out a summary of the various choices
+
+% Field of view of the mosaic
+% Eye movement pattern
+% Stimulus offset, more ...
 
 %%

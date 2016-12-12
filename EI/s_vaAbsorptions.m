@@ -82,27 +82,30 @@ toc
 % The rows represent time samples by number of trials
 % These are the temporal responses across all trials and time points.
 
-rows = cMosaic.rows;
-cols = cMosaic.cols;
+imgListAligned = trial2Matrix(alignedA,cMosaic);
+imgListOffset  = trial2Matrix(offsetA,cMosaic);
 
-% Alternating between alignedC and alignedA
-imgListAligned = zeros(nTrials*tSamples,rows*cols);
-for tt = 1:nTrials
-    lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(alignedA(tt,:,:,:));
-    thisTrial = permute(thisTrial,[3 1 2]);  
-    thisTrial = reshape(thisTrial,tSamples,[]);
-    imgListAligned(lst,:) = thisTrial;
-end
-
-imgListOffset = zeros(nTrials*tSamples,rows*cols);
-for tt = 1:nTrials
-    lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(offsetA(tt,:,:,:));
-    thisTrial = permute(thisTrial,[3 1 2]);  
-    thisTrial = reshape(thisTrial,tSamples,[]);
-    imgListOffset(lst,:) = thisTrial;
-end
+% rows = cMosaic.rows;
+% cols = cMosaic.cols;
+% 
+% % Alternating between alignedC and alignedA
+% imgListAligned = zeros(nTrials*tSamples,rows*cols);
+% for tt = 1:nTrials
+%     lst = (1:tSamples) + (tSamples)*(tt-1);
+%     thisTrial = squeeze(alignedA(tt,:,:,:));
+%     thisTrial = permute(thisTrial,[3 1 2]);  
+%     thisTrial = reshape(thisTrial,tSamples,[]);
+%     imgListAligned(lst,:) = thisTrial;
+% end
+% 
+% imgListOffset = zeros(nTrials*tSamples,rows*cols);
+% for tt = 1:nTrials
+%     lst = (1:tSamples) + (tSamples)*(tt-1);
+%     thisTrial = squeeze(offsetA(tt,:,:,:));
+%     thisTrial = permute(thisTrial,[3 1 2]);  
+%     thisTrial = reshape(thisTrial,tSamples,[]);
+%     imgListOffset(lst,:) = thisTrial;
+% end
 
 % To look at a particular trial you can set
 %   cMosaic.absorptions = squeeze(offsetA(50,:,:,:));
