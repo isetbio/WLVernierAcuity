@@ -19,8 +19,14 @@
 
 %%
 ieInit
-%%
+
+%% Create the matched vernier stimuli.  
+% Parameters are in the vaStimuli function.
+
+% We should be able to specify better here.  For now, everything is inside
+% the function.
 [aligned, offset, scenes] = vaStimuli();
+
 % offset.visualize;
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
@@ -36,10 +42,13 @@ nTrials = 100;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
+
 % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
 % pooling size found by Westheimer and McKee
 cMosaic.setSizeToFOV(0.25);
-cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  % Could be 2 ms ... why not?
+
+% Not sure why these have to match, but there is a bug and they do.
+cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  
 
 %% For aligned or offset
 
@@ -49,9 +58,9 @@ for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
-[alignedA, alignedC] = cMosaic.compute(aligned,...
+alignedA = cMosaic.compute(aligned,...
     'emPaths',emPaths, ...
-    'currentFlag',true);
+    'currentFlag',false);
 toc
 % cMosaic.window;
 
@@ -61,9 +70,9 @@ for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
-[offsetA, offsetC] = cMosaic.compute(offset, ...
+offsetA = cMosaic.compute(offset, ...
     'emPaths',emPaths, ...
-    'currentFlag',true);
+    'currentFlag',false);
 toc
 % cMosaic.window;
 
@@ -80,7 +89,7 @@ cols = cMosaic.cols;
 imgListAligned = zeros(nTrials*tSamples,rows*cols);
 for tt = 1:nTrials
     lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(alignedC(tt,:,:,:));
+    thisTrial = squeeze(alignedA(tt,:,:,:));
     thisTrial = permute(thisTrial,[3 1 2]);  
     thisTrial = reshape(thisTrial,tSamples,[]);
     imgListAligned(lst,:) = thisTrial;
@@ -89,7 +98,7 @@ end
 imgListOffset = zeros(nTrials*tSamples,rows*cols);
 for tt = 1:nTrials
     lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(offsetC(tt,:,:,:));
+    thisTrial = squeeze(offsetA(tt,:,:,:));
     thisTrial = permute(thisTrial,[3 1 2]);  
     thisTrial = reshape(thisTrial,tSamples,[]);
     imgListOffset(lst,:) = thisTrial;

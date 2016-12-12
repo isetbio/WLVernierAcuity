@@ -19,7 +19,10 @@
 
 %%
 ieInit
-%%
+
+%% Create the matched vernier stimuli.  
+% Parameters are in the vaStimuli function.
+
 [aligned, offset, scenes] = vaStimuli();
 % offset.visualize;
 % aligned.visualize;
@@ -36,10 +39,13 @@ nTrials = 100;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
+
 % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
 % pooling size found by Westheimer and McKee
 cMosaic.setSizeToFOV(0.25);
-cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  % Could be 2 ms ... why not?
+
+% Not sure why these have to match, but there is a bug and they do.
+cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  
 
 %% For aligned or offset
 
@@ -69,9 +75,9 @@ toc
 
 %%  Reformat the time series for the PCA analysis
 
-% imgListX matrix contains the temporal response for a pixel in a column
-% The rows represent time samples by number of trials
-% These are the temporal responses across all trials and time points.
+% imgListXXX matrix contains the temporal response for a pixel in a column
+% The rows represent time samples by number of trials. These are the
+% temporal responses across all trials and time points.
 
 rows = cMosaic.rows;
 cols = cMosaic.cols;
@@ -133,7 +139,7 @@ imgList = cat(1,imgListAligned,imgListOffset);
 % Time series of weights
 weightSeries  = imgList * imageBasis;  
 
-%% Let's reconstruct the approximate absorption sequence
+%% Reconstruct the input data sequence
 % 
 % recon = imageBasis*weights';
 % vcNewGraphWin; colormap(gray(round(max(recon(:)))));
