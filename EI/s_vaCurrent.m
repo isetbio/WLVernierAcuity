@@ -1,4 +1,4 @@
-%% s_vaLineOffset
+%% s_vaCurrent
 %
 %    Testing if people can see the difference between two cases:
 %      1) A straight line
