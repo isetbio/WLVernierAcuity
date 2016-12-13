@@ -1,4 +1,4 @@
-%% s_vaLineOffset
+%% s_vaCurrent
 %
 %    Testing if people can see the difference between two cases:
 %      1) A straight line
@@ -19,52 +19,13 @@
 
 %%
 ieInit
-<<<<<<< HEAD
 
-%% Init Parameters
+%% Create the matched vernier stimuli.  
+% Parameters are in the vaStimuli function.
 
-% Gaussian time series
-tseries = ieScale(fspecial('gaussian',[1,150],30),0,1);
-
-display = displayCreate('LCD-Apple');
-
-clear sparams;  % Scene parameters in general
-sparams.fov      = 0.35;  % Deg
-sparams.distance = 0.3;   % Meters
-
-% Basic vernier parameters for the oiSequence
-clear vparams;
-for ii = 3:-1:1
-    vparams(ii) = vernierP;
-    vparams(ii).display = display;
-    vparams(ii).sceneSz =[50 50];  % This controls offset
-end
-
-% Uniform field
-vparams(1).name = 'uniform'; vparams(1).bgColor = 0.5; vparams(1).barWidth = 0;
-
-% Offset Line
-vparams(2).name = 'offset';  vparams(2).bgColor = 0; vparams(2).offset = 1;
-
-% Aligned lines
-vparams(3).name = 'aligned'; vparams(3).bgColor = 0; vparams(3).offset = 0;
-
-[offset, scenes] = oisCreate('vernier','add', tseries,...
-    'testParameters',vparams([1 2]),...
-    'sceneParameters',sparams);
-offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
-fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
-
-% offset.visualize;
-
-aligned = oisCreate('vernier','add', tseries,...
-    'testParameters',vparams([1 3]),...
-    'sceneParameters',sparams);
-=======
-%%
+% I need to set up some parameters here.
 [aligned, offset, scenes] = vaStimuli();
 % offset.visualize;
->>>>>>> bc24b6f3884dcd6d685287c39d8199a98154f7df
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenes{2}); sceneWindow;
@@ -79,10 +40,13 @@ nTrials = 100;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
+
 % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
 % pooling size found by Westheimer and McKee
 cMosaic.setSizeToFOV(0.25);
-cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  % Could be 2 ms ... why not?
+
+% Not sure why these have to match, but there is a bug and they do.
+cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  
 
 %% For aligned or offset
 
@@ -92,13 +56,7 @@ for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
-<<<<<<< HEAD
-
-cMosaic.os.noiseFlag = 'random';
-alignedA = cMosaic.compute(aligned, ...
-=======
 [alignedA, alignedC] = cMosaic.compute(aligned,...
->>>>>>> bc24b6f3884dcd6d685287c39d8199a98154f7df
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
@@ -110,13 +68,7 @@ for ii = 1 : nTrials
     cMosaic.emGenSequence(tSamples);
     emPaths(ii, :, :) = cMosaic.emPositions;
 end
-<<<<<<< HEAD
-
-cMosaic.os.noiseFlag = 'random';
-offsetA = cMosaic.compute(offset, ...
-=======
 [offsetA, offsetC] = cMosaic.compute(offset, ...
->>>>>>> bc24b6f3884dcd6d685287c39d8199a98154f7df
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
@@ -124,31 +76,34 @@ toc
 
 %%  Reformat the time series for the PCA analysis
 
-% imgListX matrix contains the temporal response for a pixel in a column
-% The rows represent time samples by number of trials
-% These are the temporal responses across all trials and time points.
+% imgListXXX matrix contains the temporal response for a pixel in a column
+% The rows represent time samples by number of trials. These are the
+% temporal responses across all trials and time points.
 
-rows = cMosaic.rows;
-cols = cMosaic.cols;
+imgListAligned = trial2Matrix(alignedC,cMosaic);
+imgListOffset  = trial2Matrix(offsetC,cMosaic);
 
-% Alternating between alignedC and alignedA
-imgListAligned = zeros(nTrials*tSamples,rows*cols);
-for tt = 1:nTrials
-    lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(alignedC(tt,:,:,:));
-    thisTrial = permute(thisTrial,[3 1 2]);  
-    thisTrial = reshape(thisTrial,tSamples,[]);
-    imgListAligned(lst,:) = thisTrial;
-end
-
-imgListOffset = zeros(nTrials*tSamples,rows*cols);
-for tt = 1:nTrials
-    lst = (1:tSamples) + (tSamples)*(tt-1);
-    thisTrial = squeeze(offsetC(tt,:,:,:));
-    thisTrial = permute(thisTrial,[3 1 2]);  
-    thisTrial = reshape(thisTrial,tSamples,[]);
-    imgListOffset(lst,:) = thisTrial;
-end
+% rows = cMosaic.rows;
+% cols = cMosaic.cols;
+% 
+% % Alternating between alignedC and alignedA
+% imgListAligned = zeros(nTrials*tSamples,rows*cols);
+% for tt = 1:nTrials
+%     lst = (1:tSamples) + (tSamples)*(tt-1);
+%     thisTrial = squeeze(alignedC(tt,:,:,:));
+%     thisTrial = permute(thisTrial,[3 1 2]);  
+%     thisTrial = reshape(thisTrial,tSamples,[]);
+%     imgListAligned(lst,:) = thisTrial;
+% end
+% 
+% imgListOffset = zeros(nTrials*tSamples,rows*cols);
+% for tt = 1:nTrials
+%     lst = (1:tSamples) + (tSamples)*(tt-1);
+%     thisTrial = squeeze(offsetC(tt,:,:,:));
+%     thisTrial = permute(thisTrial,[3 1 2]);  
+%     thisTrial = reshape(thisTrial,tSamples,[]);
+%     imgListOffset(lst,:) = thisTrial;
+% end
 
 % To look at a particular trial you can set
 %   cMosaic.absorptions = squeeze(offsetA(50,:,:,:));
@@ -188,7 +143,7 @@ imgList = cat(1,imgListAligned,imgListOffset);
 % Time series of weights
 weightSeries  = imgList * imageBasis;  
 
-%% Let's reconstruct the approximate absorption sequence
+%% Reconstruct the input data sequence
 % 
 % recon = imageBasis*weights';
 % vcNewGraphWin; colormap(gray(round(max(recon(:)))));
@@ -224,5 +179,10 @@ func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
 classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
+%% Print out a summary of the various choices
+
+% Field of view of the mosaic
+% Eye movement pattern
+% Stimulus offset, more ...
 
 %%
