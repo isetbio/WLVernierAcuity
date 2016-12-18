@@ -20,13 +20,18 @@
 %%
 ieInit
 
+nTrials = 300;
+
+% Set parameters for the vernier stimulus
+clear p; 
+p.barOffset = 3;     % Pixels on the display
+p.barWidth  = 3;     % Pixels on the display
+p.tsamples = (-60:70); 
+p.timesd = 20;  
+
 %% Create the matched vernier stimuli
 
-% Parameters are in the vaStimuli function.
-% We should be able to specify better here.  For now, everything is inside
-% the function.
-[aligned, offset, scenes] = vaStimuli('barOffset',2);
-
+[aligned, offset, scenes] = vaStimuli(p);
 % offset.visualize;
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
@@ -38,7 +43,6 @@ ieInit
 
 %%  Compute absorptions for multiple trials
 
-nTrials = 100;
 tSamples = aligned.length;
 
 cMosaic = coneMosaic;
@@ -53,14 +57,14 @@ cMosaic.integrationTime = aligned.timeStep;
 %% For aligned or offset
 
 tic
-cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
-alignedA = cMosaic.compute(aligned,'currentFlag',false);
+emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+alignedA = cMosaic.compute(aligned,'currentFlag',false,'emPaths',emPaths);
 toc
 % cMosaic.window;
 
 tic
-cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
-offsetA = cMosaic.compute(offset,'currentFlag',false);
+emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+offsetA = cMosaic.compute(offset,'currentFlag',false,'emPaths',emPaths);
 toc
 % cMosaic.window;
 
@@ -105,6 +109,32 @@ imgList = cat(1,imgListAligned,imgListOffset);
 
 % Time series of weights
 weightSeries  = imgList * imageBasis;  
+
+%% Let's see if we can reduce the dimensionality of the time series 
+%
+% The reasons is that the photocurrent time series, which smooths the
+% signal over time, performs much better with the SVM.  So, I think that
+% smoothing the time series in the absorptions would allow the SVM to find
+% a good solution here, as well.
+%
+% Now the weight series for each image basis comprises 150 numbers for each
+% of 600 trials. We frame this as 150 x 600 and reduce it to [150 x
+% nTimeBasis]*wgts
+
+% These are the time series for each of the trials
+foo = reshape(weightSeries(:,1),tSamples,2*nTrials);
+vcNewGraphWin; plot(foo);
+[U,S,T] = svd(foo,'econ');
+vcNewGraphWin;
+plot(U(:,1));
+
+wgt = U(:,1:3)'*foo;
+vcNewGraphWin; 
+plot3(wgt(1,1:300),wgt(2,1:300),wgt(3,1:300),'ro')
+hold on; 
+plot3(wgt(1,301:600),wgt(2,301:600),wgt(3,301:600),'go')
+hold off
+
 
 %% svm classification
 

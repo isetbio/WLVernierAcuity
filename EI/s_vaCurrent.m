@@ -20,15 +20,23 @@
 %%
 ieInit
 
-%% Create the matched vernier stimuli.  
-% Parameters are in the vaStimuli function.
+nTrials = 300;
 
-% I need to set up some parameters here.
-[aligned, offset, scenes] = vaStimuli();
+% Set parameters for the vernier stimulus
+clear p; 
+p.barOffset = 1;     % Pixels on the display
+p.barWidth  = 3;     % Pixels on the display
+p.tsamples = (-60:70); 
+p.timesd = 20;  
+
+%% Create the matched vernier stimuli
+
+[aligned, offset, scenes] = vaStimuli(p);
 % offset.visualize;
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenes{2}); sceneWindow;
+% vcNewGraphWin; plot(tseries)
 
 % Offset lines
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
@@ -36,9 +44,7 @@ ieInit
 
 %%  Compute absorptions for multiple trials
 
-nTrials = 100;
 tSamples = aligned.length;
-
 cMosaic = coneMosaic;
 
 % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
@@ -46,32 +52,28 @@ cMosaic = coneMosaic;
 cMosaic.setSizeToFOV(0.25);
 
 % Not sure why these have to match, but there is a bug and they do.
-cMosaic.integrationTime = aligned.timeAxis(2) - aligned.timeAxis(1);  
+cMosaic.integrationTime = aligned.timeStep;  
 
 %% For aligned or offset
+cMosaic.os.noiseFlag = 'random';
+cMosaic.noiseFlag    = 'random';
 
 tic
-emPaths = zeros(nTrials, tSamples, 2);
-for ii = 1 : nTrials
-    cMosaic.emGenSequence(tSamples);
-    emPaths(ii, :, :) = cMosaic.emPositions;
-end
-[alignedA, alignedC] = cMosaic.compute(aligned,...
+emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+[~, alignedC] = cMosaic.compute(aligned, ...
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
+% cMosaic.current = squeeze(mean(alignedC,1));
 % cMosaic.window;
 
 tic
-emPaths = zeros(nTrials, tSamples, 2);
-for ii = 1 : nTrials
-    cMosaic.emGenSequence(tSamples);
-    emPaths(ii, :, :) = cMosaic.emPositions;
-end
-[offsetA, offsetC] = cMosaic.compute(offset, ...
+emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+[~, offsetC] = cMosaic.compute(offset, ...
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
+% cMosaic.current = squeeze(mean(offsetC,1));
 % cMosaic.window;
 
 %%  Reformat the time series for the PCA analysis
@@ -83,44 +85,6 @@ toc
 imgListAligned = trial2Matrix(alignedC,cMosaic);
 imgListOffset  = trial2Matrix(offsetC,cMosaic);
 
-% rows = cMosaic.rows;
-% cols = cMosaic.cols;
-% 
-% % Alternating between alignedC and alignedA
-% imgListAligned = zeros(nTrials*tSamples,rows*cols);
-% for tt = 1:nTrials
-%     lst = (1:tSamples) + (tSamples)*(tt-1);
-%     thisTrial = squeeze(alignedC(tt,:,:,:));
-%     thisTrial = permute(thisTrial,[3 1 2]);  
-%     thisTrial = reshape(thisTrial,tSamples,[]);
-%     imgListAligned(lst,:) = thisTrial;
-% end
-% 
-% imgListOffset = zeros(nTrials*tSamples,rows*cols);
-% for tt = 1:nTrials
-%     lst = (1:tSamples) + (tSamples)*(tt-1);
-%     thisTrial = squeeze(offsetC(tt,:,:,:));
-%     thisTrial = permute(thisTrial,[3 1 2]);  
-%     thisTrial = reshape(thisTrial,tSamples,[]);
-%     imgListOffset(lst,:) = thisTrial;
-% end
-
-% To look at a particular trial you can set
-%   cMosaic.absorptions = squeeze(offsetA(50,:,:,:));
-%   cMosaic.window;
-%
-
-% Visualize the sequence
-%
-% imgList = abs(imgListOffset);  % Absorptions or current should be positive
-% mx = max(imgListOffset(:));
-% vcNewGraphWin; colormap(gray(mx));
-% for ii=1:size(imgListOffset,1)
-%     image(reshape(imgListOffset(ii,:),rows*cols)); 
-%     drawnow; title(sprintf('%d',ii)); 
-%     pause(0.05); 
-% end
-
 %% Not-centered PCA (no demeaning, so first PC is basically the mean)
 
 % We make bases for each type of stimulus and then concatenate them.
@@ -131,27 +95,10 @@ imageBasis = V(:,1:nComponents);
 [~,~,V] = svd(imgListOffset,'econ');
 imageBasis = cat(2,imageBasis,V(:,1:nComponents));
 
-% Have a look if you like
-% vcNewGraphWin; colormap(gray(256))
-% for ii=1:(2*nComponents)
-%     imagesc(reshape(imageBasis(:,ii),rows*cols));
-%     pause(0.5);
-% end
-
 imgList = cat(1,imgListAligned,imgListOffset);
 
 % Time series of weights
 weightSeries  = imgList * imageBasis;  
-
-%% Reconstruct the input data sequence
-% 
-% recon = imageBasis*weights';
-% vcNewGraphWin; colormap(gray(round(max(recon(:)))));
-% for ii=1:size(recon,2)
-%     image(reshape(recon(:,ii),rows*cols));
-%     title(sprintf('%d',ii));
-%     pause(0.1);
-% end
 
 
 %% svm classification
@@ -184,5 +131,36 @@ fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 % Field of view of the mosaic
 % Eye movement pattern
 % Stimulus offset, more ...
+
+% See 'Support Vector Machines for Binary Classification' in fitcsvm
+%
+%  mdl.Beta appears to be the term that we multiply as an inner product
+%  with the data to determine whether we are in type A or not A.
+%
+%  x'*beta + Bias, I think.
+%
+%  When we get mdl.Beta, it has size of (2*nComponents)*tSamples.   So, if
+%  there are 150 tSamples and 10 spatial image components, then Beta is
+%  1500.
+%
+%  I think that on a single trial we have 150*10 numbers, which we derive
+%  by taking the inner product of the 10 spatial basis functions on every
+%  temporal sample.  If we want to express the 1500 numbers as a time
+%  series, we would multiple the 10 weights times the spatial image basis
+%  at each of the 150 time points.  So the classifier is a movie.
+%
+beta = mdl.Beta;
+nBasis = size(imageBasis,2);
+img = zeros(cMosaic.rows,cMosaic.cols,tSamples);
+
+colormap('default')
+for ii=1:tSamples
+    lst = (1:nBasis) + (ii-1)*nBasis;
+    % lst = ii:tSamples:length(beta);
+    tmp = imageBasis*beta(lst);
+    img(:,:,ii) = reshape(tmp,cMosaic.rows,cMosaic.cols);
+    imagesc(img(:,:,ii),[-.5 .5]); title(ii); colorbar; pause(0.2);
+end
+ieMovie(img);
 
 %%

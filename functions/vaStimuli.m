@@ -1,4 +1,4 @@
-function [aligned, offset, scenes] = vaStimuli(varargin)
+function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 % Create the pair of vernier stimuli
 %
 % The scene is made at 2x the FOV of the planned cone mosaic size.
@@ -6,6 +6,13 @@ function [aligned, offset, scenes] = vaStimuli(varargin)
 % The offset of 1 pixel for a test with 210,210 pixels and a field of view
 % of 0.35 deg is 6 sec.  That is a useful value. If you scale the number of
 % pixels and the field of view together, then the offset remains the same.
+%
+% Examples:
+%    clear p; p.barOffset = 3; p.barWidth  = 3;
+%    p.tsamples = [-60:70]; p.timesd = 20;  
+%    [~,offset,~,tseries] = vaStimuli(p);
+%    offset.visualize;
+%    vcNewGraphWin; plot(tseries)
 %
 % TODO:
 %   * Control line length 
@@ -21,25 +28,25 @@ function [aligned, offset, scenes] = vaStimuli(varargin)
 p = inputParser;
 p.addParameter('barWidth',1,@isscalar);
 p.addParameter('barOffset',1,@isscalar);
+p.addParameter('tsamples',(-50:100),@isvector);  % Time samples (ms)
+p.addParameter('timesd',20,@isscalar);           % Time standard deviation
+p.addParameter('display',displayCreate('LCD-Apple'),@isstruct);
 
 p.parse(varargin{:});
 
 barWidth  = p.Results.barWidth;
 barOffset = p.Results.barOffset;
+tsamples  = p.Results.tsamples;
+timesd    = p.Results.timesd;
+display   = p.Results.display;
 
-%% Display model
+%% Build Gaussian time series.
 
-display = displayCreate('LCD-Apple');
+tseries = exp(-(tsamples/timesd).^2);
+tseries = ieScale(tseries,0,1);
 
-%% Gaussian time series.
-
-% We should make some functions 
-std = 0.2;
-tseries = ieScale(gausswin(150,1/std),0,1);
-% vcNewGraphWin; plot(tseries);
-% tseries = ieScale(fspecial('gaussian',[1,150],40),0,1);
-
-clear sparams;  % Scene parameters in general
+%%  Scene parameters in general
+clear sparams; 
 
 % The size of the integration for the cone mosaic is 5 minutes for a line.
 % There are two lines, so the stimulus should be more than 10 minutes.  We
@@ -78,6 +85,7 @@ vparams(3).bgColor  = 0;
 vparams(3).offset   = 0;
 vparams(3).barWidth = barWidth;
 
+% Offset lines
 [offset, scenes] = oisCreate('vernier','add', tseries, ...
     'testParameters',vparams([1 2]),...
     'sceneParameters',sparams);
@@ -85,13 +93,14 @@ vparams(3).barWidth = barWidth;
 % ieAddObject(offset.oiFixed); ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenesO{2}); sceneWindow;
 
-% Offset lines
-offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
-fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
-
+% Aligned lines
 aligned = oisCreate('vernier','add', tseries,...
     'testParameters',vparams([1 3]),...
     'sceneParameters',sparams);
 % aligned.visualize;
+
+% Print out the offset in degrees of arc sec 
+offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
+fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
 
 end
