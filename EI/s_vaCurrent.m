@@ -99,7 +99,7 @@ imageBasis = cat(2,imageBasis,V(:,1:nComponents));
 imgList = cat(1,imgListAligned,imgListOffset);
 
 % Time series of weights
-weightSeries  = imgList * imageBasis;  
+weightSeries  = imgList * imageBasis;
 
 
 %% svm classification
@@ -120,7 +120,7 @@ mdl = fitcsvm(data,[ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'lin
 
 crossMDL = crossval(mdl);
 
-func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+func = @(y, yp, w, varargin) sum(abs(y(:, 1)-yp(:, 1)>0).*w);
 classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
