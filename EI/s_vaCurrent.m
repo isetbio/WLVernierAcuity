@@ -20,23 +20,24 @@
 %%
 ieInit
 
-nTrials = 300;
+nTrials = 200;
+tStep   = 5;   % ms
 
 % Set parameters for the vernier stimulus
 clear p; 
-p.barOffset = 1;     % Pixels on the display
+p.barOffset = 0;     % Pixels on the display
 p.barWidth  = 3;     % Pixels on the display
-p.tsamples = (-60:70); 
-p.timesd = 20;  
+p.tsamples = (-60:tStep:70)*1e-3;   % In second
+p.timesd = 20*1e-3;                 % In seconds
 
 %% Create the matched vernier stimuli
 
-[aligned, offset, scenes] = vaStimuli(p);
+[aligned, offset, scenes,tseries] = vaStimuli(p);
 % offset.visualize;
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenes{2}); sceneWindow;
-% vcNewGraphWin; plot(tseries)
+% vcNewGraphWin; plot(p.tsamples,tseries)
 
 % Offset lines
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
@@ -58,8 +59,9 @@ cMosaic.integrationTime = aligned.timeStep;
 cMosaic.os.noiseFlag = 'random';
 cMosaic.noiseFlag    = 'random';
 
-tic
 emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+
+tic
 [~, alignedC] = cMosaic.compute(aligned, ...
     'emPaths',emPaths, ...
     'currentFlag',true);
@@ -68,8 +70,7 @@ toc
 % cMosaic.window;
 
 tic
-emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
-[~, offsetC] = cMosaic.compute(offset, ...
+[~, offsetC] = cMosaic.compute(aligned, ...
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
@@ -103,9 +104,6 @@ weightSeries  = imgList * imageBasis;
 
 %% svm classification
 
-% TODO:  FInd a way to visualize the classifying function.
-% HJ?
-
 fprintf('SVM Classification ');
 
 % Put the weights from each trial into the rows of a matrix
@@ -126,7 +124,7 @@ func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
 classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
-%% Print out a summary of the various choices
+%% Visualize the classification function
 
 % Field of view of the mosaic
 % Eye movement pattern
@@ -161,6 +159,7 @@ for ii=1:tSamples
     img(:,:,ii) = reshape(tmp,cMosaic.rows,cMosaic.cols);
     imagesc(img(:,:,ii),[-.5 .5]); title(ii); colorbar; pause(0.2);
 end
-ieMovie(img);
+vcNewGraphWin; 
+colormap('default'); ieMovie(img);
 
 %%
