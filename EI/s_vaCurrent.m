@@ -96,7 +96,8 @@ imageBasis = V(:,1:nComponents);
 [~,~,V] = svd(imgListOffset,'econ');
 imageBasis = cat(2,imageBasis,V(:,1:nComponents));
 
-imgList = cat(1,imgListAligned,imgListOffset);
+% imgList = cat(1,imgListAligned,imgListOffset);
+imgList = cat(1,imgListAligned,imgListAligned);
 
 % Time series of weights
 weightSeries  = imgList * imageBasis;
@@ -116,12 +117,22 @@ for ii=1:(2*nTrials)
     data(ii,:) = thisTrial(:)';
 end
 
-mdl = fitcsvm(data,[ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
+%
+% func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+% classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 
-crossMDL = crossval(mdl);
+% train with 80% of data
+label = [ones(nTrials, 1); -ones(nTrials, 1)];
+train_index = zeros(2*nTrials, 1);
+train_index(randperm(2*nTrials, 0.8*2*nTrials)) = 1;
+train_index = train_index > 0;
 
-func = @(y, yp, w, varargin) sum(abs(y(:, 1)-yp(:, 1)>0).*w);
-classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+mdl = fitcsvm(data(train_index, :), label(train_index), ...
+    'KernelFunction', 'linear');
+
+% predict on test set
+yp = predict(mdl, data(~train_index, :));
+classLoss = sum(label(~train_index) ~= yp) / length(yp);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
 %% Visualize the classification function
