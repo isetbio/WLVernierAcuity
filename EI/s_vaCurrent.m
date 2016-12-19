@@ -20,12 +20,12 @@
 %%
 ieInit
 
-nTrials = 200;
+nTrials = 250;
 tStep   = 5;   % ms
 
 % Set parameters for the vernier stimulus
 clear p; 
-p.barOffset = 0;     % Pixels on the display
+p.barOffset = 3;     % Pixels on the display
 p.barWidth  = 3;     % Pixels on the display
 p.tsamples = (-60:tStep:70)*1e-3;   % In second
 p.timesd = 20*1e-3;                 % In seconds
@@ -70,7 +70,7 @@ toc
 % cMosaic.window;
 
 tic
-[~, offsetC] = cMosaic.compute(aligned, ...
+[~, offsetC] = cMosaic.compute(offset, ...
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
