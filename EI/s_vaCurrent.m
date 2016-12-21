@@ -25,7 +25,7 @@ tStep   = 5;   % ms
 
 % Set parameters for the vernier stimulus
 clear p; 
-p.barOffset = 3;     % Pixels on the display
+p.barOffset = 0;     % Pixels on the display
 p.barWidth  = 3;     % Pixels on the display
 p.tsamples = (-60:tStep:70)*1e-3;   % In second
 p.timesd = 20*1e-3;                 % In seconds
@@ -70,7 +70,7 @@ toc
 % cMosaic.window;
 
 tic
-[~, offsetC] = cMosaic.compute(offset, ...
+[~, offsetC] = cMosaic.compute(aligned, ...
     'emPaths',emPaths, ...
     'currentFlag',true);
 toc
@@ -86,17 +86,27 @@ toc
 imgListAligned = trial2Matrix(alignedC,cMosaic);
 imgListOffset  = trial2Matrix(offsetC,cMosaic);
 
+% PCA basis only for training data
+% train with 80% of data
+label = [ones(nTrials, 1); -ones(nTrials, 1)];
+train_index = zeros(nTrials, 1);
+train_index(randperm(nTrials, 0.8*nTrials)) = 1;
+train_index = train_index > 0;
+imgListAlignedTrain = trial2Matrix(alignedC(train_index, :,:,:), cMosaic);
+imgListOffsetTrain = trial2Matrix(offsetC(train_index, :,:,:), cMosaic);
+
 %% Not-centered PCA (no demeaning, so first PC is basically the mean)
 
 % We make bases for each type of stimulus and then concatenate them.
-nComponents = 5;
-[~,~,V] = svd(imgListAligned,'econ');
+nComponents = 4;
+[~,~,V] = svd(imgListAlignedTrain,'econ');
 imageBasis = V(:,1:nComponents);
 
-[~,~,V] = svd(imgListOffset,'econ');
+[~,~,V] = svd(imgListOffsetTrain,'econ');
 imageBasis = cat(2,imageBasis,V(:,1:nComponents));
 
 imgList = cat(1,imgListAligned,imgListOffset);
+% imgList = cat(1,imgListAligned,imgListAligned);
 
 % Time series of weights
 weightSeries  = imgList * imageBasis;
@@ -116,12 +126,16 @@ for ii=1:(2*nTrials)
     data(ii,:) = thisTrial(:)';
 end
 
-mdl = fitcsvm(data,[ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
+%
+% func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+% classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+train_index = [train_index; train_index];
+mdl = fitcsvm(data(train_index, :), label(train_index), ...
+    'KernelFunction', 'linear');
 
-crossMDL = crossval(mdl);
-
-func = @(y, yp, w, varargin) sum(abs(y(:, 1)-yp(:, 1)>0).*w);
-classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+% predict on test set
+yp = predict(mdl, data(~train_index, :));
+classLoss = sum(label(~train_index) ~= yp) / length(yp);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
 %% Visualize the classification function
