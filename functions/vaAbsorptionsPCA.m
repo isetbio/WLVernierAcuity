@@ -1,4 +1,4 @@
-%% s_vaAbsorptionsPCA
+function imageBasis = vaAbsorptionsPCA(varargin)
 %
 % Make the principal components for the absorption images.  
 %
@@ -10,17 +10,32 @@
 % BW
 
 %%
-ieInit
+p = inputParser;
 
-nTrials = 20;
-tStep   = 5;   % ms
+p.KeepUnmatched = true;
 
-% Set basic parameters for the vernier stimulus
-clear p; 
-p.barOffset = 0;     % Pixels on the display
-p.barWidth  = 3;     % Pixels on the display
-p.tsamples = (-60:tStep:70)*1e-3;   % In second
-p.timesd = 20*1e-3;                 % In seconds
+p.addParameter('nTrials',20,@isscalar);
+p.addParameter('tStep',5,@isscalar);
+p.addParameter('barWidth',3,@isscalar);
+p.addParameter('tsamples',[],@isvector);
+p.addParameter('timesd',20*1e-3,@isscalar);
+p.addParameter('nBasis',20,@isscalar);
+
+p.parse(varargin{:});
+
+nTrials = p.Results.nTrials;
+% tStep = p.Results.tStep;
+
+nBasis = p.Results.nBasis;
+
+% timesd   = p.Results.timesd;
+% barWidth = p.Results.barWidth;
+if isempty(p.Results.tsamples)
+    tsamples = (-60:tStep:70)*1e-3;
+else
+    tsamples = p.Results.tsamples;
+end
+
 
 %% Create the matched vernier stimuli
 
@@ -31,19 +46,18 @@ cMosaic = coneMosaic;
 cMosaic.setSizeToFOV(0.25);
 
 % Not sure why these have to match, but there is a bug and they do.
-cMosaic.integrationTime = p.tsamples(2) - p.tsamples(1);
-
-nFrames = length(p.tsamples);
+cMosaic.integrationTime = tsamples(2) - tsamples(1);
 
 cMosaic.os.noiseFlag = 'random';
 cMosaic.noiseFlag    = 'random';
 
 %%
 absorptions = [];
-for offset = 0:1:7      % A large range of pixel offsets
+for offset = 0:1:8      % A large range of pixel offsets
     
-    p.barOffset = offset;     % Pixels on the display
-    [~,thisStim] = vaStimuli(p);
+    stimParams = p.Results;
+    stimParams.barOffset = offset;     % Pixels on the display
+    [~,thisStim] = vaStimuli(stimParams);
     tSamples = thisStim.length;
 
     emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
@@ -67,33 +81,39 @@ end
 
 %% Check that the movies make sense
 
-vcNewGraphWin;
-for ii=1:10:size(absorptions,1)
-    tmp = squeeze(absorptions(ii,:,:,:));
-    ieMovie(tmp);
-    pause(0.5);
-end
+% vcNewGraphWin;
+% for ii=1:10:size(absorptions,1)
+%     tmp = squeeze(absorptions(ii,:,:,:));
+%     ieMovie(tmp);
+%     pause(0.5);
+% end
 
 %% Convert the shape of the absorptions so we can perform the svd
 
 tAbsorptions = trial2Matrix(absorptions,cMosaic);
 
 % We make bases for each type of stimulus and then concatenate them.
-nComponents = 20;
 [~,~,V] = svd(tAbsorptions,'econ');
-imageBasis = V(:,1:nComponents);
+imageBasis = V(:,1:nBasis);
+
+%% Visualize
 mx = max(imageBasis(:));
 mn = min(imageBasis(:));
 
 % Have a look at the resulting bases
 vcNewGraphWin; 
 colormap(gray(256))
-for ii=1:size(imageBasis,2)
+for ii=1:nBasis
     imagesc(reshape(imageBasis(:,ii),cMosaic.rows,cMosaic.cols),[1.2*mn 1.2*mx]);
     title(sprintf('Basis %d',ii));
     pause(1);
 end
 
-%%  We will do better, but for now
+%%  Save the result and the parameters used to create the result
 
-save('imageBasisAbsorptions','imageBasis','p')
+% When we load in s_vaAbsorptions we decide whether or not to recompute
+% based on the match of basisParameters
+basisParameters = varargin{1};
+save('imageBasisAbsorptions','imageBasis','basisParameters')
+
+end

@@ -19,24 +19,62 @@
 
 %%
 ieInit
-nTrials = 100;
+
+nTrials = 600;
+
+% Integration time and time step of the movie
 tStep   = 5;
 
+% Set the number of image bases
+nBasis = 10;
+
 % Set basic parameters for the vernier stimulus
-clear p; 
-p.barOffset = 0;     % Pixels on the display
-p.barWidth  = 1;     % Pixels on the display
-p.tsamples = (-60:tStep:70)*1e-3;   % In second
-p.timesd = 20*1e-3;                 % In seconds
+clear params; 
+params.barOffset = 6;     % Pixels on the display
+params.barWidth  = 3;     % Pixels on the display
+params.tsamples  = (-60:tStep:70)*1e-3;   % In second
+params.timesd  = 20*1e-3;                 % In seconds
+params.nTrials = nTrials;
+params.tStep   = tStep;
+params.nBasis  = nBasis;
+
+% If already computed, use the imageBasis.  If not, make an image basis.
+tmp = load('imageBasisAbsorptions');
+if isfield(tmp,'basisParameters')
+    basisParameters = tmp.basisParameters;
+    if isequal(basisParameters.barWidth,params.barWidth) && ...
+            isequal(basisParameters.timesd, params.timesd) && ...
+            isequal(basisParameters.tStep,params.tStep) && ...
+            basisParameters.nBasis >= params.nBasis
+        disp('Loading image basis because parameters match')
+        load('imageBasisAbsorptions','imageBasis');
+    else
+        disp('Creating new image basis - parameters do not match')
+        imageBasis = vaAbsorptionsPCA(params);
+    end
+else
+    disp('Creating new image basis - can not find parameters in file')
+    imageBasis = vaAbsorptionsPCA(params);
+end
+
+% % % Have a look if you like
+% vcNewGraphWin; colormap(gray(256))
+% mx = max(imageBasis(:)); mn = min(imageBasis(:));
+% for ii=1:params.nBasis
+%     imagesc(reshape(imageBasis(:,ii),cMosaic.rows,cMosaic.cols),[mn mx]);
+%     title(sprintf('Basis %d',ii));
+%     pause(0.5);
+% end
+
 
 %% Create the matched vernier stimuli
 
-[aligned, offset, scenes,tseries] = vaStimuli(p);
+[aligned, offset, scenes,tseries] = vaStimuli(params);
 % offset.visualize;
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenes{2}); sceneWindow;
-% vcNewGraphWin; plot(p.tsamples,tseries)
+% vcNewGraphWin; plot(params.tsamples,tseries)
 
 % Offset lines
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
@@ -93,25 +131,8 @@ imgListOffset  = trial2Matrix(offsetA,cMosaic);
 
 %% Not-centered PCA (no demeaning, so first PC is basically the mean)
 
-% % We make bases for each type of stimulus and then concatenate them.
-% nComponents = 5;
-% [~,~,V] = svd(imgListAligned,'econ');
-% imageBasis = V(:,1:nComponents);
-% 
-% [~,~,V] = svd(imgListOffset,'econ');
-% imageBasis = cat(2,imageBasis,V(:,1:nComponents));
-% 
-% % Have a look if you like
-% % vcNewGraphWin; colormap(gray(256))
-% % for ii=1:(2*nComponents)
-% %     imagesc(reshape(imageBasis(:,ii),rows*cols));
-% %     pause(0.5);
-% % end
-% 
-
-% produced by s_vaAbsorptionsPCA.  Needs to match the stimulus here, I
-% think.
-load('imageBasisAbsorptions','imageBasis');
+% Could shrink nBasis here ... or not
+% % imageBasis = imageBasis(:,1:nBasis);
 
 imgList = cat(1,imgListAligned,imgListOffset);
 % imgList = cat(1,imgListAligned,imgListAligned);
@@ -159,26 +180,73 @@ for ii=1:(2*nTrials)
 end
 label = [ones(nTrials, 1); -ones(nTrials, 1)];
 
-%
 % func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
 % classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+
+% Select some of the data (80%) as the training set.
 train_index = zeros(nTrials, 1);
-train_index(randperm(nTrials, 0.8*nTrials)) = 1;
+train_index(randperm(nTrials, round(0.8*nTrials))) = 1;
 train_index = train_index > 0;
+
+% The aligned and offset trials are still matched
 train_index = [train_index; train_index];
 
+% Fit the SVM model.
 mdl = fitcsvm(data(train_index, :), label(train_index), ...
     'KernelFunction', 'linear');
 
-% predict on training set - I think we should generate a completely fresh
-% test here. (BW)
+% predict the data not in the training set.
 yp = predict(mdl, data(~train_index, :));
 classLoss = sum(label(~train_index) ~= yp) / length(yp);
-fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
+fprintf('Accuracy for held out data: %.2f%% \n', (1-classLoss) * 100);
 
-% cross validation
-crossMDL = crossval(mdl);
-func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
-classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+%% Run cross validation
+
+% I don't understand this yet, so I am skipping (BW)
+
+% crossMDL = crossval(mdl);    % I don't understand this syntax 
+% func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+% classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+
+%% Visualize the classification function
+
+% Field of view of the mosaic
+% Eye movement pattern
+% Stimulus offset, more ...
+
+% See 'Support Vector Machines for Binary Classification' in fitcsvm
+%
+%  mdl.Beta appears to be the term that we multiply as an inner product
+%  with the data to determine whether we are in type A or not A.
+%
+%  x'*beta + Bias, I think.
+%
+%  When we get mdl.Beta, it has size of tSamples*nBasis.   So, if
+%  there are 150 tSamples and 10 spatial image components, then Beta is
+%  1500.
+%
+%  I think that on a single trial we have tSamples*nBasis numbers.  If we
+%  want to express these  numbers as a movie, we multiply the weights times
+%  the spatial image basis at each of the time points. So the classifier is
+%  a movie.
+%
+% 
+% 
+% % These are the beta weights we multiply
+% beta = mdl.Beta;
+% % nBasis = size(imageBasis,2);
+% img = zeros(cMosaic.rows,cMosaic.cols,tSamples);
+% 
+% colormap('default')
+% for ii=1:tSamples
+%     lst = (1:nBasis) + (ii-1)*nBasis;
+%     % lst = ii:tSamples:length(beta);
+%     tmp = imageBasis*beta(lst);
+%     img(:,:,ii) = reshape(tmp,cMosaic.rows,cMosaic.cols);
+%     imagesc(img(:,:,ii),[-.5 .5]); title(ii); colorbar; pause(.2);
+% end
+% 
+% vcNewGraphWin; 
+% colormap('default'); ieMovie(img);
 
 %%

@@ -26,6 +26,9 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 
 %%
 p = inputParser;
+
+p.KeepUnmatched = true;   % Sometimes we overload p for SVM and cMosaic
+
 p.addParameter('barWidth',1,@isscalar);
 p.addParameter('barOffset',1,@isscalar);
 p.addParameter('tsamples',(-50:100),@isvector);  % Time samples (ms)
