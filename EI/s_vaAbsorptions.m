@@ -19,7 +19,6 @@
 
 %%
 ieInit
-
 nTrials = 100;
 tStep   = 5;
 
@@ -58,7 +57,7 @@ cMosaic.integrationTime = aligned.timeStep;
 
 %% For aligned or offset
 
-cMosaic.noiseFlag    = 'frozen';
+cMosaic.noiseFlag    = 'random';
 
 emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
 
@@ -163,12 +162,23 @@ label = [ones(nTrials, 1); -ones(nTrials, 1)];
 %
 % func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
 % classLoss = kfoldLoss(crossMDL, 'lossfun', func);
-mdl = fitcsvm(data, label, 'KernelFunction', 'linear');
+train_index = zeros(nTrials, 1);
+train_index(randperm(nTrials, 0.8*nTrials)) = 1;
+train_index = train_index > 0;
+train_index = [train_index; train_index];
+
+mdl = fitcsvm(data(train_index, :), label(train_index), ...
+    'KernelFunction', 'linear');
 
 % predict on training set - I think we should generate a completely fresh
 % test here. (BW)
-yp = predict(mdl, data);
-classLoss = sum(label ~= yp) / length(yp);
+yp = predict(mdl, data(~train_index, :));
+classLoss = sum(label(~train_index) ~= yp) / length(yp);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
+
+% cross validation
+crossMDL = crossval(mdl);
+func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 
 %%
