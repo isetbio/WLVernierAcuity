@@ -21,6 +21,7 @@
 ieInit
 
 nTrials = 100;
+tStep   = 5;
 
 % Set basic parameters for the vernier stimulus
 clear p; 
@@ -109,6 +110,10 @@ imgListOffset  = trial2Matrix(offsetA,cMosaic);
 % % end
 % 
 
+% produced by s_vaAbsorptionsPCA.  Needs to match the stimulus here, I
+% think.
+load('imageBasisAbsorptions','imageBasis');
+
 imgList = cat(1,imgListAligned,imgListOffset);
 % imgList = cat(1,imgListAligned,imgListAligned);
 
@@ -140,7 +145,7 @@ weightSeries  = imgList * imageBasis;
 % plot3(wgt(1,301:600),wgt(2,301:600),wgt(3,301:600),'go')
 % hold off
 
-%% Good classifier?
+%% Start classification training
 
 fprintf('SVM Classification ');
 
@@ -160,36 +165,10 @@ label = [ones(nTrials, 1); -ones(nTrials, 1)];
 % classLoss = kfoldLoss(crossMDL, 'lossfun', func);
 mdl = fitcsvm(data, label, 'KernelFunction', 'linear');
 
-% predict on test set - I think we should generate a completely fresh test
-% here. (BW)
+% predict on training set - I think we should generate a completely fresh
+% test here. (BW)
 yp = predict(mdl, data);
 classLoss = sum(label ~= yp) / length(yp);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
-
-% %% svm classification
-% 
-% % TODO:  FInd a way to visualize the classifying function.
-% % HJ?
-% 
-% fprintf('SVM Classification ');
-% 
-% % Put the weights from each trial into the rows of a matrix
-% % Each row is another trial
-% nWeights = size(weightSeries,2);
-% data = zeros(2*nTrials,nWeights*tSamples);
-% for ii=1:(2*nTrials)
-%     start = (ii-1)*tSamples + 1;
-%     thisTrial = weightSeries(start:(start+tSamples - 1),:);
-%     data(ii,:) = thisTrial(:)';
-% end
-% 
-% % Labeled data where we fit the svm
-% mdl = fitcsvm(data,[ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
-% 
-% crossMDL = crossval(mdl);
-% 
-% func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
-% classLoss = kfoldLoss(crossMDL, 'lossfun', func);
-% fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
 %%

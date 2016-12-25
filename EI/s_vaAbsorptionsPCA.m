@@ -94,4 +94,6 @@ for ii=1:size(imageBasis,2)
     pause(1);
 end
 
-%%
+%%  We will do better, but for now
+
+save('imageBasisAbsorptions','imageBasis')
