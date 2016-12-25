@@ -20,22 +20,23 @@
 %%
 ieInit
 
-nTrials = 300;
+nTrials = 100;
 
-% Set parameters for the vernier stimulus
+% Set basic parameters for the vernier stimulus
 clear p; 
-p.barOffset = 3;     % Pixels on the display
-p.barWidth  = 3;     % Pixels on the display
-p.tsamples = (-60:70); 
-p.timesd = 20;  
+p.barOffset = 0;     % Pixels on the display
+p.barWidth  = 1;     % Pixels on the display
+p.tsamples = (-60:tStep:70)*1e-3;   % In second
+p.timesd = 20*1e-3;                 % In seconds
 
 %% Create the matched vernier stimuli
 
-[aligned, offset, scenes] = vaStimuli(p);
+[aligned, offset, scenes,tseries] = vaStimuli(p);
 % offset.visualize;
 % aligned.visualize;
 % ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenes{2}); sceneWindow;
+% vcNewGraphWin; plot(p.tsamples,tseries)
 
 % Offset lines
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
@@ -56,16 +57,18 @@ cMosaic.integrationTime = aligned.timeStep;
 
 %% For aligned or offset
 
-tic
+cMosaic.noiseFlag    = 'frozen';
+
 emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
-alignedA = cMosaic.compute(aligned,'currentFlag',false,'emPaths',emPaths);
-toc
-% cMosaic.window;
 
 tic
-emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+alignedA = cMosaic.compute(aligned,'currentFlag',false,'emPaths',emPaths);
+toc
+
+tic
 offsetA = cMosaic.compute(offset,'currentFlag',false,'emPaths',emPaths);
 toc
+
 % cMosaic.window;
 
 %%  Reformat the time series for the PCA analysis
@@ -90,22 +93,24 @@ imgListOffset  = trial2Matrix(offsetA,cMosaic);
 
 %% Not-centered PCA (no demeaning, so first PC is basically the mean)
 
-% We make bases for each type of stimulus and then concatenate them.
-nComponents = 5;
-[~,~,V] = svd(imgListAligned,'econ');
-imageBasis = V(:,1:nComponents);
-
-[~,~,V] = svd(imgListOffset,'econ');
-imageBasis = cat(2,imageBasis,V(:,1:nComponents));
-
-% Have a look if you like
-% vcNewGraphWin; colormap(gray(256))
-% for ii=1:(2*nComponents)
-%     imagesc(reshape(imageBasis(:,ii),rows*cols));
-%     pause(0.5);
-% end
+% % We make bases for each type of stimulus and then concatenate them.
+% nComponents = 5;
+% [~,~,V] = svd(imgListAligned,'econ');
+% imageBasis = V(:,1:nComponents);
+% 
+% [~,~,V] = svd(imgListOffset,'econ');
+% imageBasis = cat(2,imageBasis,V(:,1:nComponents));
+% 
+% % Have a look if you like
+% % vcNewGraphWin; colormap(gray(256))
+% % for ii=1:(2*nComponents)
+% %     imagesc(reshape(imageBasis(:,ii),rows*cols));
+% %     pause(0.5);
+% % end
+% 
 
 imgList = cat(1,imgListAligned,imgListOffset);
+% imgList = cat(1,imgListAligned,imgListAligned);
 
 % Time series of weights
 weightSeries  = imgList * imageBasis;  
@@ -122,24 +127,20 @@ weightSeries  = imgList * imageBasis;
 % nTimeBasis]*wgts
 
 % These are the time series for each of the trials
-foo = reshape(weightSeries(:,1),tSamples,2*nTrials);
-vcNewGraphWin; plot(foo);
-[U,S,T] = svd(foo,'econ');
-vcNewGraphWin;
-plot(U(:,1));
+% foo = reshape(weightSeries(:,1),tSamples,2*nTrials);
+% vcNewGraphWin; plot(foo);
+% [U,S,T] = svd(foo,'econ');
+% vcNewGraphWin;
+% plot(U(:,1));
+% 
+% wgt = U(:,1:3)'*foo;
+% vcNewGraphWin; 
+% plot3(wgt(1,1:300),wgt(2,1:300),wgt(3,1:300),'ro')
+% hold on; 
+% plot3(wgt(1,301:600),wgt(2,301:600),wgt(3,301:600),'go')
+% hold off
 
-wgt = U(:,1:3)'*foo;
-vcNewGraphWin; 
-plot3(wgt(1,1:300),wgt(2,1:300),wgt(3,1:300),'ro')
-hold on; 
-plot3(wgt(1,301:600),wgt(2,301:600),wgt(3,301:600),'go')
-hold off
-
-
-%% svm classification
-
-% TODO:  FInd a way to visualize the classifying function.
-% HJ?
+%% Good classifier?
 
 fprintf('SVM Classification ');
 
@@ -152,13 +153,43 @@ for ii=1:(2*nTrials)
     thisTrial = weightSeries(start:(start+tSamples - 1),:);
     data(ii,:) = thisTrial(:)';
 end
+label = [ones(nTrials, 1); -ones(nTrials, 1)];
 
-mdl = fitcsvm(data,[ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
+%
+% func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+% classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+mdl = fitcsvm(data, label, 'KernelFunction', 'linear');
 
-crossMDL = crossval(mdl);
-
-func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
-classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+% predict on test set - I think we should generate a completely fresh test
+% here. (BW)
+yp = predict(mdl, data);
+classLoss = sum(label ~= yp) / length(yp);
 fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
+
+% %% svm classification
+% 
+% % TODO:  FInd a way to visualize the classifying function.
+% % HJ?
+% 
+% fprintf('SVM Classification ');
+% 
+% % Put the weights from each trial into the rows of a matrix
+% % Each row is another trial
+% nWeights = size(weightSeries,2);
+% data = zeros(2*nTrials,nWeights*tSamples);
+% for ii=1:(2*nTrials)
+%     start = (ii-1)*tSamples + 1;
+%     thisTrial = weightSeries(start:(start+tSamples - 1),:);
+%     data(ii,:) = thisTrial(:)';
+% end
+% 
+% % Labeled data where we fit the svm
+% mdl = fitcsvm(data,[ones(nTrials, 1); -ones(nTrials, 1)], 'KernelFunction', 'linear');
+% 
+% crossMDL = crossval(mdl);
+% 
+% func = @(y, yp, w, varargin) sum(abs(y(:, 1)-(yp(:, 1)>0)).*w);
+% classLoss = kfoldLoss(crossMDL, 'lossfun', func);
+% fprintf('Accuracy: %.2f%% \n', (1-classLoss) * 100);
 
 %%

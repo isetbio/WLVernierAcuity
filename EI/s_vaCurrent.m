@@ -20,7 +20,7 @@
 %%
 ieInit
 
-nTrials = 500;
+nTrials = 100;
 tStep   = 5;   % ms
 
 % Set parameters for the vernier stimulus
@@ -173,6 +173,7 @@ for ii=1:tSamples
     img(:,:,ii) = reshape(tmp,cMosaic.rows,cMosaic.cols);
     imagesc(img(:,:,ii),[-.5 .5]); title(ii); colorbar; pause(.2);
 end
+
 vcNewGraphWin; 
 colormap('default'); ieMovie(img);
 
