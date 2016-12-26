@@ -1,4 +1,4 @@
-%% s_vaAbsorptions
+%% s_vaCurrent
 %
 %    Testing if people can see the difference between two cases:
 %      1) A straight line
@@ -20,7 +20,7 @@
 %%
 ieInit
 
-nTrials = 800;
+nTrials = 100;
 
 % Integration time and time step of the movie
 tStep   = 10;
@@ -40,7 +40,7 @@ params.nBasis  = nBasis;
 
 % If already computed, use the imageBasis.  If not, make an image basis.
 tmp = [];
-if exist('imageBasisAbsorptions.mat','file'), tmp = load('imageBasisAbsorptions'); end
+if exist('imageBasisCurrent.mat','file'), tmp = load('imageBasisCurrent'); end
 if isfield(tmp,'basisParameters')
     basisParameters = tmp.basisParameters;
     if isequal(basisParameters.barWidth,params.barWidth) && ...
@@ -51,11 +51,11 @@ if isfield(tmp,'basisParameters')
         load('imageBasisAbsorptions','imageBasis');
     else
         disp('Creating new image basis - parameters do not match')
-        imageBasis = vaAbsorptionsPCA(params);
+        imageBasis = vaCurrentPCA(params);
     end
 else
     disp('Creating new image basis - can not find parameters in file')
-    imageBasis = vaAbsorptionsPCA(params);
+    imageBasis = vaCurrentPCA(params);
 end
 
 % % % Have a look if you like
@@ -74,7 +74,7 @@ end
 X = zeros(1,7);
 P = zeros(1,7);
 barOffset = 0:1:6;
-for bb = 1:length(barOffset)
+for bb = 1:numel(barOffset)
     
     params.barOffset = barOffset(bb);
     [aligned, offset, scenes,tseries] = vaStimuli(params);
@@ -108,11 +108,11 @@ for bb = 1:length(barOffset)
     emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
     
     tic
-    alignedA = cMosaic.compute(aligned,'currentFlag',false,'emPaths',emPaths);
+    [~, alignedC] = cMosaic.compute(aligned,'currentFlag',true,'emPaths',emPaths);
     toc
     
     tic
-    offsetA = cMosaic.compute(offset,'currentFlag',false,'emPaths',emPaths);
+    [~, offsetC] = cMosaic.compute(offset,'currentFlag',true,'emPaths',emPaths);
     toc
     
     % cMosaic.window;
@@ -123,8 +123,8 @@ for bb = 1:length(barOffset)
     % The rows represent time samples by number of trials
     % These are the temporal responses across all trials and time points.
     
-    imgListAligned = trial2Matrix(alignedA,cMosaic);
-    imgListOffset  = trial2Matrix(offsetA,cMosaic);
+    imgListAligned = trial2Matrix(alignedC,cMosaic);
+    imgListOffset  = trial2Matrix(offsetC,cMosaic);
     
     % Visualize the sequence
     %
@@ -213,8 +213,10 @@ end
 %% Dump out for saving and plotting
 
 params
-[X,P]
-
+s = sprintf('X = ['); s = [s, sprintf('%d ',X)]; s = [s , sprintf(']')];
+disp(s)
+s = sprintf('P = ['); s = [s, sprintf('%.2f ',P)]; s = [s , sprintf(']')];
+disp(s)
 
 %% Run cross validation
 
