@@ -20,13 +20,13 @@
 %%
 ieInit
 
-nTrials = 100;
+nTrials = 400;
 
 % Integration time and time step of the movie
-tStep   = 10;
+tStep   = 5;
 
 % Set the number of image bases
-nBasis = 20;
+nBasis = 10;
 
 % Set basic parameters for the vernier stimulus
 clear params;
@@ -58,7 +58,7 @@ else
     imageBasis = vaCurrentPCA(params);
 end
 
-% % % Have a look if you like
+%% Have a look if you like
 % vcNewGraphWin; colormap(gray(256))
 % mx = max(imageBasis(:)); mn = min(imageBasis(:));
 % for ii=1:params.nBasis
@@ -67,7 +67,7 @@ end
 %     pause(0.5);
 % end
 
-% We print these out at the end
+%% We print these out at the end for plotting
 X = zeros(1,7);
 P = zeros(1,7);
 barOffset = 0:1:6;
@@ -107,12 +107,22 @@ for bb = 1:numel(barOffset)
     
     emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
     
+    % Use the some photocurrent impulse response functions for the aligned
+    % and offset stimuli.  Otherwise, the SVM can tell the difference based
+    % on that.
+    disp('aligned')
     tic
-    [~, alignedC] = cMosaic.compute(aligned,'currentFlag',true,'emPaths',emPaths);
+    [~, alignedC,interpFilters,meanCur] = ...
+        cMosaic.compute(aligned,'currentFlag',true,...
+        'emPaths',emPaths);
     toc
     
+    disp('offset')
     tic
-    [~, offsetC] = cMosaic.compute(offset,'currentFlag',true,'emPaths',emPaths);
+    [~, offsetC] = cMosaic.compute(offset,'currentFlag',true,...
+        'emPaths',emPaths,...
+        'interpFilters',interpFilters,...
+        'meanCur',meanCur);
     toc
     
     % cMosaic.window;

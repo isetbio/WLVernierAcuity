@@ -13,7 +13,6 @@ p = inputParser;
 
 p.KeepUnmatched = true;
 
-p.addParameter('nTrials',20,@isscalar);
 p.addParameter('tStep',5,@isscalar);
 p.addParameter('barWidth',3,@isscalar);
 p.addParameter('tsamples',[],@isvector);
@@ -22,10 +21,8 @@ p.addParameter('nBasis',20,@isscalar);
 
 p.parse(varargin{:});
 
-
 % Figure out a sensible way to set this.
-nTrials = p.Results.nTrials;
-nTrials = 10;
+nTrials = 20;
 
 % tStep = p.Results.tStep;
 
@@ -33,12 +30,9 @@ nBasis = p.Results.nBasis;
 
 % timesd   = p.Results.timesd;
 % barWidth = p.Results.barWidth;
-if isempty(p.Results.tsamples)
-    tsamples = (-60:tStep:70)*1e-3;
-else
-    tsamples = p.Results.tsamples;
+if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
+else                            tsamples = p.Results.tsamples;
 end
-
 
 %% Create the matched vernier stimuli
 
