@@ -15,18 +15,18 @@
 %%
 ieInit
 
-nTrials = 300;
+nTrials = 400;
 
 % Integration time and time step of the movie
 tStep   = 8;
 
 % Set the number of image bases used here.  Should be less than 30
-nBasis = 15;
+nBasis = 30;
 
 % Set parameters for the vernier stimulus
 clear params;
 params.barOffset = 3;     % Pixels on the display
-params.barWidth  = 2;     % Pixels on the display
+params.barWidth  = 3;     % Pixels on the display
 params.tsamples  = (-70:tStep:100)*1e-3;   % In second
 params.timesd  = 40*1e-3;                 % In seconds
 params.nTrials = nTrials;
@@ -65,7 +65,7 @@ imageBasis = imageBasis(:,1:nBasis);
 %% We print these out at the end for plotting
 
 % This is the range of offsets we analyze
-barOffset = 0:1:6;
+barOffset = 0:2:6;
 X = zeros(1,numel(barOffset));
 P = zeros(1,numel(barOffset));
 
@@ -188,6 +188,14 @@ s = sprintf('X = ['); s = [s, sprintf('%d ',X)]; s = [s , sprintf(']')];
 disp(s)
 s = sprintf('P = ['); s = [s, sprintf('%.2f ',P)]; s = [s , sprintf(']')];
 disp(s)
+
+vcNewGraphWin;
+plot(6*X,P,'o-');
+grid on
+xlabel('Offset (arc sec)'); ylabel('Percent correct');
+set(gca,'ylim',[45 100])
+title(sprintf('Bar width %.1f (sec), duration %.3f (sec) (C)',6*params.barWidth,params.timesd));
+
 
 %% Run cross validation
 

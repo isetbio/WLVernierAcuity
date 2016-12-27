@@ -25,12 +25,12 @@ nTrials = 400;
 tStep   = 8;
 
 % Set the number of image bases
-nBasis = 15;
+nBasis = 30;
 
 % Set basic parameters for the vernier stimulus
 clear params;
 params.barOffset = 3;     % Pixels on the display
-params.barWidth  = 2;     % Pixels on the display
+params.barWidth  = 3;     % Pixels on the display
 params.tsamples  = (-70:tStep:100)*1e-3;   % In second
 params.timesd  = 40*1e-3;                  % In seconds                 
 params.nTrials = nTrials;
@@ -68,7 +68,7 @@ end
 %% Create the aligned and offset vernier stimuli
 
 % This could loop here on the barOffset
-barOffset = 0:1:6;
+barOffset = 0:2:6;
 X = zeros(1,numel(barOffset));
 P = zeros(1,numel(barOffset));
 
@@ -219,6 +219,12 @@ disp(s)
 s = sprintf('P = ['); s = [s, sprintf('%.2f ',P)]; s = [s , sprintf(']')];
 disp(s)
 
+vcNewGraphWin;
+plot(6*X,P,'o-');
+grid on
+xlabel('Offset (arc sec)'); ylabel('Percent correct');
+set(gca,'ylim',[45 100])
+title(sprintf('Bar width %.1f (sec), duration %.3f (sec) (A)',6*params.barWidth, params.timesd));
 
 %% Run cross validation
 
