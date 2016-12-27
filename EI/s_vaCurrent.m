@@ -23,7 +23,7 @@ ieInit
 nTrials = 400;
 
 % Integration time and time step of the movie
-tStep   = 5;
+tStep   = 4;
 
 % Set the number of image bases
 nBasis = 10;
@@ -51,7 +51,7 @@ if isfield(tmp,'basisParameters')
         load('imageBasisAbsorptions','imageBasis');
     else
         disp('Creating new image basis - parameters do not match')
-        imageBasis = vaCurrentPCA(params);
+        [~,imageBasis] = vaPCA(params);
     end
 else
     disp('Creating new image basis - can not find parameters in file')
