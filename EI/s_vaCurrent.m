@@ -1,34 +1,29 @@
 %% s_vaCurrent
 %
-%    Testing if people can see the difference between two cases:
-%      1) A straight line
-%      2) Two straight lines with 1 pixel apart
-%
 %  Vernier acuity in human shows the positional acuity is around 6 sec of
 %  arc. Here, we are analyzing stimulus, optics, and eye movements and
-%  basing the calculation on absorptions.
+%  basing the calculation on photocurrent.
 %
-%  In a separate script, we will try the photocurrent.
+%  Testing if people can see the difference between:
+%      1) A straight line
+%      2) Two straight lines with N pixel offset
 %
-% In this case we try
-%    Standard retinal parameters
-%    White line on a gray monitor background
-%    Sweep out viewing distance
+%  In s_vaAbsorptions we try the absorptions.
 %
 % HJ/BW, ISETBIO TEAM, 2016
 
 %%
 ieInit
 
-nTrials = 400;
+nTrials = 300;
 
 % Integration time and time step of the movie
-tStep   = 4;
+tStep   = 8;
 
-% Set the number of image bases
-nBasis = 10;
+% Set the number of image bases used here.  Should be less than 30
+nBasis = 15;
 
-% Set basic parameters for the vernier stimulus
+% Set parameters for the vernier stimulus
 clear params;
 params.barOffset = 3;     % Pixels on the display
 params.barWidth  = 2;     % Pixels on the display
@@ -36,17 +31,15 @@ params.tsamples  = (-70:tStep:100)*1e-3;   % In second
 params.timesd  = 40*1e-3;                 % In seconds
 params.nTrials = nTrials;
 params.tStep   = tStep;
-params.nBasis  = nBasis;
 
-% If already computed, use the imageBasis.  If not, make an image basis.
+%% If already computed, use the imageBasis.  If not, make an image basis.
 tmp = [];
 if exist('imageBasisCurrent.mat','file'), tmp = load('imageBasisCurrent'); end
 if isfield(tmp,'basisParameters')
     basisParameters = tmp.basisParameters;
     if isequal(basisParameters.barWidth,params.barWidth) && ...
             isequal(basisParameters.timesd, params.timesd) && ...
-            isequal(basisParameters.tStep,params.tStep) && ...
-            basisParameters.nBasis >= params.nBasis
+            isequal(basisParameters.tStep,params.tStep)
         disp('Loading image basis because parameters match')
         load('imageBasisAbsorptions','imageBasis');
     else
@@ -58,6 +51,8 @@ else
     imageBasis = vaCurrentPCA(params);
 end
 
+imageBasis = imageBasis(:,1:nBasis);
+
 %% Have a look if you like
 % vcNewGraphWin; colormap(gray(256))
 % mx = max(imageBasis(:)); mn = min(imageBasis(:));
@@ -68,9 +63,11 @@ end
 % end
 
 %% We print these out at the end for plotting
-X = zeros(1,7);
-P = zeros(1,7);
+
+% This is the range of offsets we analyze
 barOffset = 0:1:6;
+X = zeros(1,numel(barOffset));
+P = zeros(1,numel(barOffset));
 
 %% Create the aligned and offset vernier stimuli
 
@@ -136,17 +133,6 @@ for bb = 1:numel(barOffset)
     imgListAligned = trial2Matrix(alignedC,cMosaic);
     imgListOffset  = trial2Matrix(offsetC,cMosaic);
     
-    % Visualize the sequence
-    %
-    % imgList = abs(imgListOffset);  % Absorptions or current should be positive
-    % mx = max(imgListOffset(:));
-    % vcNewGraphWin; colormap(gray(mx));
-    % for ii=1:size(imgListOffset,1)
-    %     image(reshape(imgListOffset(ii,:),rows*cols));
-    %     drawnow; title(sprintf('%d',ii));
-    %     pause(0.05);
-    % end
-    
     %% Not-centered PCA (no demeaning, so first PC is basically the mean)
     
     % Could shrink nBasis here ... or not
@@ -157,31 +143,6 @@ for bb = 1:numel(barOffset)
     
     % Time series of weights
     weightSeries  = imgList * imageBasis;
-    
-    %% Let's see if we can reduce the dimensionality of the time series
-    %
-    % The reasons is that the photocurrent time series, which smooths the
-    % signal over time, performs much better with the SVM.  So, I think that
-    % smoothing the time series in the absorptions would allow the SVM to find
-    % a good solution here, as well.
-    %
-    % Now the weight series for each image basis comprises 150 numbers for each
-    % of 600 trials. We frame this as 150 x 600 and reduce it to [150 x
-    % nTimeBasis]*wgts
-    
-    % These are the time series for each of the trials
-    % foo = reshape(weightSeries(:,1),tSamples,2*nTrials);
-    % vcNewGraphWin; plot(foo);
-    % [U,S,T] = svd(foo,'econ');
-    % vcNewGraphWin;
-    % plot(U(:,1));
-    %
-    % wgt = U(:,1:3)'*foo;
-    % vcNewGraphWin;
-    % plot3(wgt(1,1:300),wgt(2,1:300),wgt(3,1:300),'ro')
-    % hold on;
-    % plot3(wgt(1,301:600),wgt(2,301:600),wgt(3,301:600),'go')
-    % hold off
     
     %% Start classification training
     
@@ -220,7 +181,7 @@ for bb = 1:numel(barOffset)
     fprintf('Accuracy for held out data: (%d, %.2f%%) \n', barOffset(bb), (1-classLoss) * 100);
 end
 
-%% Dump out for saving and plotting
+%% Print out for saving and plotting
 
 params
 s = sprintf('X = ['); s = [s, sprintf('%d ',X)]; s = [s , sprintf(']')];

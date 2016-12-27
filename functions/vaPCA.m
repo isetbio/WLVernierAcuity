@@ -1,8 +1,11 @@
 function [imageBasisA,imageBasisC] = vaPCA(varargin)
 % Make the principal component images for the absorptions and photocurrent
 %
-%  We used to do this separately for absorptions and current, but no
-%  longer. Now, it is done for both, here.
+% The input argument is a struct that must include all the parameters
+% needed to produce a vernier stimulus.
+%
+% We used to do this separately for absorptions and current, but no
+% longer. Now, it is done for both, here.
 %
 % Steps:
 %   Create a set of stimuli  with different offsets.
@@ -13,28 +16,29 @@ function [imageBasisA,imageBasisC] = vaPCA(varargin)
 %
 % BW, ISETBIO Team, Copyright 2016
 
-%%
+%% Basic parameters
+
+% Figure out a sensible way to set this.  We average some number of trials
+% to reduce noise, I think.
+nTrials = 20;
+
+% We want plenty of basis functions stored.  We may not use all of them.
+nBasis = 30;
+
+%% Parse the inputs
 p = inputParser;
 
 p.KeepUnmatched = true;
 
+% These parameters influence the image.  Though I wonder whether we might
+% have the same basis images for different time steps?
 p.addParameter('tStep',5,@isscalar);
 p.addParameter('barWidth',3,@isscalar);
 p.addParameter('tsamples',[],@isvector);
 p.addParameter('timesd',20*1e-3,@isscalar);
-p.addParameter('nBasis',20,@isscalar);
 
 p.parse(varargin{:});
 
-% Figure out a sensible way to set this.
-nTrials = 20;
-
-% tStep = p.Results.tStep;
-
-nBasis = p.Results.nBasis;
-
-% timesd   = p.Results.timesd;
-% barWidth = p.Results.barWidth;
 if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
 else                            tsamples = p.Results.tsamples;
 end
@@ -53,8 +57,9 @@ cMosaic.setSizeToFOV(0.25);
 % Not sure why these have to match, but there is a bug and they do.
 cMosaic.integrationTime = tsamples(2) - tsamples(1);
 
-cMosaic.os.noiseFlag = 'random';
-cMosaic.noiseFlag    = 'random';
+% Should we have noise?  Or not?
+cMosaic.os.noiseFlag = 'none';
+cMosaic.noiseFlag    = 'none';
 
 %%  Store up the absorptions and current across multiple trials
 
