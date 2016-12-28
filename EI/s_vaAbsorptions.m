@@ -2,13 +2,14 @@
 %
 %    Testing if people can see the difference between two cases:
 %      1) A straight line
-%      2) Two straight lines with 1 pixel apart
+%      2) Two straight lines barOffset pixels apart
 %
 %  Vernier acuity in human shows the positional acuity is around 6 sec of
 %  arc. Here, we are analyzing stimulus, optics, and eye movements and
 %  basing the calculation on absorptions.
 %
-%  In a separate script, we will try the photocurrent.
+%  In a separate script, we analyze the discriminability based on
+%  photocurrent rather than absorptions.
 %
 % In this case we try
 %    Standard retinal parameters
@@ -17,33 +18,26 @@
 %
 % HJ/BW, ISETBIO TEAM, 2016
 
-%%
-ieInit
-
-nTrials = 400;
-% Integration time and time step of the movie
-tStep   = 8;
-
-% Set the number of image bases
-nBasis = 30;
-
-% Set basic parameters for the vernier stimulus
-clear params;
-params.barOffset = 3;     % Pixels on the display
-params.barWidth  = 3;     % Pixels on the display
-params.tsamples  = (-70:tStep:100)*1e-3;   % In second
-params.timesd  = 40*1e-3;                  % In seconds                 
-params.nTrials = nTrials;
-params.tStep   = tStep;
+%% Moved parameter setting to s_EIScratch.m
+%
+% We now run this script just to execute.
+%
 
 %% If already computed, use the imageBasis.  If not, make an image basis.
 tmp = [];
 if exist('imageBasisAbsorptions.mat','file'), tmp = load('imageBasisAbsorptions'); end
 if isfield(tmp,'basisParameters')
     basisParameters = tmp.basisParameters;
-    if isequal(basisParameters.barWidth,params.barWidth) && ...
-            isequal(basisParameters.timesd, params.timesd) && ...
-            isequal(basisParameters.tStep,params.tStep)
+    if      isequal(basisParameters.timesd, params.timesd) && ...
+            isequal(basisParameters.tStep,params.tStep) && ...
+            isequal(basisParameters.fov,params.fov) && ...
+            isequal(basisParameters.vernier.bgColor, params.vernier.bgColor) && ...
+            isequal(basisParameters.vernier.barWidth,params.vernier.barWidth) && ...
+            isequal(basisParameters.vernier.barLength,params.vernier.barLength) && ...
+            isequal(basisParameters.vernier.gap,params.vernier.gap) && ...
+            isequal(basisParameters.vernier.barColor,params.vernier.barColor) && ...
+            isequal(basisParameters.vernier.sceneSz,params.vernier.sceneSz)
+
         disp('Loading image basis because parameters match')
         load('imageBasisAbsorptions','imageBasis');
     else
@@ -54,6 +48,7 @@ else
     disp('Creating new image basis - can not find parameters in file')
     imageBasis = vaPCA(params);
 end
+imageBasis = imageBasis(:,1:params.nBasis);
 
 % % % Have a look if you like
 % vcNewGraphWin; colormap(gray(256))
@@ -68,14 +63,13 @@ end
 %% Create the aligned and offset vernier stimuli
 
 % This could loop here on the barOffset
-barOffset = 0:2:6;
 X = zeros(1,numel(barOffset));
 P = zeros(1,numel(barOffset));
 
 %%
 for bb = 1:numel(barOffset)
     
-    params.barOffset = barOffset(bb);
+    params.vernier.offset = barOffset(bb);
     [aligned, offset, scenes,tseries] = vaStimuli(params);
     % offset.visualize;
     % aligned.visualize;
@@ -95,7 +89,7 @@ for bb = 1:numel(barOffset)
     
     % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
     % pooling size found by Westheimer and McKee
-    cMosaic.setSizeToFOV(0.25);
+    cMosaic.setSizeToFOV(params.fov);
     
     % Not sure why these have to match, but there is a bug if they don't.
     cMosaic.integrationTime = aligned.timeStep;
@@ -104,7 +98,7 @@ for bb = 1:numel(barOffset)
     
     cMosaic.noiseFlag    = 'random';
     
-    emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
+    emPaths  = cMosaic.emGenSequence(tSamples,'nTrials',nTrials,'em',params.em);
     
     disp('Aligned')
     tic
@@ -224,7 +218,7 @@ plot(6*X,P,'o-');
 grid on
 xlabel('Offset (arc sec)'); ylabel('Percent correct');
 set(gca,'ylim',[45 100])
-title(sprintf('Bar width %.1f (sec), duration %.3f (sec) (A)',6*params.barWidth, params.timesd));
+title(sprintf('Bar width %.1f (sec), duration %.3f (sec) (A)',6*params.vernier.barWidth, params.timesd));
 
 %% Run cross validation
 

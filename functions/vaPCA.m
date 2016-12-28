@@ -32,13 +32,19 @@ p.KeepUnmatched = true;
 
 % These parameters influence the image.  Though I wonder whether we might
 % have the same basis images for different time steps?
+p.addParameter('vernier',vernierP,@isstruct);
+
 p.addParameter('tStep',5,@isscalar);
-p.addParameter('barWidth',3,@isscalar);
 p.addParameter('tsamples',[],@isvector);
 p.addParameter('timesd',20*1e-3,@isscalar);
+p.addParameter('fov',0.25,@isscalar);
 
 p.parse(varargin{:});
 
+% Stimulus parameters for the vernier target
+vernier = p.Results.vernier;
+
+% Time samples for the oiSequence
 if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
 else                            tsamples = p.Results.tsamples;
 end
@@ -52,24 +58,23 @@ cMosaic = coneMosaic;
 
 % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
 % pooling size found by Westheimer and McKee
-cMosaic.setSizeToFOV(0.25);
+cMosaic.setSizeToFOV(p.Results.fov);
 
 % Not sure why these have to match, but there is a bug and they do.
 cMosaic.integrationTime = tsamples(2) - tsamples(1);
 
 % Should we have noise?  Or not?
-cMosaic.os.noiseFlag = 'none';
-cMosaic.noiseFlag    = 'none';
+cMosaic.os.noiseFlag = 'random';
+cMosaic.noiseFlag    = 'random';
 
 %%  Store up the absorptions and current across multiple trials
 
 absorptions = [];
 current = [];
-for offset = 0:1:8      % A large range of pixel offsets
+for offset = 0:1:7      % A large range of pixel offsets
     
-    stimParams = p.Results;
-    stimParams.barOffset = offset;     % Pixels on the display
-    [~,thisStim] = vaStimuli(stimParams);
+    basisParameters.vernier.offset = offset;     % Pixels on the display
+    [~,thisStim] = vaStimuli(basisParameters);
     tSamples = thisStim.length;
 
     emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);

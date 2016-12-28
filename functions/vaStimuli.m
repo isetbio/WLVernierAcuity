@@ -1,7 +1,8 @@
 function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 % Create the pair of vernier stimuli
 %
-% The scene is made at 2x the FOV of the planned cone mosaic size.
+% The scene is made at 2x the FOV of the planned cone mosaic size.  The
+% default display is an Apple LCD monitor.
 %
 % The offset of 1 pixel for a test with 210,210 pixels and a field of view
 % of 0.35 deg is 6 sec.  That is a useful value. If you scale the number of
@@ -17,28 +18,35 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 % TODO:
 %   * Control line length 
 %   * Control the gap between the lines
+%   * Control the background level
+%   * Control the color and contrast of the lines
+%   
 %
 % Notes
 %   Westheimer and McKee, 1977
 %   Luminance 2 log millilamberts
 %   Line width 1 minute of arc.
 %
+% BW, ISETBIO Team, 2016
 
 %%
 p = inputParser;
 
 p.KeepUnmatched = true;   % Sometimes we overload p for SVM and cMosaic
 
-p.addParameter('barWidth',1,@isscalar);
-p.addParameter('barOffset',1,@isscalar);
+p.addParameter('vernier',vernierP,@isstruct);
+
 p.addParameter('tsamples',(-50:100),@isvector);  % Time samples (ms)
 p.addParameter('timesd',20,@isscalar);           % Time standard deviation
 p.addParameter('display',displayCreate('LCD-Apple'),@isstruct);
 
 p.parse(varargin{:});
 
-barWidth  = p.Results.barWidth;
-barOffset = p.Results.barOffset;
+vernier   = p.Results.vernier;
+barWidth  = vernier.barWidth;
+barOffset = vernier.offset;
+bgColor   = vernier.bgColor;
+
 tsamples  = p.Results.tsamples;
 timesd    = p.Results.timesd;
 display   = p.Results.display;
@@ -62,18 +70,17 @@ clear sparams;
 sparams.fov      = (0.35); 
 sparams.distance = (0.3);    % Meters
 
-% Basic vernier parameters for the oiSequence
+% Basic vernier parameters for the oiSequence.  Reverse order forces the
+% allocation first so the array does not grow over the loop.
 clear vparams;
 for ii = 3:-1:1
-    vparams(ii) = vernierP;
+    vparams(ii) = vernier;
     vparams(ii).display = display;
-    % For a fov of 0.35 and this size, 1 pixel offset is 6 sec of arc
-    vparams(ii).sceneSz = ([210 210]);
 end
 
-% Uniform field, no line
+% Uniform field, no line, just the background color
 vparams(1).name     = 'uniform'; 
-vparams(1).bgColor  = 0.5; 
+vparams(1).bgColor  = bgColor; 
 vparams(1).barWidth = 0;
 
 % Offset Line on a zero background
