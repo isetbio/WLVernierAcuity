@@ -2,7 +2,8 @@
 
 nTrials = 300;
 % Integration time and time step of the movie
-tStep   = 30;
+tStep   = 30;  % Adequate for absorptions
+% tStep   = 5;   % Useful for current
 
 % Set the number of image bases
 nBasis = 15;
@@ -13,7 +14,7 @@ nBasis = 15;
 coneMosaicfov = 0.25;
 
 % Sets the number of steps in the curve
-barOffset = [0 2 ];
+barOffset = [4 6];
 
 % Set basic parameters for the vernier stimulus
 clear params;
@@ -40,7 +41,9 @@ params.em.emFlag = [1 1 1]';
 
 % vaPCA(params);
 
+% We need to visualize the imageBasis.  Here would be a good spot.
 s_vaAbsorptions
+% s_vaCurrent
 
 %%
 params = 
