@@ -22,8 +22,6 @@ function [imageBasisA,imageBasisC] = vaPCA(varargin)
 % to reduce noise, I think.
 nTrials = 20;
 
-% We want plenty of basis functions stored.  We may not use all of them.
-nBasis = 30;
 
 %% Parse the inputs
 p = inputParser;
@@ -43,6 +41,9 @@ p.parse(varargin{:});
 
 % Stimulus parameters for the vernier target
 vernier = p.Results.vernier;
+
+% We want plenty of basis functions stored.  We may not use all of them.
+nBasis = 100;
 
 % Time samples for the oiSequence
 if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
