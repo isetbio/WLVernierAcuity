@@ -1,8 +1,21 @@
 function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
-% Create the pair of vernier stimuli
+% Create the pair of vernier stimuli (aligned and offset)
 %
-% The scene is made at 2x the FOV of the planned cone mosaic size.  The
-% default display is an Apple LCD monitor.
+% There is usually one input argument that is a struct with these
+% parameters
+%
+%  vernier   - Parameters for the vernier stimuli; Default is vernierP
+%  tsamples  - Time samples (sec)
+%  timesd    - Time standard deviation
+%  display   - Display struct, default displayCreate('LCD-Apple')
+%  sceneFOV  - Degrees, default 0.35
+%  distance  - Meters, viewing distance to display, default is 0.3 m
+%
+% When the LCD-Apple display is 210, 210 pixels and this is 0.35, then 1
+% pixel is 6 arc sec
+
+%%
+% The default display is an Apple LCD monitor.
 %
 % The offset of 1 pixel for a test with 210,210 pixels and a field of view
 % of 0.35 deg is 6 sec.  That is a useful value. If you scale the number of
@@ -22,6 +35,9 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 %   * Control the color and contrast of the lines
 %   
 %
+% See also:
+%   imageVernier, sceneVernier, sceneCreate, s_vaAbsorptions.m
+%
 % Notes
 %   Westheimer and McKee, 1977
 %   Luminance 2 log millilamberts
@@ -40,6 +56,10 @@ p.addParameter('tsamples',(-50:100),@isvector);  % Time samples (ms)
 p.addParameter('timesd',20,@isscalar);           % Time standard deviation
 p.addParameter('display',displayCreate('LCD-Apple'),@isstruct);
 
+% When the LCD-Apple display is 210, 210 pixels and this is 0.35, then 1
+% pixel is 6 arc sec
+p.addParameter('sceneFOV',0.35,@isscalar);  % Degrees. 
+p.addParameter('distance',0.3,@isscalar);   % Meters
 p.parse(varargin{:});
 
 vernier   = p.Results.vernier;
@@ -50,6 +70,9 @@ bgColor   = vernier.bgColor;
 tsamples  = p.Results.tsamples;
 timesd    = p.Results.timesd;
 display   = p.Results.display;
+
+sceneFOV = p.Results.sceneFOV;
+distance = p.Results.distance;
 
 %% Build Gaussian time series.
 
@@ -67,8 +90,8 @@ clear sparams;
 % We create the scene and thus the oi to be a bit bigger to allow for eye
 % movements.  We set the scene to be .35*60 ~ 21 minutes.  The oi is even a
 % little bigger to allow for blur.
-sparams.fov      = (0.35); 
-sparams.distance = (0.3);    % Meters
+sparams.fov      = sceneFOV;
+sparams.distance = distance;    % Meters
 
 % Basic vernier parameters for the oiSequence.  Reverse order forces the
 % allocation first so the array does not grow over the loop.
