@@ -8,7 +8,7 @@ tStep   = 30;  % Adequate for absorptions
 % tStep   = 5;   % Useful for current
 
 % Set the number of image bases
-nBasis = 40;
+nBasis = 50;
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;
@@ -36,13 +36,13 @@ v.barLength = 200;
 params.vernier = v;
 
 % These are oisequence and other parameters
-params.tsamples  = (-200:tStep:200)*1e-3;   % In second M/W was 200 ms
-params.timesd  = 100*1e-3;                  % In seconds                 
-params.nTrials = nTrials;
-params.tStep   = tStep;
-params.sc      = sc;
-params.nBasis  = nBasis;
-params.fov     = coneMosaicFOV;             % Field of view of cone mosaic in deg
+params.tsamples  = (-200:tStep:200)*1e-3;    % In second M/W was 200 ms
+params.timesd    = 100*1e-3;                 % In seconds                 
+params.nTrials   = nTrials;
+params.tStep     = tStep;
+params.sc        = sc;
+params.nBasis    = nBasis;
+params.fov       = coneMosaicFOV;            % Cone mosaic field of view (deg)
 params.distance  = 0.3;
 params.em        = emCreate;
 params.em.emFlag = [1 1 1]';
@@ -79,7 +79,7 @@ offsetSec = offsetDeg*3600;
 % Legend
 lStrings = cell(1,length(vals));
 for pp=1:length(vals)
-    lStrings{pp} = sprintf('%.1f arc sec',offsetSec*vals(pp));
+    lStrings{pp} = sprintf('%.1f arc min',offsetSec*vals(pp)/60);
 end
 
 h = vcNewGraphWin;
@@ -89,17 +89,18 @@ grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 
 fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat');
-save(fname, 'params', 'barOffset', 'vals');
+save(fname, 'PC','params', 'barOffset', 'vals');
  
 %%  Sweep out different durations
 %
 % Run with sc = 1
 
+% Total of 1 sec duration
 params.tsamples  = (-500:tStep:500)*1e-3;   % In second M/W was 200 ms
-
-barOffset = 2;
-sd = [50 100 200 400]*1e-3;
+barOffset = 1;
+sd = [50 100 200 400 600]*1e-3;
 PC = zeros(1,length(sd));
+
 for pp=1:length(sd)
     params.timesd  = sd(pp);                  % In seconds                 
     s_vaAbsorptions;
@@ -108,7 +109,7 @@ end
 
 % Offset per sample on the display
 offsetDeg = sceneGet(scenes{1},'degrees per sample');
-offsetSec = offsetDeg*3600;
+offsetSec = offsetDeg*3600*barOffset;
 
 vcNewGraphWin;
 plot(sd,squeeze(PC));
@@ -116,34 +117,47 @@ xlabel('Duration (ms)'); ylabel('Percent correct')
 grid on; l = legend(sprintf('Offset: %d arc sec',offsetSec));
 set(l,'FontSize',12);
 
-params
+fname = fullfile(wlvRootPath,'EI','figures','temporalPooling.mat');
+save(fname, 'PC', 'params', 'barOffset', 'sd');
 
 %%  Fix the eye movements to 0.
 % Purpose:  Show that eye movements have a big impact
 %
 
+s_EIParameters;
+
+barOffset = [0 1 2 4 6];
+PC = zeros(numel(barOffset),2);
+
 % Maybe compare the prob. correct at 6 sec when there are no eye movements to
 % the standard eye movement parameter
 params.em.emFlag = [0 0 0]';
-barOffset = [0 1 2 4 6];
-
 s_vaAbsorptions;
+PC(:,1) = P(:);
+
+params.em.emFlag = [1 1 1]';
+s_vaAbsorptions;
+PC(:,1) = P(:);
 
 % Offset per sample on the display
 offsetDeg = sceneGet(scenes{1},'degrees per sample');
-offsetSec = offsetDeg*3600;
+offsetMin = offsetDeg*60;
 
 % Legend
 lStrings = cell(1,length(barOffset));
 for pp=1:length(barOffset)
-    lStrings{pp} = sprintf('%.1f arc sec',offsetSec*barOffset(pp));
+    lStrings{pp} = sprintf('%.1f arc min',offsetMin*barOffset(pp));
 end
 
 vcNewGraphWin;
 plot(offsetSec*barOffset,P);
-xlabel('Offset arc sec'); ylabel('Percent correct')
+xlabel('Offset arc min'); ylabel('Percent correct')
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
+
+fname = fullfile(wlvRootPath,'EI','figures','eyeMovements.mat');
+save(fname, 'PC', 'params', 'barOffset');
+
 
 %% Vary the spatial blurring by the optics 
 %
