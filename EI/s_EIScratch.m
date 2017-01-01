@@ -61,9 +61,20 @@ params.em.emFlag = [1 1 1]';
 % Show the dependence on bar length for the computational observer.
 % Use the match on bar length as an indicator of the spatial summation region of
 % the human eye
+nTrials = 300;
 
-barOffset = [0 1 2 3 4 5 6];
-vals = [10 40 160];    % 5 arc sec per pixel
+% Integration time 
+tStep   = 30;  % Adequate for absorptions (ms)
+
+% Cone mosaic field of view in degrees
+coneMosaicFOV = 0.25;
+
+% Spatial scale to control visual angle of each display pixel
+sc = 1;
+
+s_EIParameters;
+barOffset = [0 1  3  5 ];
+vals = [10 40 120 180 240];
 PC = zeros(length(barOffset),length(vals));
 
 for pp=1:length(vals)
@@ -71,6 +82,7 @@ for pp=1:length(vals)
     s_vaAbsorptions;
     PC(:,pp) = P(:);
 end
+% mesh(PC)
 
 % Offset per sample on the display
 offsetDeg = sceneGet(scenes{1},'degrees per sample');
@@ -93,7 +105,6 @@ save(fname, 'PC','params', 'barOffset', 'vals');
  
 %%  Sweep out different durations
 %
-% Run with sc = 1
 
 % Total of 1 sec duration
 params.tsamples  = (-500:tStep:500)*1e-3;   % In second M/W was 200 ms
@@ -124,34 +135,43 @@ save(fname, 'PC', 'params', 'barOffset', 'sd');
 % Purpose:  Show that eye movements have a big impact
 %
 
+nTrials = 300;
+
+% Integration time 
+tStep   = 30;  % Adequate for absorptions (ms)
+
+% Cone mosaic field of view in degrees
+coneMosaicFOV = 0.25;
+
+% Spatial scale to control visual angle of each display pixel
+sc = 1;
+
 s_EIParameters;
 
-barOffset = [0 1 2 4 6];
-PC = zeros(numel(barOffset),2);
+params.vernier.barLength = 120;
 
 % Maybe compare the prob. correct at 6 sec when there are no eye movements to
 % the standard eye movement parameter
+barOffset = [0 1 3];
+PC = zeros(numel(barOffset),2);
 params.em.emFlag = [0 0 0]';
 s_vaAbsorptions;
 PC(:,1) = P(:);
 
 params.em.emFlag = [1 1 1]';
 s_vaAbsorptions;
-PC(:,1) = P(:);
+PC(:,2) = P(:);
 
 % Offset per sample on the display
 offsetDeg = sceneGet(scenes{1},'degrees per sample');
 offsetMin = offsetDeg*60;
 
 % Legend
-lStrings = cell(1,length(barOffset));
-for pp=1:length(barOffset)
-    lStrings{pp} = sprintf('%.1f arc min',offsetMin*barOffset(pp));
-end
+lStrings = cell({'No em','Default em'});
 
 vcNewGraphWin;
-plot(offsetSec*barOffset,P);
-xlabel('Offset arc min'); ylabel('Percent correct')
+plot(offsetMin*barOffset*60,PC);
+xlabel('Offset arc sec'); ylabel('Percent correct')
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 
