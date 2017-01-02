@@ -16,7 +16,8 @@ params.nTrials   = nTrials;
 params.tStep     = tStep;
 params.sc        = sc;
 params.nBasis    = nBasis;
-params.fov       = coneMosaicFOV;            % Cone mosaic field of view (deg)
+params.cmFOV     = coneMosaicFOV;           % Cone mosaic field of view (deg)
+params.sceneFOV  = sceneFOV;                % Scene field of view (deg)
 params.distance  = 0.3;
 params.em        = emCreate;
 params.em.emFlag = [1 1 1]';
@@ -30,9 +31,9 @@ v.bgColor = 0.5;    % The dark background used in McKee and Westheimer
 
 % For a scene fov of 0.35 and a size of 210,210, 1 pixel offset is 6 sec of
 % arc.  Scaling them together preserves this 6 arc sec value. 
-v.sceneSz = [210 210]*params.sc;
-v.barWidth  = 10;
-v.barLength = 200;
+v.sceneSz   = round([210 210]*params.sc);
+v.barWidth  = round(10*params.sc);
+v.barLength = round(200*params.sc);
 
 % Attach the vernier parameters
 params.vernier = v;

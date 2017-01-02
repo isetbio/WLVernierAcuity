@@ -18,11 +18,6 @@
 %
 % HJ/BW, ISETBIO TEAM, 2016
 
-%% Moved parameter setting to s_EIScratch.m
-%
-% We now run this script just to execute.
-%
-
 %% If already computed, use the imageBasis.  If not, make an image basis.
 tmp = [];
 if exist('imageBasisAbsorptions.mat','file'), tmp = load('imageBasisAbsorptions'); end
@@ -30,7 +25,8 @@ if isfield(tmp,'basisParameters')
     basisParameters = tmp.basisParameters;
     if      isequal(basisParameters.timesd, params.timesd) && ...
             isequal(basisParameters.tStep,params.tStep) && ...
-            isequal(basisParameters.fov,params.fov) && ...
+            isequal(basisParameters.cmFOV,params.cmFOV) && ...
+            isequal(basisParameters.sceneFOV,params.sceneFOV) && ...
             isequal(basisParameters.vernier.bgColor, params.vernier.bgColor) && ...
             isequal(basisParameters.vernier.barWidth,params.vernier.barWidth) && ...
             isequal(basisParameters.vernier.barLength,params.vernier.barLength) && ...
@@ -89,7 +85,7 @@ for bb = 1:numel(barOffset)
     
     % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
     % pooling size found by Westheimer and McKee
-    cMosaic.setSizeToFOV(params.fov);
+    cMosaic.setSizeToFOV(params.cmFOV);
     
     % Not sure why these have to match, but there is a bug if they don't.
     cMosaic.integrationTime = aligned.timeStep;

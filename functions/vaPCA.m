@@ -37,7 +37,7 @@ p.addParameter('vernier',vernierP,@isstruct);
 p.addParameter('tStep',5,@isscalar);
 p.addParameter('tsamples',[],@isvector);
 p.addParameter('timesd',20*1e-3,@isscalar);
-p.addParameter('fov',0.25,@isscalar);
+p.addParameter('cmFOV',0.25,@isscalar);
 
 p.parse(varargin{:});
 
@@ -58,7 +58,7 @@ cMosaic = coneMosaic;
 
 % Set the mosaic size to 15 minutes (.25 deg) because that is the spatial
 % pooling size found by Westheimer and McKee
-cMosaic.setSizeToFOV(p.Results.fov);
+cMosaic.setSizeToFOV(p.Results.cmFOV);
 
 % Not sure why these have to match, but there is a bug and they do.
 cMosaic.integrationTime = tsamples(2) - tsamples(1);

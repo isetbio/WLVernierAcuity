@@ -3,7 +3,7 @@
 nTrials = 500;
 
 % Integration time 
-tStep   = 30;  % Adequate for absorptions (ms)
+tStep   = 10;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;
@@ -13,7 +13,7 @@ sc = 3;
 
 s_EIParameters;
 
-params.vernier.barLength = 120;
+params.vernier.barLength = 360;
 
 % Maybe compare the prob. correct at 6 sec when there are no eye movements to
 % the standard eye movement parameter
@@ -47,14 +47,19 @@ PC(:,5) = P(:);
 offsetDeg = sceneGet(scenes{1},'degrees per sample');
 offsetMin = offsetDeg*60;
 
-lStrings = cell({'No em','tremor only','drift only','msaccade only','default'});
+lStrings = cell({'No em','tremor only','drift only','msaccade only','All'});
 
 vcNewGraphWin;
-plot(offsetMin*barOffset*60,PC);
+plot(offsetMin*barOffset*60,PC,'o-');
 xlabel('Offset arc sec'); ylabel('Percent correct')
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
+set(gca,'ylim',[40 110]);
 
+%%S
 fname = fullfile(wlvRootPath,'EI','figures','fineEyeMovements.mat');
-save(fname, 'PC', 'params', 'barOffset');
+save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
+%%
+
+load(fname)

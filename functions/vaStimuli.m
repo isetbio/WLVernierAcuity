@@ -56,7 +56,7 @@ p.addParameter('tsamples',(-50:100),@isvector);  % Time samples (ms)
 p.addParameter('timesd',20,@isscalar);           % Time standard deviation
 p.addParameter('display',displayCreate('LCD-Apple'),@isstruct);
 
-% When the LCD-Apple display is 210, 210 pixels and this is 0.35, then 1
+% When the LCD-Apple display is 210, 210 pixels and sceneFOV is 0.35, then 1
 % pixel is 6 arc sec
 p.addParameter('sceneFOV',0.35,@isscalar);  % Degrees. 
 p.addParameter('distance',0.3,@isscalar);   % Meters
