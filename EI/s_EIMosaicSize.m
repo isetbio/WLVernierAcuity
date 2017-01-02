@@ -22,6 +22,8 @@ sc = (sceneFOV/0.35);  % 4 arc sec
 
 s_EIParameters;
 
+%% Summarize
+
 % Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
 % is higher.
 secPerPixel = (6 / sc);
@@ -31,7 +33,6 @@ fprintf('Bar length is %.1f deg, %.1f min\n',...
     (params.vernier.barLength*degPerPixel),...
     (params.vernier.barLength*minPerPixel));
 
-%%
 fprintf('Bar offset per pixel is %.1f sec\n',secPerPixel);
 barOffset = [0  1 2 3  4 ];
 
@@ -39,14 +40,16 @@ barOffset = [0  1 2 3  4 ];
 cmFOV = [.1 .15 .25 .35];    % Degress of visual angle
 PC = zeros(length(barOffset),length(cmFOV));
 
-% Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
-% is higher.
-minPerPixel = (6 / sc) / 60;
+for ii=length(cmFOV):-1:1
+    localParams(ii) = params;
+    localParams(ii).cmFOV = cmFOV(ii);
+end
+clear params
 
-localParams = params;
+%% Parallelize?
 
-for pp=1:length(vals)
-    params.cmFOV = cmFOV(pp);
+parfor pp=1:length(cmFOV)
+    params = localParams(pp);
     s_vaAbsorptions;
     PC(:,pp) = P(:);
 end
@@ -71,8 +74,8 @@ grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 
 %%
-fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat','scenes');
-save(fname, 'PC','params', 'barOffset', 'vals');
+fname = fullfile(wlvRootPath,'EI','figures','mosaicSize.mat');
+save(fname, 'PC','params', 'barOffset', 'cmFOV','scenes');
 
 %%
 load(fname)
