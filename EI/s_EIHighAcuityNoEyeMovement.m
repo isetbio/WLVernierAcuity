@@ -1,4 +1,4 @@
-%% FIne eye movements and different types
+%% Fine eye movements and different types
 
 nTrials = 500;
 
