@@ -1,4 +1,9 @@
 %% Fine eye movements and different types
+%  Note that this is done at high spatial (2 sec) and temoral (10 ms)
+%  resolution. So it takes a while to run.
+% 
+% It would be very nice to figure out a way to run this using parfor
+%
 
 nTrials = 500;
 
@@ -67,7 +72,7 @@ set(l,'FontSize',12)
 set(gca,'ylim',[40 110]);
 
 %%S
-fname = fullfile(wlvRootPath,'EI','figures','fineEyeMovements.mat');
+fname = fullfile(wlvRootPath,'EI','figures','FineEyeMovement.mat');
 save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
 %%

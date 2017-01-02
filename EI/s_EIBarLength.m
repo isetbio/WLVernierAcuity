@@ -29,6 +29,10 @@ barOffset = [0 1 2 3 ];       % Pixels on the display
 vals = [30 60 120 240 360];   % Bar length is half the FOV (6/1.5)*max(vals)/3600
 PC = zeros(length(barOffset),length(vals));
 
+% Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
+% is higher.
+minPerPixel = (6 / sc) / 60;
+
 %%
 for pp=1:length(vals)
     params.vernier.barLength = vals(pp);
@@ -63,3 +67,5 @@ fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat');
 save(fname, 'PC','params', 'barOffset', 'vals','scenes');
 
 %%
+
+load(fname)

@@ -1,8 +1,10 @@
-%% Impact of bar length
+%% Impact of cone mosaic size
+%
+% This complements the bar length analysis.  It should tell a similar story.
+%
 
-% Show the dependence on bar length for the computational observer.
-% Use the match on bar length as an indicator of the spatial summation region of
-% the human eye
+% Show the dependence on spatial size of the cone mosaic for the computational
+% observer.
 nTrials = 300;
 
 % Integration time 
@@ -11,20 +13,46 @@ tStep   = 30;  % Adequate for absorptions (ms)
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;
 
-% Spatial scale to control visual angle of each display pixel
-sc = 1;
+% Original scene
+sceneFOV = 0.35;
+
+% Spatial scale to control visual angle of each display pixel The rule is 6/sc
+% arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
+sc = (sceneFOV/0.35);  % 4 arc sec
 
 s_EIParameters;
-barOffset = [0  1  3  5 ];
-cmSize = [.1 .15 .20 .25 .30];    % Degress of visual angle
-PC = zeros(length(barOffset),length(vals));
+
+% Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
+% is higher.
+secPerPixel = (6 / sc);
+minPerPixel = (6 / sc) / 60;
+degPerPixel = minPerPixel/60;
+fprintf('Bar length is %.1f deg, %.1f min\n',...
+    (params.vernier.barLength*degPerPixel),...
+    (params.vernier.barLength*minPerPixel));
+
+%%
+fprintf('Bar offset per pixel is %.1f sec\n',secPerPixel);
+barOffset = [0  1 2 3  4 ];
+
+%%
+cmFOV = [.1 .15 .25 .35];    % Degress of visual angle
+PC = zeros(length(barOffset),length(cmFOV));
+
+% Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
+% is higher.
+minPerPixel = (6 / sc) / 60;
+
+localParams = params;
 
 for pp=1:length(vals)
-    params. = vals(pp);
+    params.cmFOV = cmFOV(pp);
     s_vaAbsorptions;
     PC(:,pp) = P(:);
 end
 % mesh(PC)
+
+%% 
 
 % Offset per sample on the display
 offsetDeg = sceneGet(scenes{1},'degrees per sample');
@@ -42,5 +70,9 @@ xlabel('Offset arc sec'); ylabel('Percent correct')
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 
+%%
 fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat','scenes');
 save(fname, 'PC','params', 'barOffset', 'vals');
+
+%%
+load(fname)

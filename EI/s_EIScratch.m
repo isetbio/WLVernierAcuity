@@ -1,5 +1,11 @@
 %% s_EIScratch
 % Sets up parameters and runs s_vaAbsorptions
+%
+
+%
+% This has been deprecated for the various individual files, s_EI<AnalysisTye>
+%
+
 
 nTrials = 300;
 
