@@ -19,32 +19,8 @@
 % HJ/BW, ISETBIO TEAM, 2016
 
 %% If already computed, use the imageBasis.  If not, make an image basis.
-tmp = [];
-if exist('imageBasisAbsorptions.mat','file'), tmp = load('imageBasisAbsorptions'); end
-if isfield(tmp,'basisParameters')
-    basisParameters = tmp.basisParameters;
-    if      isequal(basisParameters.timesd, params.timesd) && ...
-            isequal(basisParameters.tStep,params.tStep) && ...
-            isequal(basisParameters.cmFOV,params.cmFOV) && ...
-            isequal(basisParameters.sceneFOV,params.sceneFOV) && ...
-            isequal(basisParameters.vernier.bgColor, params.vernier.bgColor) && ...
-            isequal(basisParameters.vernier.barWidth,params.vernier.barWidth) && ...
-            isequal(basisParameters.vernier.barLength,params.vernier.barLength) && ...
-            isequal(basisParameters.vernier.gap,params.vernier.gap) && ...
-            isequal(basisParameters.vernier.barColor,params.vernier.barColor) && ...
-            isequal(basisParameters.vernier.sceneSz,params.vernier.sceneSz)
 
-        disp('Loading image basis because parameters match')
-        load('imageBasisAbsorptions','imageBasis');
-    else
-        disp('Creating new image basis - parameters do not match')
-        imageBasis = vaPCA(params);
-    end
-else
-    disp('Creating new image basis - can not find parameters in file')
-    imageBasis = vaPCA(params);
-end
-imageBasis = imageBasis(:,1:params.nBasis);
+imageBasis = vaPCA(params);
 
 % % % Have a look if you like
 % vcNewGraphWin; colormap(gray(256))
@@ -54,7 +30,6 @@ imageBasis = imageBasis(:,1:params.nBasis);
 %     title(sprintf('Basis %d',ii));
 %     pause(0.5);
 % end
-
 
 %% Create the aligned and offset vernier stimuli
 
@@ -203,7 +178,7 @@ end
 
 %% Dump out for saving and plotting
 
-params
+disp(params)
 s = sprintf('X = ['); s = [s, sprintf('%d ',X)]; s = [s , sprintf(']')];
 disp(s)
 s = sprintf('P = ['); s = [s, sprintf('%.2f ',P)]; s = [s , sprintf(']')];

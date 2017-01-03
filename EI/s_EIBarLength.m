@@ -68,4 +68,4 @@ save(fname, 'PC','params', 'barOffset', 'vals','scenes');
 
 %%
 
-load(fname)
+% load(fname)

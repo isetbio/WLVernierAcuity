@@ -1,4 +1,4 @@
-function [imageBasisA,imageBasisC] = vaPCA(varargin)
+function [imageBasisAbsorptions,imageBasisCurrent] = vaPCA(varargin)
 % Make the principal component images for the absorptions and photocurrent
 %
 % The input argument is a struct that must include all the parameters
@@ -16,16 +16,34 @@ function [imageBasisA,imageBasisC] = vaPCA(varargin)
 %
 % BW, ISETBIO Team, Copyright 2016
 
+%% Check if the PCA has already been computed
+
+params = varargin{1};
+
+% Stored imageBasis filename with the same parameters as this
+fname = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'.mat']);
+
+if exist(fname,'file')
+    disp('Loading image basis from file - parameters match')
+    load(fname);
+else 
+    disp('Creating and saving image basis file - parameters do not match')
+end
+
+if ~exist('maxOffset','var'), maxOffset = 7; end
+
 %% Basic parameters
 
-% Figure out a sensible way to set this.  We average some number of trials
-% to reduce noise, I think.
+% Figure out a sensible way to set this.  We average some trials to reduce
+% noise, I think.
 nTrials = 20;
 
 % We want plenty of basis functions stored.  We may not use all of them.
 nBasis = 100;
 
-%% Parse the inputs
+%% Parse the inputs - probably not needed any more.
+% Just accept that params will be passed in
+
 p = inputParser;
 
 p.KeepUnmatched = true;
@@ -38,19 +56,18 @@ p.addParameter('tStep',5,@isscalar);
 p.addParameter('tsamples',[],@isvector);
 p.addParameter('timesd',20*1e-3,@isscalar);
 p.addParameter('cmFOV',0.25,@isscalar);
+p.addParameter('maxOffset',7,@isscalar);
 
 p.parse(varargin{:});
 
 % Stimulus parameters for the vernier target
-vernier = p.Results.vernier;
+vernier   = p.Results.vernier;
+maxOffset = p.Results.maxOffset;
 
 % Time samples for the oiSequence
 if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
-else                            tsamples = p.Results.tsamples;
+else,                           tsamples = p.Results.tsamples;
 end
-
-% Saved in the output files
-basisParameters = varargin{1}; %#ok<NASGU>
 
 %% Create the matched vernier stimuli
 
@@ -71,10 +88,10 @@ cMosaic.noiseFlag    = 'random';
 
 absorptions = [];
 current = [];
-for offset = 0:1:7      % A large range of pixel offsets
+for offset = 0:1:maxOffset      % A large range of pixel offsets
     
-    basisParameters.vernier.offset = offset;     % Pixels on the display
-    [~,thisStim] = vaStimuli(basisParameters);
+    params.vernier.offset = offset;     % Pixels on the display
+    [~,thisStim] = vaStimuli(params);
     tSamples = thisStim.length;
 
     emPaths = cMosaic.emGenSequence(tSamples,'nTrials',nTrials);
@@ -112,13 +129,7 @@ tAbsorptions = trial2Matrix(absorptions,cMosaic);
 
 % We make bases for each type of stimulus and then concatenate them.
 [~,~,V] = svd(tAbsorptions,'econ');
-imageBasis = V(:,1:nBasis); %#ok<*NASGU>
-
-% Save the result and the parameters used to create the result
-% When we load in s_vaAbsorptions we decide whether or not to recompute
-% based on the match of basisParameters
-save('imageBasisAbsorptions','imageBasis','basisParameters')
-imageBasisA = imageBasis;
+imageBasisAbsorptions = V(:,1:nBasis); %#ok<*NASGU>
 
 %% Convert the shape of the absorptions so we can perform the svd
 
@@ -126,13 +137,11 @@ tCurrent = trial2Matrix(current,cMosaic);
 
 % We make bases for each type of stimulus and then concatenate them.
 [~,~,V] = svd(tCurrent,'econ');
-imageBasis = V(:,1:nBasis);
+imageBasisCurrent = V(:,1:nBasis);
 
-% Save the result and the parameters used to create the result When we load
-% in s_vaCurrent we decide whether or not to recompute based on the match
-% of basisParameters
-save('imageBasisCurrent','imageBasis','basisParameters')
-imageBasisC = imageBasis;
+%% Save
+
+save(fname,'imageBasisAbsorptions','imageBasisCurrent','params');
 
 %% Visualize
 % mx = max(imageBasis(:));
@@ -146,5 +155,6 @@ imageBasisC = imageBasis;
 %     title(sprintf('Basis %d',ii));
 %     pause(1);
 % end
+
 
 end

@@ -8,7 +8,7 @@
 nTrials = 300;
 
 % Integration time 
-tStep   = 30;  % Adequate for absorptions (ms)
+tStep   = 10;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;
@@ -40,35 +40,31 @@ barOffset = [0  1 2 3  4 ];
 cmFOV = [.1 .15 .25 .35];    % Degress of visual angle
 PC = zeros(length(barOffset),length(cmFOV));
 
-for ii=length(cmFOV):-1:1
-    localParams(ii) = params;
-    localParams(ii).cmFOV = cmFOV(ii);
-end
-clear params
+% for ii=length(cmFOV):-1:1
+%     localParams(ii) = params;
+%     localParams(ii).cmFOV = cmFOV(ii);
+% end
+% clear params
 
-%% Parallelize?
+%% Can we parallelize?
 
-parfor pp=1:length(cmFOV)
-    params = localParams(pp);
+for pp=1:length(cmFOV)
+    params.cmFOV = cmFOV(pp);
     s_vaAbsorptions;
     PC(:,pp) = P(:);
 end
 % mesh(PC)
 
-%% 
-
-% Offset per sample on the display
-offsetDeg = sceneGet(scenes{1},'degrees per sample');
-offsetSec = offsetDeg*3600;
+%% Make summary graph
 
 % Legend
-lStrings = cell(1,length(vals));
-for pp=1:length(vals)
-    lStrings{pp} = sprintf('%.1f arc min',offsetSec*vals(pp)/60);
+lStrings = cell(1,length(cmFOV));
+for pp=1:length(cmFOV)
+    lStrings{pp} = sprintf('%.2f deg',cmFOV(pp));
 end
 
 h = vcNewGraphWin;
-plot(offsetSec*barOffset,PC);
+plot(secPerPixel*barOffset,PC);
 xlabel('Offset arc sec'); ylabel('Percent correct')
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
