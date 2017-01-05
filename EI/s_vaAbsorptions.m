@@ -176,21 +176,6 @@ for bb = 1:numel(barOffset)
     fprintf('Accuracy for held out data: (%d, %.2f%%) \n', barOffset(bb), (1-classLoss) * 100);
 end
 
-%% Dump out for saving and plotting
-
-disp(params)
-s = sprintf('X = ['); s = [s, sprintf('%d ',X)]; s = [s , sprintf(']')];
-disp(s)
-s = sprintf('P = ['); s = [s, sprintf('%.2f ',P)]; s = [s , sprintf(']')];
-disp(s)
-
-vcNewGraphWin;
-plot(6*X,P,'o-');
-grid on
-xlabel('Offset (arc sec)'); ylabel('Percent correct');
-set(gca,'ylim',[45 100])
-title(sprintf('Bar width %.1f (sec), duration %.3f (sec) (A)',6*params.vernier.barWidth, params.timesd));
-
 %% Run cross validation
 
 % I don't understand this yet, so I am skipping (BW)

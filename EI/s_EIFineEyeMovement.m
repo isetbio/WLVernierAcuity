@@ -5,7 +5,7 @@
 % It would be very nice to figure out a way to run this using parfor
 %
 
-nTrials = 500;
+nTrials = 300;
 
 % Integration time 
 tStep   = 10;  % Adequate for absorptions (ms)
@@ -71,8 +71,9 @@ grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 set(gca,'ylim',[40 110]);
 
-%%S
-fname = fullfile(wlvRootPath,'EI','figures','FineEyeMovement.mat');
+%%
+str = datestr(now,30);
+fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
 save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
 %%

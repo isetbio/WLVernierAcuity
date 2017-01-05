@@ -1,37 +1,51 @@
 %% Impact of bar length
-
 % Show the dependence on bar length for the computational observer. Use the
-% match on bar length as an indicator of the spatial summation region of the
-% human eye
+% match on bar length with behavior as an indicator of the spatial summation
+% region of the human eye
+
 nTrials = 300;
+nBasis  = 40;
 
 % Integration time 
-% Captures eye movements up to 50HZ
+% Captures eye movements up to 100HZ
 % Adequate for absorptions (ms)
-tStep   = 20;       
+tStep   = 10;       
 
 % Scene FOV.  Larger than usual to show the continuing pooling
-sceneFOV = 1;
+sceneFOV = 0.6;
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.5;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
-% arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
+% arc sec for a 0.35 deg scene. The scale factor in the front divides the 6, so
+% 6/1.5 is the secPerPixel here.
 sc = 1.5*(sceneFOV/0.35);  
                            
 s_EIParameters;
 % If you want to initiate imageBasis by hand, do this
 % vaPCA(params);
 
-%%
-barOffset = [0 1 2 3 ];       % Pixels on the display
-vals = [30 60 120 240 360];   % Bar length is half the FOV (6/1.5)*max(vals)/3600
-PC = zeros(length(barOffset),length(vals));
-
+%% Summarize spatial parameters
 % Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
 % is higher.
+secPerPixel = (6 / sc);
 minPerPixel = (6 / sc) / 60;
+degPerPixel = minPerPixel/60;
+barLength = params.vernier.barLength*minPerPixel;
+barWidth   = params.vernier.barWidth*minPerPixel;
+fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
+    (barLength),...
+    (params.vernier.barLength*degPerPixel),...
+    (barWidth));
+fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
+
+%%
+barOffset = [0 1 2 3 ];           % Pixels on the display
+vals = [30 60 120 240 360 600];   % Bar length is half the cmFOV degPerPixel*max(vals)
+PC = zeros(length(barOffset),length(vals));
+fprintf('Max bar length %.2f\n',degPerPixel*max(vals));
+fprintf('Half mosaic size %.2f\n',coneMosaicFOV/2);
 
 %%
 for pp=1:length(vals)
@@ -41,31 +55,28 @@ for pp=1:length(vals)
 end
 % mesh(PC)
 
-
-%%
-% Offset per sample on the display
-offsetDeg = sceneGet(scenes{1},'degrees per sample');
-offsetSec = offsetDeg*3600;
+%% Plot
 
 % Legend
 lStrings = cell(1,length(vals));
 for pp=1:length(vals)
-    lStrings{pp} = sprintf('%.2f deg',offsetSec*vals(pp)/3600);
+    lStrings{pp} = sprintf('%.2f deg',degPerPixel*vals(pp));
 end
 
 title(sprintf('Scene FOV %.1f',sceneGet(scenes{1},'fov')),'FontSize',14)
+
 h = vcNewGraphWin;
-plot(offsetSec*barOffset,PC);
+plot(secPerPixel*barOffset,PC,'-o');
 xlabel('Offset arc sec'); ylabel('Percent correct')
 set(gca,'ylim',[45 100]);
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 
-%%
-
-fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat');
+%% Save
+str = datestr(now,30);
+fname = fullfile(wlvRootPath,'EI','figures',['spatialBarLength-',str,'.mat']);
 save(fname, 'PC','params', 'barOffset', 'vals','scenes');
 
 %%
-
-% load(fname)
+fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat');
+load(fname)

@@ -19,13 +19,12 @@ function [imageBasisAbsorptions,imageBasisCurrent] = vaPCA(varargin)
 %% Check if the PCA has already been computed
 
 params = varargin{1};
-
-% Stored imageBasis filename with the same parameters as this
-fname = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'.mat']);
+fname = vaFname(params);
 
 if exist(fname,'file')
     disp('Loading image basis from file - parameters match')
-    load(fname);
+    load(fname,'imageBasisAbsorptions','imageBasisCurrent');
+    return;
 else 
     disp('Creating and saving image basis file - parameters do not match')
 end
@@ -50,7 +49,7 @@ p.KeepUnmatched = true;
 
 % These parameters influence the image.  Though I wonder whether we might
 % have the same basis images for different time steps?
-p.addParameter('vernier',vernierP,@isstruct);
+p.addParameter('vernier',[]);
 
 p.addParameter('tStep',5,@isscalar);
 p.addParameter('tsamples',[],@isvector);
@@ -66,7 +65,7 @@ maxOffset = p.Results.maxOffset;
 
 % Time samples for the oiSequence
 if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
-else,                           tsamples = p.Results.tsamples;
+else                            tsamples = p.Results.tsamples;
 end
 
 %% Create the matched vernier stimuli

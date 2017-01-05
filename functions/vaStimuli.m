@@ -46,6 +46,21 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 % BW, ISETBIO Team, 2016
 
 %%
+params = varargin{1};
+
+% Stored imageBasis filename with the same parameters as this
+fname = vaFname(params);
+
+if exist(fname,'file')
+    disp('Loading stimulus from file - parameters match')
+    load(fname,'aligned','offset','scenes','tseries');
+    return;
+else 
+    disp('Creating and saving stimulus file - parameters do not match')
+end
+
+
+%%
 p = inputParser;
 
 p.KeepUnmatched = true;   % Sometimes we overload p for SVM and cMosaic
@@ -54,7 +69,6 @@ p.addParameter('vernier',vernierP,@isstruct);
 
 p.addParameter('tsamples',(-50:100),@isvector);  % Time samples (ms)
 p.addParameter('timesd',20,@isscalar);           % Time standard deviation
-p.addParameter('display',displayCreate('LCD-Apple'),@isstruct);
 
 % When the LCD-Apple display is 210, 210 pixels and sceneFOV is 0.35, then 1
 % pixel is 6 arc sec
@@ -69,7 +83,6 @@ bgColor   = vernier.bgColor;
 
 tsamples  = p.Results.tsamples;
 timesd    = p.Results.timesd;
-display   = p.Results.display;
 
 sceneFOV = p.Results.sceneFOV;
 distance = p.Results.distance;
@@ -98,7 +111,6 @@ sparams.distance = distance;    % Meters
 clear vparams;
 for ii = 3:-1:1
     vparams(ii) = vernier;
-    vparams(ii).display = display;
 end
 
 % Uniform field, no line, just the background color
@@ -134,8 +146,11 @@ aligned = oisCreate('vernier','add', tseries,...
     'sceneParameters',sparams);
 % aligned.visualize;
 
+%%
+save(fname,'aligned','offset','scenes','tseries');
+
 % Print out the offset in degrees of arc sec 
-offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
-fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
+% offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;
+% fprintf('Offset in arc secs %.2f\n',offsetDeg*3600);
 
 end
