@@ -49,12 +49,16 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 params = varargin{1};
 
 % Stored imageBasis filename with the same parameters as this
-fname = vaFname(params);
+[~,fname] = vaFname(params);
 
 if exist(fname,'file')
     disp('Loading stimulus from file - parameters match')
-    load(fname,'aligned','offset','scenes','tseries');
-    return;
+    try
+        load(fname,'aligned','offset','scenes','tseries');
+        return;
+    catch
+        disp('File found, but not the variables.  Creating.')
+    end
 else 
     disp('Creating and saving stimulus file - parameters do not match')
 end

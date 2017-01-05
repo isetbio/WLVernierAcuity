@@ -1,4 +1,4 @@
-function fname = vaFname(params)
+function [fname,fnameStimulus] = vaFname(params)
 % Return the filename for storing basis and stimulus in the va analysis.
 %
 % BW, ISETBIO Team, 2017
@@ -10,6 +10,9 @@ function fname = vaFname(params)
 % to what they were originally, 
 params.nBasis  = 40;
 params.nTrials = 300;
+
 fname = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'.mat']);
+
+fnameStimulus = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'-Stimulus.mat']);
 
 end

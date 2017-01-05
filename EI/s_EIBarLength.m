@@ -77,6 +77,7 @@ str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['spatialBarLength-',str,'.mat']);
 save(fname, 'PC','params', 'barOffset', 'vals','scenes');
 
-%%
-fname = fullfile(wlvRootPath,'EI','figures','spatialBarLength.mat');
-load(fname)
+%% Something like this.
+dlist = fullfile(wlvRootPath,'EI','figures','spatialBarLength*.mat');
+fnames = dir(dlist)
+load(fname(1).name)
