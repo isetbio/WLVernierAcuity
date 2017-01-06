@@ -41,17 +41,18 @@ barOffset = [0  1 2 3  4 ];
 cmFOV = [.1 .15 .25 .35];    % Degress of visual angle
 PC = zeros(length(barOffset),length(cmFOV));
 
-%% Can we parallelize?
-
-for pp=1:length(cmFOV)
-    params.cmFOV = cmFOV(pp);
-    s_vaAbsorptions;
-    PC(:,pp) = P(:);
+%% Compute classification accuracy
+tic;
+parfor pp = 1:length(cmFOV)
+    thisParam = params;
+    thisParam.cmFOV = cmFOV(pp);
+    P = vaAbsorptions(barOffset, thisParam);
+    PC(:, pp) = P(:);
 end
+toc
 % mesh(PC)
 
 %% Make summary graph
-
 % Legend
 lStrings = cell(1,length(cmFOV));
 for pp=1:length(cmFOV)
