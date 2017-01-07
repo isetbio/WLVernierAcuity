@@ -19,12 +19,12 @@ sceneFOV = 1;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = 1.5*(sceneFOV/0.35);  % 4 arc sec
+sc = (sceneFOV/0.35); 
 
 s_EIParameters;
 
 % Make the bar length a little less than 1 deg
-params.vernier.barLength = params.vernier.barLength*2.8;
+params.vernier.barLength = round(params.vernier.barLength*1);
 
 %% Summarize
 
@@ -33,7 +33,7 @@ params.vernier.barLength = params.vernier.barLength*2.8;
 secPerPixel = (6 / sc);
 minPerPixel = (6 / sc) / 60;
 degPerPixel = minPerPixel/60;
-fprintf('Bar length is %.1f deg, %.1f min\n',...
+fprintf('Bar length is %.2f deg, %.2f min\n',...
     (params.vernier.barLength*degPerPixel),...
     (params.vernier.barLength*minPerPixel));
 
@@ -46,6 +46,7 @@ PC = zeros(length(barOffset),length(cmFOV));
 
 %% Compute classification accuracy
 tic;
+c = gcp; if isempty(c), parpool('local'); end
 parfor pp = 1:length(cmFOV)
     thisParam = params;
     thisParam.cmFOV = cmFOV(pp);
