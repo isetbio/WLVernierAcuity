@@ -1,59 +1,41 @@
-%% Impact of cone mosaic size
-%
-% This complements the bar length analysis.  It should tell a similar story.
+%% Impact of blurring the optics on CSF and Vernier
 %
 
 % Show the dependence on spatial size of the cone mosaic for the computational
 % observer.
-nTrials = 1000;
+nTrials = 100;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 10;  % Adequate for absorptions (ms)
+tStep   = 50;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;
 
 % Original scene
-sceneFOV = 1;
+sceneFOV = 0.35;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = 1.5*(sceneFOV/0.35);  % 4 arc sec
+sc = 1*(sceneFOV/0.35);  
 
-s_EIParameters;
-
-% Make the bar length a little less than 1 deg
-params.vernier.barLength = params.vernier.barLength*2.8;
+s_EIParametersCSF;
 
 %% Summarize
 
-% Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
-% is higher.
-secPerPixel = (6 / sc);
-minPerPixel = (6 / sc) / 60;
-degPerPixel = minPerPixel/60;
-fprintf('Bar length is %.1f deg, %.1f min\n',...
-    (params.vernier.barLength*degPerPixel),...
-    (params.vernier.barLength*minPerPixel));
+%% Set up for the CSF calculation
 
-%%
-fprintf('Bar offset per pixel is %.1f sec\n',secPerPixel);
-barOffset = [0 1 2 3 4];
+freqSamples = [10 30 50];  % CPD
+PC = zeros(length(freqSamples),length(2));
 
-cmFOV = [0.15 0.30 0.50 0.80];    % Degress of visual angle
-PC = zeros(length(barOffset),length(cmFOV));
-
-%% Can we parallelize?
-
-for pp=1:length(cmFOV)
-    params.cmFOV = cmFOV(pp);
-    s_vaAbsorptions;
+%% 
+for pp=1:length(freqSamples)
+    s_csfAbsorptions;
     PC(:,pp) = P(:);
 end
 % mesh(PC)
 
-%% Make summary graph
+%% Make summary graphs
 
 % Legend
 lStrings = cell(1,length(cmFOV));

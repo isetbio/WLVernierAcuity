@@ -5,7 +5,9 @@
 % It would be very nice to figure out a way to run this using parfor
 %
 
-nTrials = 300;
+% Can be changed without recomputing everything
+nTrials = 1000;
+nBasis  = 40;
 
 % Integration time 
 tStep   = 10;  % Adequate for absorptions (ms)
@@ -77,5 +79,29 @@ fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
 save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
 %%
+ddir = fullfile(wlvRootPath,'EI','figures');
+dfiles = dir(fullfile(ddir,'FineEyeMovements*'));
 
-load(fname)
+h = vcNewGraphWin;
+cnt = 0;
+for ii=1:length(dfiles)
+    load(dfiles(ii).name);
+    ii, size(PC)
+    PC
+    if ii == 1
+        PCall = PC; cnt = 1;
+    else
+        if size(PC) == size(PCall)
+            PCall = PCall + PC;
+            cnt = cnt + 1;
+        end
+    end
+end
+PCall = PCall/cnt;
+plot(secPerPixel*barOffset,PCall,'-o');
+xlabel('Offset arc sec'); ylabel('Percent correct')
+lStrings = cell({'No em','tremor only','drift only','micro saccade only','All'});
+grid on; l = legend(lStrings);
+set(l,'FontSize',12)
+set(gca,'ylim',[40 110]);
+

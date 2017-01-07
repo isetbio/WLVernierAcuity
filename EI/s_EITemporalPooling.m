@@ -3,7 +3,7 @@
 % BW, ISETBIO Team, 2017
 
 %% Initialize parameters for s_EIParameters call
-nTrials = 300;
+nTrials = 600;
 nBasis  = 40;
 
 % Integration time 
@@ -57,7 +57,7 @@ end
 %%
 vcNewGraphWin;
 plot(sd,squeeze(PC),'-o');
-xlabel('Duratison (ms)'); ylabel('Percent correct')
+xlabel('Duration (ms)'); ylabel('Percent correct')
 grid on; set(l,'FontSize',12);
 
 % disp(params)
@@ -69,5 +69,6 @@ fname = fullfile(wlvRootPath,'EI','figures',['temporalPooling-',str,'.mat']);
 save(fname, 'PC', 'params', 'barOffset', 'sd');
 
 %%
-fname = fullfile(wlvRootPath,'EI','figures','temporalPooling.mat');
-load(fname)
+ddir = fullfile(wlvRootPath,'EI','figures');
+dfiles = dir(fullfile(ddir,'temporalPooling*'));
+load(dfiles(2).name)
