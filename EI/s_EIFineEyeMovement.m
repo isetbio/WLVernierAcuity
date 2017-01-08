@@ -20,11 +20,11 @@ sceneFOV = 0.35;
 
 % Spatial scale that controls visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = 3*(sceneFOV/0.35);  
+sc = 1.5*(sceneFOV/0.35);  
 
 s_EIParameters;
 
-params.vernier.barLength = 360;   % This is 0.2 deg
+% params.vernier.barLength = 360;   % This is 0.2 deg
 
 %%
 secPerPixel = (6 / sc);
@@ -49,34 +49,39 @@ fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 
 %%
 
-
-% [aligned, offset, scenes] = vaStimuli(params);
-% ieAddObject(scenes{2}); sceneWindow;
-
 % Maybe compare the prob. correct at 6 sec when there are no eye movements to
 % the standard eye movement parameter
-barOffset = [0 1 2 4 6 7];
+barOffset = [0 1 2 4 6];
 PC = zeros(numel(barOffset),5);
 
-params.em.emFlag = [0 0 0]';
-s_vaAbsorptions;
-PC(:,1) = P(:);
+emTypes = [ 0 0 0 ; 1 0 0 ; 0 1 0 ; 0 0 1 ; 1 1 1]';
+tic;
+c = gcp; if isempty(c), parpool('local'); end
+parfor pp=1:5
+    pp
+    thisParam = params;
+    thisParam.em.emFlag = emTypes(:,pp);
+    P = vaAbsorptions(barOffset,thisParam);
+    PC(:,pp) = P(:);
+end
+toc
 
-params.em.emFlag = [1 0 0]';
-s_vaAbsorptions;
-PC(:,2) = P(:);
-
-params.em.emFlag = [0 1 0]';
-s_vaAbsorptions;
-PC(:,3) = P(:);
-
-params.em.emFlag = [0 0 1]';
-s_vaAbsorptions;
-PC(:,4) = P(:);
-
-params.em.emFlag = [1 1 1]';
-s_vaAbsorptions;
-PC(:,5) = P(:);
+%%
+% params.em.emFlag = [1 0 0]';
+% s_vaAbsorptions;
+% PC(:,2) = P(:);
+% 
+% params.em.emFlag = [0 1 0]';
+% s_vaAbsorptions;
+% PC(:,3) = P(:);
+% 
+% params.em.emFlag = [0 0 1]';
+% s_vaAbsorptions;
+% PC(:,4) = P(:);
+% 
+% params.em.emFlag = [1 1 1]';
+% s_vaAbsorptions;
+% PC(:,5) = P(:);
 
 
 %% Plot
@@ -91,9 +96,9 @@ set(l,'FontSize',12)
 set(gca,'ylim',[40 110]);
 
 %%
-% str = datestr(now,30);
-% fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
-% save(fname, 'PC', 'params', 'barOffset', 'scenes');
+str = datestr(now,30);
+fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
+save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
 %%
 % ddir = fullfile(wlvRootPath,'EI','figures');

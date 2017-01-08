@@ -20,7 +20,7 @@ coneMosaicFOV = 0.5;
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. The scale factor in the front divides the 6, so
 % 6/1.5 is the secPerPixel here.
-sc = 1.5*(sceneFOV/0.35);  
+sc = (sceneFOV/0.35);  
                            
 s_EIParameters;
 % If you want to initiate imageBasis by hand, do this
@@ -31,7 +31,7 @@ s_EIParameters;
 % is higher.
 secPerPixel = (6 / sc);
 minPerPixel = (6 / sc) / 60;
-degPerPixel = minPerPixel/60;
+degPerPixel = (6 / sc) / 60 / 60;
 barLength = params.vernier.barLength*minPerPixel;
 barWidth   = params.vernier.barWidth*minPerPixel;
 fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
@@ -49,27 +49,37 @@ fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 % 
 % oiGet(offset.oiModulated,'angular resolution')*3600
 
-%%
-barOffset = [0 1 2 3 ];           % Pixels on the display
-vals = [30 60 120 240 300 360];   % Bar length is half the cmFOV degPerPixel*max(vals)
-PC = zeros(length(barOffset),length(vals));
-fprintf('Max bar length %.2f\n',degPerPixel*max(vals));
-fprintf('Half mosaic size %.2f\n',coneMosaicFOV/2);
+%% Initialize offsets and lengths
 
-%%
-for pp=1:length(vals)
-    params.vernier.barLength = vals(pp);
-    s_vaAbsorptions;
+barOffset  = [0 1 2 3 4];           % Pixels on the display
+% Make this less than
+% params.vernier.sceneSz(1)
+barLengths = [30 60 120 240 350];   % Bar length is the top and bottom
+if max(barLengths) > params.vernier.sceneSz(1)
+    error('Bar length is too long');
+end
+PC = zeros(length(barOffset),length(barLengths));
+fprintf('Max bar length %.2f\n',degPerPixel*max(barLengths));
+fprintf('Mosaic size %.2f\n',coneMosaicFOV);
+
+%% Run for all the bar lengths
+
+tic;
+c = gcp; if isempty(c), parpool('local'); end
+for pp=1:length(barLengths)
+    thisParam = params;
+    thisParam.vernier.barLength = barLengths(pp);
+    P = vaAbsorptions(barOffset,thisParam);
     PC(:,pp) = P(:);
 end
-% mesh(PC)
+toc
 
 %% Plot
 
 % Legend
-lStrings = cell(1,length(vals));
-for pp=1:length(vals)
-    lStrings{pp} = sprintf('%.2f deg',degPerPixel*vals(pp));
+lStrings = cell(1,length(barLengths));
+for pp=1:length(barLengths)
+    lStrings{pp} = sprintf('%.2f deg',degPerPixel*barLengths(pp));
 end
 
 title(sprintf('Scene FOV %.1f',sceneGet(scenes{1},'fov')),'FontSize',14)
@@ -109,9 +119,9 @@ PCall = PCall/cnt;
 plot(secPerPixel*barOffset,PCall,'-o');
 
 % Legend
-lStrings = cell(1,length(vals));
-for pp=1:length(vals)
-    lStrings{pp} = sprintf('%.2f deg',degPerPixel*vals(pp));
+lStrings = cell(1,length(barLengths));
+for pp=1:length(barLengths)
+    lStrings{pp} = sprintf('%.2f deg',degPerPixel*barLengths(pp));
 end
 
 xlabel('Offset arc sec'); ylabel('Percent correct')
