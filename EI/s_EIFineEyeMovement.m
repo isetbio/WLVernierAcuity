@@ -6,7 +6,7 @@
 %
 
 % Can be changed without recomputing everything
-nTrials = 1000;
+nTrials = 500;
 nBasis  = 40;
 
 % Integration time 
@@ -24,14 +24,31 @@ sc = 3*(sceneFOV/0.35);
 
 s_EIParameters;
 
+params.vernier.barLength = 360;   % This is 0.2 deg
+
+%%
+secPerPixel = (6 / sc);
+minPerPixel = (6 / sc) / 60;
+degPerPixel = minPerPixel / 60;
+barLength = params.vernier.barLength*minPerPixel;
+barWidth  = params.vernier.barWidth*minPerPixel;
+fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
+    (barLength),...
+    (params.vernier.barLength*degPerPixel),...
+    (barWidth));
+fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
+
+%%  Build the stimuli if you want to check stuff
+% 
+% [~, offset,scenes,tseries] = vaStimuli(params);
+% 
+% ieAddObject(scenes{2}); sceneWindow;
+% ieAddObject(offset.oiModulated); oiWindow;
+% 
+% oiGet(offset.oiModulated,'angular resolution')*3600
+
 %%
 
-% Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
-% is higher.
-minPerPixel = (6 / sc) / 60;
-
-% So the bar length in arc minutes should be this number times minPerPixel
-params.vernier.barLength = 360;   % This is 0.2 deg
 
 % [aligned, offset, scenes] = vaStimuli(params);
 % ieAddObject(scenes{2}); sceneWindow;
@@ -74,34 +91,34 @@ set(l,'FontSize',12)
 set(gca,'ylim',[40 110]);
 
 %%
-str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
-save(fname, 'PC', 'params', 'barOffset', 'scenes');
+% str = datestr(now,30);
+% fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
+% save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
 %%
-ddir = fullfile(wlvRootPath,'EI','figures');
-dfiles = dir(fullfile(ddir,'FineEyeMovements*'));
-
-h = vcNewGraphWin;
-cnt = 0;
-for ii=1:length(dfiles)
-    load(dfiles(ii).name);
-    ii, size(PC)
-    PC
-    if ii == 1
-        PCall = PC; cnt = 1;
-    else
-        if size(PC) == size(PCall)
-            PCall = PCall + PC;
-            cnt = cnt + 1;
-        end
-    end
-end
-PCall = PCall/cnt;
-plot(secPerPixel*barOffset,PCall,'-o');
-xlabel('Offset arc sec'); ylabel('Percent correct')
-lStrings = cell({'No em','tremor only','drift only','micro saccade only','All'});
-grid on; l = legend(lStrings);
-set(l,'FontSize',12)
-set(gca,'ylim',[40 110]);
+% ddir = fullfile(wlvRootPath,'EI','figures');
+% dfiles = dir(fullfile(ddir,'FineEyeMovements*'));
+% 
+% h = vcNewGraphWin;
+% cnt = 0;
+% for ii=1:length(dfiles)
+%     load(dfiles(ii).name);
+%     ii, size(PC)
+%     PC
+%     if ii == 1
+%         PCall = PC; cnt = 1;
+%     else
+%         if size(PC) == size(PCall)
+%             PCall = PCall + PC;
+%             cnt = cnt + 1;
+%         end
+%     end
+% end
+% PCall = PCall/cnt;
+% plot(secPerPixel*barOffset,PCall,'-o');
+% xlabel('Offset arc sec'); ylabel('Percent correct')
+% lStrings = cell({'No em','tremor only','drift only','micro saccade only','All'});
+% grid on; l = legend(lStrings);
+% set(l,'FontSize',12)
+% set(gca,'ylim',[40 110]);
 

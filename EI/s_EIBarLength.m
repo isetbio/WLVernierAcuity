@@ -40,6 +40,15 @@ fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
     (barWidth));
 fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 
+%%  Build the stimuli if you want to check stuff
+% 
+% [~, offset,scenes,tseries] = vaStimuli(params);
+% 
+% ieAddObject(scenes{2}); sceneWindow;
+% ieAddObject(offset.oiModulated); oiWindow;
+% 
+% oiGet(offset.oiModulated,'angular resolution')*3600
+
 %%
 barOffset = [0 1 2 3 ];           % Pixels on the display
 vals = [30 60 120 240 300 360];   % Bar length is half the cmFOV degPerPixel*max(vals)

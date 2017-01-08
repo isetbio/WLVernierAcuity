@@ -33,7 +33,7 @@ v.bgColor = 0.5;    % The dark background used in McKee and Westheimer
 % arc.  Scaling them together preserves this 6 arc sec value. 
 v.sceneSz   = round([210 210]*params.sc);
 v.barWidth  = round(10*params.sc);
-v.barLength = round(200*params.sc);
+v.barLength = round(200*params.sc);   % This is the two bars, together
 
 % Attach the vernier parameters
 params.vernier = v;
