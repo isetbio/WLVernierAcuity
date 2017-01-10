@@ -89,7 +89,7 @@ hparams(1).contrast = 0;
     'testParameters',hparams, ...
     'sceneParameters',sparams);
 
-% stimHarmonic.visualize;
+% vcNewGraphWin; stimHarmonic.visualize;
 % ieAddObject(offset.oiFixed); ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenesO{2}); sceneWindow;
 

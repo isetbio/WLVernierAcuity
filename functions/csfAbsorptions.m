@@ -19,14 +19,15 @@ nTrials = params.nTrials;
 % This could loop here on the barOffset
 X = zeros(1, numel(freq));
 P = zeros(1, numel(freq));
-
-%% Compute for each offset
-for bb = 1:numel(freq)
-    params.vernier.offset = freq(bb);
-    %%%%% [uniform, harmonic, ~, ~] = csfStimuli(params);
+contrast = 1;
+%% Compute for each contrast level?
+for bb = 1:numel(contrast)
+    params.harmonic.contrast = contrast(bb);
+    [uniform, harmonic, ~, ~] = csfStimuli(params);
     
     %  Compute absorptions for multiple trials
-    tSamples = aligned.length;
+    tSamples = uniform.length;
+    
     cMosaic = coneMosaic;
     
     % Set the mosaic size to 15 minutes (.25 deg) because that is the
@@ -35,7 +36,7 @@ for bb = 1:numel(freq)
     cMosaic.setSizeToFOV(params.cmFOV);
     
     % Not sure why these have to match, but there is a bug if they don't.
-    cMosaic.integrationTime = aligned.timeStep;
+    cMosaic.integrationTime = uniform.timeStep;
     
     % For aligned or offset
     cMosaic.noiseFlag = 'random';
@@ -43,9 +44,9 @@ for bb = 1:numel(freq)
         'em', params.em);
     
     % compute absorptions for aligned and offset
-    alignedA = cMosaic.compute(aligned, 'currentFlag', false, ...
+    uniformA = cMosaic.compute(uniform, 'currentFlag', false, ...
         'emPaths', emPaths);
-    offsetA = cMosaic.compute(offset, 'currentFlag', false, ...
+    harmonicA = cMosaic.compute(harmonic, 'currentFlag', false, ...
         'emPaths', emPaths);
     
     % Reformat the time series for the PCA analysis
@@ -53,11 +54,11 @@ for bb = 1:numel(freq)
     % imgListX matrix contains the temporal response for a pixel in a
     % column The rows represent time samples by number of trials These are
     % the temporal responses across all trials and time points.
-    imgListAligned = trial2Matrix(alignedA,cMosaic);
-    imgListOffset  = trial2Matrix(offsetA,cMosaic);
+    imgListUniform = trial2Matrix(uniformA,cMosaic);
+    imgListharmonic  = trial2Matrix(harmonicA,cMosaic);
     
     % Not-centered PCA (no demeaning, so first PC is basically the mean)
-    imgList = cat(1,imgListAligned,imgListOffset);
+    imgList = cat(1,imgListUniform,imgListharmonic);
     
     % Time series of weights
     weightSeries  = imgList * imageBasis;

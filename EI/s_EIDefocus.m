@@ -7,7 +7,7 @@ nTrials = 100;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 10e-3;  % Adequate for absorptions (ms)
+tStep   = 10;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;

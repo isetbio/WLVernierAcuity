@@ -56,7 +56,7 @@ p.addParameter('cmFOV',0.5,@isscalar);
 
 p.parse(varargin{:});
 
-tStep      = p.Results.tStep;
+tStep      = p.Results.tStep;      % In ms right now, should be sec
 harmonic   = p.Results.harmonic;
 
 % % Time samples for the oiSequence
@@ -76,7 +76,7 @@ cMosaic = coneMosaic;
 cMosaic.setSizeToFOV(p.Results.cmFOV);
 
 % Not sure why these have to match, but there is a bug and they do.
-cMosaic.integrationTime = tStep;
+cMosaic.integrationTime = tStep*1e-3;
 
 % Should we have noise?  Or not?
 cMosaic.os.noiseFlag = 'random';

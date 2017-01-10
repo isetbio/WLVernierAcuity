@@ -10,18 +10,18 @@
 %% These are oisequence and other parameters
 clear params
 
-params.tsamples  = (-200:tStep:200)*1e-3;   % In second M/W was 200 ms
-params.timesd    = 100e-3;                  % +/- 1 sstd is 200 ms               
+params.tsamples  = (-200:tStep:200)*1e-3;   % (sec) McKee/Westheimer was 200 ms
+params.timesd    = 100e-3;                  % (sec) +/- 1 std is 200 ms               
 params.nTrials   = nTrials;
-params.tStep     = tStep;
+params.tStep     = tStep;  % In milliseconds?  That's odd.  Let's fix everywhere
 params.sc        = sc;
 params.nBasis    = nBasis;
 params.cmFOV     = coneMosaicFOV;           % Cone mosaic field of view (deg)
-params.sceneFOV    = sceneFOV;                % Scene field of view (deg)
+params.sceneFOV    = sceneFOV;              % Scene field of view (deg)
 params.distance    = 0.3;
 params.em          = emCreate;
 params.em.emFlag   = [1 1 1]';
-params.defocus     = defocus;                 % Defocus in diopters
+params.defocus     = defocus;               % Defocus in diopters
 
 %% Set basic parameters for the harmonic stimulus
 
