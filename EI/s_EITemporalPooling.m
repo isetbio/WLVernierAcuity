@@ -3,7 +3,7 @@
 % BW, ISETBIO Team, 2017
 
 %% Initialize parameters for s_EIParameters call
-nTrials = 600;
+nTrials = 1000;
 nBasis  = 40;
 
 % Integration time 
@@ -23,15 +23,22 @@ maxOffset = 5;         % Out to 30 arc sec for vaPCA
 
 s_EIParameters;
 
-params.vernier.barWidth = 20;
+params.vernier.barWidth = 10;
 params.tsamples  = (-500:tStep:500)*1e-3;   % In second M/W was 200 ms
+
+%% Summnarize
+
+[~, offset,scenes,tseries] = vaStimuli(params);
+
+ieAddObject(scenes{2}); sceneWindow;
+ieAddObject(offset.oiModulated); oiWindow;
+degPerPixel = sceneGet(scenes{2},'degrees per sample');
+minPerPixel = degPerPixel * 60;
+secPerPixel = minPerPixel * 60;
 
 %% Summarize spatial parameters
 % Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
 % is higher.
-secPerPixel = (6 / sc);
-minPerPixel = (6 / sc) / 60;
-degPerPixel = minPerPixel/60;
 barLength = params.vernier.barLength*minPerPixel;
 barWidth   = params.vernier.barWidth*minPerPixel;
 fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
@@ -47,12 +54,16 @@ barOffset = 2;
 sd = [50 100 200 400 600]*1e-3;
 PC = zeros(1,length(sd));
 
-for pp=1:length(sd)
-    fprintf('Loop %d of %d\n',pp,length(sd));
-    params.timesd  = sd(pp);                  % In seconds                 
-    s_vaAbsorptions;
+tic
+parfor pp=1:length(sd)
+    fprintf('Starting %d of %d ...\n',pp,length(sd));
+    thisParams = params;
+    thisParams.timesd  = sd(pp);                  % In seconds                 
+    P = vaAbsorptions(barOffset,thisParams);
     PC(:,pp) = P(:);
+    fprintf('Finished %d\n',pp);
 end
+toc
 
 %%
 vcNewGraphWin;
@@ -66,9 +77,7 @@ grid on; set(l,'FontSize',12);
 %%
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['temporalPooling-',str,'.mat']);
+fprintf('Saving %s\n',fname);
 save(fname, 'PC', 'params', 'barOffset', 'sd');
 
 %%
-ddir = fullfile(wlvRootPath,'EI','figures');
-dfiles = dir(fullfile(ddir,'temporalPooling*'));
-load(dfiles(2).name)

@@ -30,7 +30,7 @@ PC = zeros(length(freqSamples),length(2));
 
 %% 
 for pp=1:length(freqSamples)
-    s_csfAbsorptions;
+    P = csfAbsorptions;
     PC(:,pp) = P(:);
 end
 % mesh(PC)

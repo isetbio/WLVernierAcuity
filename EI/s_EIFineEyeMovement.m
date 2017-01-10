@@ -6,7 +6,7 @@
 %
 
 % Can be changed without recomputing everything
-nTrials = 500;
+nTrials = 1000;
 nBasis  = 40;
 
 % Integration time 
@@ -20,16 +20,22 @@ sceneFOV = 0.35;
 
 % Spatial scale that controls visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = 1.5*(sceneFOV/0.35);  
+sc = 3*(sceneFOV/0.35);  
 
 s_EIParameters;
 
 % params.vernier.barLength = 360;   % This is 0.2 deg
+%% Summarize
+
+[~, offset,scenes,tseries] = vaStimuli(params);
+
+ieAddObject(scenes{2}); sceneWindow;
+ieAddObject(offset.oiModulated); oiWindow;
+degPerPixel = sceneGet(scenes{2},'degrees per sample');
+minPerPixel = degPerPixel * 60;
+secPerPixel = minPerPixel * 60;
 
 %%
-secPerPixel = (6 / sc);
-minPerPixel = (6 / sc) / 60;
-degPerPixel = minPerPixel / 60;
 barLength = params.vernier.barLength*minPerPixel;
 barWidth  = params.vernier.barWidth*minPerPixel;
 fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
@@ -37,15 +43,6 @@ fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
     (params.vernier.barLength*degPerPixel),...
     (barWidth));
 fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
-
-%%  Build the stimuli if you want to check stuff
-% 
-% [~, offset,scenes,tseries] = vaStimuli(params);
-% 
-% ieAddObject(scenes{2}); sceneWindow;
-% ieAddObject(offset.oiModulated); oiWindow;
-% 
-% oiGet(offset.oiModulated,'angular resolution')*3600
 
 %%
 
@@ -57,32 +54,15 @@ PC = zeros(numel(barOffset),5);
 emTypes = [ 0 0 0 ; 1 0 0 ; 0 1 0 ; 0 0 1 ; 1 1 1]';
 tic;
 c = gcp; if isempty(c), parpool('local'); end
-parfor pp=1:5
-    pp
+parfor pp=1:size(emTypes,2)
+    fprintf('Starting %d of %d ...\n',pp,size(emTypes,2));
     thisParam = params;
     thisParam.em.emFlag = emTypes(:,pp);
     P = vaAbsorptions(barOffset,thisParam);
     PC(:,pp) = P(:);
+    fprintf('Finished %d\n',pp);
 end
 toc
-
-%%
-% params.em.emFlag = [1 0 0]';
-% s_vaAbsorptions;
-% PC(:,2) = P(:);
-% 
-% params.em.emFlag = [0 1 0]';
-% s_vaAbsorptions;
-% PC(:,3) = P(:);
-% 
-% params.em.emFlag = [0 0 1]';
-% s_vaAbsorptions;
-% PC(:,4) = P(:);
-% 
-% params.em.emFlag = [1 1 1]';
-% s_vaAbsorptions;
-% PC(:,5) = P(:);
-
 
 %% Plot
 
@@ -98,32 +78,8 @@ set(gca,'ylim',[40 110]);
 %%
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
+fprintf('Saving %s\n',fname);
 save(fname, 'PC', 'params', 'barOffset', 'scenes');
 
 %%
-% ddir = fullfile(wlvRootPath,'EI','figures');
-% dfiles = dir(fullfile(ddir,'FineEyeMovements*'));
-% 
-% h = vcNewGraphWin;
-% cnt = 0;
-% for ii=1:length(dfiles)
-%     load(dfiles(ii).name);
-%     ii, size(PC)
-%     PC
-%     if ii == 1
-%         PCall = PC; cnt = 1;
-%     else
-%         if size(PC) == size(PCall)
-%             PCall = PCall + PC;
-%             cnt = cnt + 1;
-%         end
-%     end
-% end
-% PCall = PCall/cnt;
-% plot(secPerPixel*barOffset,PCall,'-o');
-% xlabel('Offset arc sec'); ylabel('Percent correct')
-% lStrings = cell({'No em','tremor only','drift only','micro saccade only','All'});
-% grid on; l = legend(lStrings);
-% set(l,'FontSize',12)
-% set(gca,'ylim',[40 110]);
 

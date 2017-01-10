@@ -3,7 +3,7 @@
 % match on bar length with behavior as an indicator of the spatial summation
 % region of the human eye
 
-nTrials = 600;
+nTrials = 1000;
 nBasis  = 40;
 
 % Integration time 
@@ -26,28 +26,27 @@ s_EIParameters;
 % If you want to initiate imageBasis by hand, do this
 % vaPCA(params);
 
+
+%%  Build the stimuli if you want to check stuff
+
+[~, offset,scenes,tseries] = vaStimuli(params);
+
+ieAddObject(scenes{2}); sceneWindow;
+ieAddObject(offset.oiModulated); oiWindow;
+degPerPixel = sceneGet(scenes{2},'degrees per sample');
+minPerPixel = degPerPixel * 60;
+secPerPixel = minPerPixel * 60;
+
 %% Summarize spatial parameters
 % Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
 % is higher.
-secPerPixel = (6 / sc);
-minPerPixel = (6 / sc) / 60;
-degPerPixel = (6 / sc) / 60 / 60;
-barLength = params.vernier.barLength*minPerPixel;
+barLength  = params.vernier.barLength*minPerPixel;
 barWidth   = params.vernier.barWidth*minPerPixel;
 fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
     (barLength),...
     (params.vernier.barLength*degPerPixel),...
     (barWidth));
 fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
-
-%%  Build the stimuli if you want to check stuff
-% 
-% [~, offset,scenes,tseries] = vaStimuli(params);
-% 
-% ieAddObject(scenes{2}); sceneWindow;
-% ieAddObject(offset.oiModulated); oiWindow;
-% 
-% oiGet(offset.oiModulated,'angular resolution')*3600
 
 %% Initialize offsets and lengths
 
@@ -67,10 +66,12 @@ fprintf('Mosaic size %.2f\n',coneMosaicFOV);
 tic;
 c = gcp; if isempty(c), parpool('local'); end
 for pp=1:length(barLengths)
+    fprintf('Starting %d of %d ...\n',pp, length(barLengths));
     thisParam = params;
     thisParam.vernier.barLength = barLengths(pp);
     P = vaAbsorptions(barOffset,thisParam);
     PC(:,pp) = P(:);
+    fprintf('Finished %d\n',pp);
 end
 toc
 
@@ -94,38 +95,8 @@ set(l,'FontSize',12)
 %% Save
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['spatialBarLength-',str,'.mat']);
-save(fname, 'PC','params', 'barOffset', 'vals','scenes');
+fprintf('Saving %s\n',fname);
+save(fname, 'PC','params', 'barOffset', 'barLengths','scenes');
 
-%% Something like this.
-ddir = fullfile(wlvRootPath,'EI','figures');
-dfiles = dir(fullfile(ddir,'spatialBarLength*'));
-
-h = vcNewGraphWin;
-cnt = 0;
-for ii=1:length(dfiles)
-    load(dfiles(ii).name);
-    ii, size(PC)
-    PC
-    if ii == 1
-        PCall = PC; cnt = 1;
-    else
-        if size(PC) == size(PCall)
-            PCall = PCall + PC;
-            cnt = cnt + 1;
-        end
-    end
-end
-PCall = PCall/cnt;
-plot(secPerPixel*barOffset,PCall,'-o');
-
-% Legend
-lStrings = cell(1,length(barLengths));
-for pp=1:length(barLengths)
-    lStrings{pp} = sprintf('%.2f deg',degPerPixel*barLengths(pp));
-end
-
-xlabel('Offset arc sec'); ylabel('Percent correct')
-set(gca,'ylim',[45 100]);
-grid on; l = legend(lStrings);
-set(l,'FontSize',12)
+%%
 

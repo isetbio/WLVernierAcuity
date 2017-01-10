@@ -1,20 +1,21 @@
 function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
-% Create the pair of vernier stimuli (aligned and offset)
+% VASTIMULI - Create the pair of vernier stimuli (aligned and offset)
 %
-% There is usually one input argument that is a struct with these
-% parameters
+%   There is one input argument that is a struct with these parameters
 %
-%  vernier   - Parameters for the vernier stimuli; Default is vernierP
-%  tsamples  - Time samples (sec)
-%  timesd    - Time standard deviation
-%  display   - Display struct, default displayCreate('LCD-Apple')
-%  sceneFOV  - Degrees, default 0.35
-%  distance  - Meters, viewing distance to display, default is 0.3 m
+%    vernier   - Parameters for the vernier stimuli; Default is vernierP
+%    tsamples  - Time samples (sec)
+%    timesd    - Time standard deviation
+%    display   - Display struct, default displayCreate('LCD-Apple')
+%    sceneFOV  - Degrees, default 0.35
+%    distance  - Meters, viewing distance to display, default is 0.3 m
 %
-% When the LCD-Apple display is 210, 210 pixels and this is 0.35, then 1
-% pixel is 6 arc sec
-
-%%
+%   When the LCD-Apple display is [210, 210] pixels and the sceneFOV is 0.35,
+%   then 1 pixel is 6 arc sec.
+%
+%   See also s_EIParameters, s_EIMosaicSize
+%
+%
 % The default display is an Apple LCD monitor.
 %
 % The offset of 1 pixel for a test with 210,210 pixels and a field of view
@@ -28,22 +29,14 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 %    offset.visualize;
 %    vcNewGraphWin; plot(tseries)
 %
-% TODO:
-%   * Control line length 
-%   * Control the gap between the lines
-%   * Control the background level
-%   * Control the color and contrast of the lines
-%   
-%
-% See also:
-%   imageVernier, sceneVernier, sceneCreate, s_vaAbsorptions.m
-%
 % Notes
 %   Westheimer and McKee, 1977
 %   Luminance 2 log millilamberts
 %   Line width 1 minute of arc.
 %
 % BW, ISETBIO Team, 2016
+%
+% See also imageVernier, sceneVernier, sceneCreate, s_vaAbsorptions.m
 
 %%
 params = varargin{1};
