@@ -19,7 +19,7 @@ function [imageBasisAbsorptions,imageBasisCurrent] = csfPCA(varargin)
 %% Check if the PCA has already been computed
 
 params = varargin{1};
-fname = vaFname(params);
+fname  = vaFname(params);
 
 if exist(fname,'file')
     disp('Loading image basis from file - parameters match')
@@ -49,24 +49,23 @@ p.KeepUnmatched = true;
 % have the same basis images for different time steps?
 p.addParameter('harmonic',[]);
 
-p.addParameter('tStep',5,@isscalar);
-p.addParameter('tsamples',[],@isvector);
+p.addParameter('tStep',10,@isscalar);
+% p.addParameter('tsamples',[],@isvector);
 p.addParameter('timesd',20*1e-3,@isscalar);
-p.addParameter('cmFOV',0.25,@isscalar);
-p.addParameter('freqSamples',1,@isvector);
+p.addParameter('cmFOV',0.5,@isscalar);
 
 p.parse(varargin{:});
 
-% Stimulus parameters for the vernier target
+tStep      = p.Results.tStep;
 harmonic   = p.Results.harmonic;
 
-% These are the frequency we train for in the PCA
-freqSamples = p.Results.freqSamples;
-
-% Time samples for the oiSequence
-if isempty(p.Results.tsamples), tsamples = (-60:tStep:70)*1e-3;
-else                            tsamples = p.Results.tsamples;
-end
+% % Time samples for the oiSequence
+% if isempty(p.Results.tsamples), 
+%     tStep = p.Results.tStep;
+%     tsamples = (-60:tStep:70)*1e-3;
+% else
+%     tsamples = p.Results.tsamples;
+% end
 
 %% Create the matched vernier stimuli
 
@@ -77,7 +76,7 @@ cMosaic = coneMosaic;
 cMosaic.setSizeToFOV(p.Results.cmFOV);
 
 % Not sure why these have to match, but there is a bug and they do.
-cMosaic.integrationTime = tsamples(2) - tsamples(1);
+cMosaic.integrationTime = tStep;
 
 % Should we have noise?  Or not?
 cMosaic.os.noiseFlag = 'random';
@@ -87,6 +86,7 @@ cMosaic.noiseFlag    = 'random';
 
 absorptions = [];
 current = [];
+freqSamples = (-1:1)+harmonic.freq;
 for ff = 1:length(freqSamples)      % A large range of pixel offsets
     
     params.harmonic.freq = freqSamples(ff);
@@ -141,19 +141,5 @@ imageBasisCurrent = V(:,1:nBasis);
 %% Save
 
 save(fname,'imageBasisAbsorptions','imageBasisCurrent','params');
-
-%% Visualize
-% mx = max(imageBasis(:));
-% mn = min(imageBasis(:));
-% 
-% % Have a look at the resulting bases
-% vcNewGraphWin; 
-% colormap(gray(256))
-% for ii=1:nBasis
-%     imagesc(reshape(imageBasis(:,ii),cMosaic.rows,cMosaic.cols),[1.2*mn 1.2*mx]);
-%     title(sprintf('Basis %d',ii));
-%     pause(1);
-% end
-
 
 end

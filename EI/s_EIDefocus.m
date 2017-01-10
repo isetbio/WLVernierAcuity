@@ -7,7 +7,7 @@ nTrials = 100;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 50;  % Adequate for absorptions (ms)
+tStep   = 10e-3;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.25;
@@ -15,9 +15,13 @@ coneMosaicFOV = 0.25;
 % Original scene
 sceneFOV = 0.35;
 
+defocus = 0.5;
+
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
 sc = 1*(sceneFOV/0.35);  
+
+freqSamples = [10 30 50];  % CPD
 
 s_EIParametersCSF;
 
@@ -25,12 +29,12 @@ s_EIParametersCSF;
 
 %% Set up for the CSF calculation
 
-freqSamples = [10 30 50];  % CPD
 PC = zeros(length(freqSamples),length(2));
 
 %% 
 for pp=1:length(freqSamples)
-    P = csfAbsorptions;
+    params.harmonic.freq = freqSamples(pp);
+    P = csfAbsorptions(params);
     PC(:,pp) = P(:);
 end
 % mesh(PC)
