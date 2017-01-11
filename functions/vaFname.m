@@ -10,7 +10,6 @@ function [fname,fnameStimulus] = vaFname(params)
 % to what they were originally, 
 params.nBasis  = 40;
 params.nTrials = 300;
-params.oi = [];            % savejson doesn't like the oi object
 
 fname = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'.mat']);
 

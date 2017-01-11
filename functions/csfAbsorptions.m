@@ -1,4 +1,4 @@
-function [P, X] = csfAbsorptions(params)
+function [P, X] = csfAbsorptions(contrasts,params)
 % CSFABSORPTIONS - SVM discriminability of harmonic and uniform using absorptions
 %
 % The harmonic has a frequency and a contrast.  We compare that with a 0
@@ -17,12 +17,11 @@ nTrials = params.nTrials;
 
 %% Create the aligned and offset vernier stimuli
 % This could loop here on the barOffset
-X = zeros(1, numel(freq));
-P = zeros(1, numel(freq));
-contrast = 1;
+X = zeros(1, numel(contrasts));
+P = zeros(1, numel(contrasts));
 %% Compute for each contrast level?
-for bb = 1:numel(contrast)
-    params.harmonic.contrast = contrast(bb);
+for bb = 1:numel(contrasts)
+    params.harmonic.contrast = contrasts(bb);
     [uniform, harmonic, ~, ~] = csfStimuli(params);
     
     %  Compute absorptions for multiple trials
@@ -92,7 +91,7 @@ for bb = 1:numel(contrast)
     yp = predict(mdl, data(~train_index, :));
     classLoss = sum(label(~train_index) ~= yp) / length(yp);
     
-    X(bb) = freq(bb);
+    X(bb) = contrasts(bb);
     P(bb) = (1-classLoss) * 100;
 end
 

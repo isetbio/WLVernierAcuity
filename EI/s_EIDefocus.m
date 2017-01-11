@@ -7,13 +7,13 @@ nTrials = 100;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 10;  % Adequate for absorptions (ms)
+tStep   = 10;  % Adequate for absorptions (ms)  Should be in units of sec!
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.25;
+coneMosaicFOV = 0.5;
 
 % Original scene
-sceneFOV = 0.35;
+sceneFOV = 1;
 
 defocus = 0.5;
 
@@ -21,23 +21,43 @@ defocus = 0.5;
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
 sc = 1*(sceneFOV/0.35);  
 
-freqSamples = [10 30 50];  % CPD
+freqSamples = 1;  % CPD
 
 s_EIParametersCSF;
 
 %% Summarize
 
+params.harmonic.freq = freqSamples(1);
+params.harmonic.contrast = 1;
+[~, harmonic,scenes,tseries] = csfStimuli(params);
+
+% Show and ultimately print
+ieAddObject(scenes{2}); sceneWindow;
+ieAddObject(offset.oiModulated); oiWindow;
+degPerPixel = sceneGet(scenes{2},'degrees per sample');
+minPerPixel = degPerPixel * 60;
+secPerPixel = minPerPixel * 60;
+
 %% Set up for the CSF calculation
 
-PC = zeros(length(freqSamples),length(2));
+PC = zeros(length(contrasts),length(freqSamples));
 
 %% 
+% c = gcp; if isempty(c), parpool('local'); end
+
+contrasts = 0.5;
+
+tic;
 for pp=1:length(freqSamples)
-    params.harmonic.freq = freqSamples(pp);
-    P = csfAbsorptions(params);
+    fprintf('Starting %d of %d ...\n',pp,length(freqSamples));
+    thisParam = params;
+    thisParam.harmonic.freq = freqSamples(pp);
+    P = csfAbsorptions(contrasts,thisParam);
     PC(:,pp) = P(:);
+    fprintf('Finished %d\n',pp);
 end
-% mesh(PC)
+toc
+
 
 %% Make summary graphs
 
@@ -56,37 +76,6 @@ set(l,'FontSize',12)
 %%
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['mosaicSize-',str,'.mat']);
-save(fname, 'PC','params', 'barOffset', 'cmFOV','scenes');
-
-%%
-ddir = fullfile(wlvRootPath,'EI','figures');
-dfiles = dir(fullfile(ddir,'mosaicSize*'));
-
-% Legend
-lStrings = cell(1,length(cmFOV));
-for pp=1:length(cmFOV)
-    lStrings{pp} = sprintf('%.2f deg',cmFOV(pp));
-end
-
-h = vcNewGraphWin;
-cnt = 0;
-for ii=1:length(dfiles)
-    load(dfiles(ii).name);
-    ii, size(PC)
-    PC
-    if ii == 1
-        PCall = PC; cnt = 1;
-    else
-        if size(PC) == size(PCall)
-            PCall = PCall + PC;
-            cnt = cnt + 1;
-        end
-    end
-end
-PCall = PCall/cnt;
-plot(secPerPixel*barOffset,PCall,'-o');
-xlabel('Offset arc sec'); ylabel('Percent correct')
-grid on; l = legend(lStrings);
-set(l,'FontSize',12)
+save(fname, 'PC','params', 'contrasts', 'cmFOV','scenes');
 
 %%

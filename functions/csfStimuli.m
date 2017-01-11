@@ -20,12 +20,12 @@ function [stimUniform, stimHarmonic, scenes, tseries] = csfStimuli(varargin)
 params = varargin{1};
 
 % Stored imageBasis filename with the same parameters as this
-[~,fname] = vaFname(params);
+[~,fname] = csfFname(params);
 
 if exist(fname,'file')
     disp('Loading stimulus from file - parameters match')
     try
-        load(fname,'aligned','offset','scenes','tseries');
+        load(fname,'stimUniform','stimHarmonic','scenes','tseries');
         return;
     catch
         disp('File found, but not the variables.  Creating.')
@@ -102,7 +102,7 @@ stimUniform = oisCreate('harmonic','blend', tseries,...
 % stimUniform.visualize;
 
 %%
-% save(fname,'stimUniform','stimHarmonic','scenes','tseries');
+save(fname,'stimUniform','stimHarmonic','scenes','tseries');
 
 % Print out the offset in degrees of arc sec 
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;

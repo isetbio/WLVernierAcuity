@@ -19,7 +19,7 @@ function [imageBasisAbsorptions,imageBasisCurrent] = csfPCA(varargin)
 %% Check if the PCA has already been computed
 
 params = varargin{1};
-fname  = vaFname(params);
+fname  = csfFname(params);
 
 if exist(fname,'file')
     disp('Loading image basis from file - parameters match')
@@ -86,10 +86,13 @@ cMosaic.noiseFlag    = 'random';
 
 absorptions = [];
 current = [];
-freqSamples = (-1:1)+harmonic.freq;
-for ff = 1:length(freqSamples)      % A large range of pixel offsets
+% span = (-1:1);
+span = 0;
+freqRange = span + harmonic.freq;
+freqRange = [0, freqRange];   % Always include uniform
+for ff = 1:length(freqRange)      % A large range of pixel offsets
     
-    params.harmonic.freq = freqSamples(ff);
+    params.harmonic.freq = freqRange(ff);
     [~,thisStim] = csfStimuli(params);
     tSamples = thisStim.length;
 
