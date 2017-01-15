@@ -1,9 +1,9 @@
-%% Impact of blurring the optics on CSF and Vernier
+%% Impact of blurring the optics on CSF
 %
 
 % Show the dependence on spatial size of the cone mosaic for the computational
 % observer.
-nTrials = 100;
+nTrials = 1000;
 nBasis  = 40;
 
 % Integration time 
@@ -15,39 +15,56 @@ coneMosaicFOV = 0.5;
 % Original scene
 sceneFOV = 1;
 
-defocus = 0.5;
+defocus = 0;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
 sc = 1*(sceneFOV/0.35);  
 
-freqSamples = 1;  % CPD
-
 s_EIParametersCSF;
+
+% Special conditions
+contrasts   = logspace(-2.5,0,5); 
+freqSamples = 1; % [1, 2, 10, 15, 20, 25];
+
 
 %% Summarize
 
-params.harmonic.freq = freqSamples(1);
 params.harmonic.contrast = 1;
+params.harmonic.freq = freqSamples(end);
 [~, harmonic,scenes,tseries] = csfStimuli(params);
 
 % Show and ultimately print
 ieAddObject(scenes{2}); sceneWindow;
-ieAddObject(offset.oiModulated); oiWindow;
+ieAddObject(harmonic.oiModulated); oiWindow;
 degPerPixel = sceneGet(scenes{2},'degrees per sample');
 minPerPixel = degPerPixel * 60;
 secPerPixel = minPerPixel * 60;
 
-%% Set up for the CSF calculation
+%% Examine the oiSequence
 
-PC = zeros(length(contrasts),length(freqSamples));
+% vcNewGraphWin;
+% for ii=1:harmonic.length
+%     oi = harmonic.frameAtIndex(ii);
+%     imagesc(oiGet(oi,'rgb'));
+%     title(sprintf('%d',ii)); pause(0.1);
+% end
 
-%% 
+% Or examine the cone mosaic
+%
+% cm = coneMosaic;
+% cm.emGenSequence(harmonic.length);
+% cm.compute(harmonic);
+% cm.window;
+
+
+%% Main compute loop
+
+% Could start the parallel pool
 % c = gcp; if isempty(c), parpool('local'); end
 
-contrasts = 0.5;
-
 tic;
+PC = zeros(length(contrasts),length(freqSamples));
 for pp=1:length(freqSamples)
     fprintf('Starting %d of %d ...\n',pp,length(freqSamples));
     thisParam = params;
@@ -62,20 +79,20 @@ toc
 %% Make summary graphs
 
 % Legend
-lStrings = cell(1,length(cmFOV));
-for pp=1:length(cmFOV)
-    lStrings{pp} = sprintf('%.2f deg',cmFOV(pp));
+lStrings = cell(1,length(freqSamples));
+for pp=1:length(freqSamples)
+    lStrings{pp} = sprintf('%.2f deg',freqSamples(pp));
 end
 
 h = vcNewGraphWin;
-plot(secPerPixel*barOffset,PC);
-xlabel('Offset arc sec'); ylabel('Percent correct')
+semilogx(contrasts,PC,'-o');
+xlabel('Contrast'); ylabel('Percent correct')
 grid on; l = legend(lStrings);
 set(l,'FontSize',12)
 
 %%
 str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['mosaicSize-',str,'.mat']);
-save(fname, 'PC','params', 'contrasts', 'cmFOV','scenes');
+fname = fullfile(wlvRootPath,'EI','figures',['csf-',str,'.mat']);
+save(fname, 'PC','params', 'contrasts', 'freqSamples','scenes');
 
 %%

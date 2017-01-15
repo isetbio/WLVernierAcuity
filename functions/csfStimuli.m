@@ -83,22 +83,21 @@ end
 
 % The first parameter has zero contrast, the second parameter has some contrast
 hparams(1).contrast = 0;
+
 % Offset lines
-[stimHarmonic, scenes] = oisCreate('harmonic','blend', tseries, ...
-    'sampleTimes',tsamples, ...
-    'testParameters',hparams, ...
-    'sceneParameters',sparams);
+P.sampleTimes     = tsamples;
+P.testParameters  = hparams;
+P.sceneParameters = sparams;
+P.oi = params.oi;
+[stimHarmonic, scenes] = oisCreate('harmonic','blend', tseries, P);
 
 % vcNewGraphWin; stimHarmonic.visualize;
 % ieAddObject(offset.oiFixed); ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenesO{2}); sceneWindow;
 
-% Zero contrast
+% Zero contrast for both the modulated and fixed.
 hparams(2).contrast = 0;
-stimUniform = oisCreate('harmonic','blend', tseries,...
-    'sampleTimes',tsamples, ...
-    'testParameters',hparams,...
-    'sceneParameters',sparams);
+stimUniform = oisCreate('harmonic','blend', tseries, P);
 % stimUniform.visualize;
 
 %%

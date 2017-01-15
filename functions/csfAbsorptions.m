@@ -21,7 +21,10 @@ X = zeros(1, numel(contrasts));
 P = zeros(1, numel(contrasts));
 %% Compute for each contrast level?
 for bb = 1:numel(contrasts)
+    
     params.harmonic.contrast = contrasts(bb);
+    
+    fprintf('Frequency %.1f, Contrast %.3f\n',params.harmonic.freq,params.harmonic.contrast);
     [uniform, harmonic, ~, ~] = csfStimuli(params);
     
     %  Compute absorptions for multiple trials
@@ -31,7 +34,6 @@ for bb = 1:numel(contrasts)
     
     % Set the mosaic size to 15 minutes (.25 deg) because that is the
     % spatial pooling size found by Westheimer and McKee
-    fprintf('Setting cone mosaic FOV to %.2f\n',params.cmFOV);
     cMosaic.setSizeToFOV(params.cmFOV);
     
     % Not sure why these have to match, but there is a bug if they don't.
