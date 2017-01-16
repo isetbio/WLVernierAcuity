@@ -45,10 +45,9 @@ for bb = 1:numel(contrasts)
         'em', params.em);
     
     % compute absorptions for aligned and offset
-    uniformA = cMosaic.compute(uniform, 'currentFlag', false, ...
-        'emPaths', emPaths);
-    harmonicA = cMosaic.compute(harmonic, 'currentFlag', false, ...
-        'emPaths', emPaths);
+    uniformA  = cMosaic.compute(uniform, 'currentFlag', false, 'emPaths', emPaths);
+    harmonicA = cMosaic.compute(harmonic,'currentFlag', false, 'emPaths', emPaths);
+    % cMosaic.window;
     
     % Reformat the time series for the PCA analysis
     %

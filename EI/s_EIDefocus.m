@@ -3,7 +3,7 @@
 
 % Show the dependence on spatial size of the cone mosaic for the computational
 % observer.
-nTrials = 1000;
+nTrials = 100;
 nBasis  = 40;
 
 % Integration time 
@@ -21,11 +21,12 @@ defocus = 0;
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
 sc = 1*(sceneFOV/0.35);  
 
+freqSamples = 1; % [1, 2, 10, 15, 20, 25];
+
 s_EIParametersCSF;
 
 % Special conditions
 contrasts   = logspace(-2.5,0,5); 
-freqSamples = 1; % [1, 2, 10, 15, 20, 25];
 
 
 %% Summarize
