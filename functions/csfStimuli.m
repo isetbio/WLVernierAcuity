@@ -31,7 +31,7 @@ if exist(fname,'file')
         disp('File found, but not the variables.  Creating.')
     end
 else 
-    disp('Creating and saving stimulus file - parameters do not match')
+    disp('Creating and saving stimulus file - no match found')
 end
 
 
@@ -97,11 +97,12 @@ P.oi = params.oi;
 
 % Zero contrast for both the modulated and fixed.
 hparams(2).contrast = 0;
+P.testParameters  = hparams;
 stimUniform = oisCreate('harmonic','blend', tseries, P);
 % stimUniform.visualize;
 
 %%
-save(fname,'stimUniform','stimHarmonic','scenes','tseries');
+save(fname,'stimUniform','stimHarmonic','scenes','tseries','P');
 
 % Print out the offset in degrees of arc sec 
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;

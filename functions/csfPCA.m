@@ -24,6 +24,8 @@ fname  = csfFname(params);
 if exist(fname,'file')
     disp('Loading image basis from file - parameters match')
     load(fname,'imageBasisAbsorptions','imageBasisCurrent');
+    imageBasisAbsorptions = imageBasisAbsorptions(:,1:params.nBasis); %#ok<*NODEF>
+    imageBasisCurrent     = imageBasisCurrent(:,1:params.nBasis);
     return;
 else 
     disp('Creating and saving image basis file - parameters do not match')
@@ -144,5 +146,11 @@ imageBasisCurrent = V(:,1:nBasis);
 %% Save
 
 save(fname,'imageBasisAbsorptions','imageBasisCurrent','params');
+
+%% Return the number of basis terms for this calculation
+
+imageBasisAbsorptions = imageBasisAbsorptions(:,1:params.nBasis);
+imageBasisCurrent     = imageBasisCurrent(:,1:params.nBasis);
+
 
 end

@@ -13,6 +13,7 @@ function [P, X] = csfAbsorptions(contrasts,params)
 % If already computed, we load it from file. Otherwise, we make an image
 % basis and save it.
 imageBasis = csfPCA(params);
+
 nTrials = params.nTrials;
 
 %% Create the aligned and offset vernier stimuli
@@ -26,6 +27,7 @@ for bb = 1:numel(contrasts)
     
     fprintf('Frequency %.1f, Contrast %.3f\n',params.harmonic.freq,params.harmonic.contrast);
     [uniform, harmonic, ~, ~] = csfStimuli(params);
+    % harmonic.visualize;
     
     %  Compute absorptions for multiple trials
     tSamples = uniform.length;

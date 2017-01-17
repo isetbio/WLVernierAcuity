@@ -11,6 +11,10 @@ function [fname,fnameStimulus] = vaFname(params)
 params.nBasis  = 40;
 params.nTrials = 300;
 
+% savejson has trouble with this struct.  And if it wasn't here, we didn't use
+% it so we only clear it when it is there.
+if isfield(params,'oi'), params.oi = []; end  % savejson has trouble.  
+
 fname = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'.mat']);
 
 fnameStimulus = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'-Stimulus.mat']);

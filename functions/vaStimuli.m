@@ -1,20 +1,19 @@
-function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
+function [aligned, offset, scenes, tseries, fname] = vaStimuli(varargin)
 % VASTIMULI - Create the pair of vernier stimuli (aligned and offset)
 %
-%   There is one input argument that is a struct with these parameters
+% There is one input argument that is a struct with these parameters
 %
-%    vernier   - Parameters for the vernier stimuli; Default is vernierP
-%    tsamples  - Time samples (sec)
-%    timesd    - Time standard deviation
-%    display   - Display struct, default displayCreate('LCD-Apple')
-%    sceneFOV  - Degrees, default 0.35
-%    distance  - Meters, viewing distance to display, default is 0.3 m
+%  vernier   - Parameters for the vernier stimuli; Default is vernierP
+%  tsamples  - Time samples (sec)
+%  timesd    - Time standard deviation
+%  display   - Display struct, default displayCreate('LCD-Apple')
+%  sceneFOV  - Degrees, default 0.35
+%  distance  - Meters, viewing distance to display, default is 0.3 m
 %
-%   When the LCD-Apple display is [210, 210] pixels and the sceneFOV is 0.35,
-%   then 1 pixel is 6 arc sec.
+%  When the LCD-Apple display is [210, 210] pixels and the sceneFOV is 0.35,
+%  then 1 pixel is 6 arc sec.
 %
-%   See also s_EIParameters, s_EIMosaicSize
-%
+%  See also s_EIParameters, s_EIMosaicSize
 %
 % The default display is an Apple LCD monitor.
 %
@@ -25,7 +24,7 @@ function [aligned, offset, scenes, tseries] = vaStimuli(varargin)
 % Examples:
 %    clear p; p.barOffset = 3; p.barWidth  = 3;
 %    p.tsamples = [-60:70]; p.timesd = 20;  
-%    [~,offset,~,tseries] = vaStimuli(p);
+%    [~,offset,~,tseries, fname] = vaStimuli(p);
 %    offset.visualize;
 %    vcNewGraphWin; plot(tseries)
 %
@@ -53,7 +52,7 @@ if exist(fname,'file')
         disp('File found, but not the variables.  Creating.')
     end
 else 
-    disp('Creating and saving stimulus file - parameters do not match')
+    disp('Creating and saving stimulus file - no match found')
 end
 
 
@@ -71,6 +70,7 @@ p.addParameter('timesd',20,@isscalar);           % Time standard deviation
 % pixel is 6 arc sec
 p.addParameter('sceneFOV',0.35,@isscalar);  % Degrees. 
 p.addParameter('distance',0.3,@isscalar);   % Meters
+
 p.parse(varargin{:});
 
 vernier   = p.Results.vernier;
@@ -102,6 +102,7 @@ clear sparams;
 % little bigger to allow for blur.
 sparams.fov      = sceneFOV;
 sparams.distance = distance;    % Meters
+if isfield(params,'defocus'), sparams.defocus = params.defocus; end
 
 % Basic vernier parameters for the oiSequence.  Reverse order forces the
 % allocation first so the array does not grow over the loop.
@@ -128,23 +129,28 @@ vparams(3).offset   = 0;
 vparams(3).barWidth = barWidth;
 
 % Offset lines
-[offset, scenes] = oisCreate('vernier','add', tseries, ...
-    'sampleTimes',tsamples, ...
-    'testParameters',vparams([1 2]),...
-    'sceneParameters',sparams);
+P.sampleTimes = tsamples;
+P.testParameters = vparams([1 2]);
+P.sceneParameters = sparams;
+if isfield(params,'oi'), P.oi = params.oi; end
+[offset, scenes] = oisCreate('vernier','add', tseries, P);
+%     'sampleTimes',tsamples, ...
+%     'testParameters',vparams([1 2]),...
+%     'sceneParameters',sparams);
 % offset.visualize;
 % ieAddObject(offset.oiFixed); ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenesO{2}); sceneWindow;
 
 % Aligned lines
-aligned = oisCreate('vernier','add', tseries,...
-    'sampleTimes',tsamples, ...
-    'testParameters',vparams([1 3]),...
-    'sceneParameters',sparams);
+P.testParameters = vparams([1 3]);
+aligned = oisCreate('vernier','add', tseries, P);
+%     'sampleTimes',tsamples, ...
+%     'testParameters',vparams([1 3]),...
+%     'sceneParameters',sparams);
 % aligned.visualize;
 
 %%
-save(fname,'aligned','offset','scenes','tseries');
+save(fname,'aligned','offset','scenes','tseries','P');
 
 % Print out the offset in degrees of arc sec 
 % offsetDeg = sceneGet(scenes{1},'degrees per sample')*vparams(2).offset;

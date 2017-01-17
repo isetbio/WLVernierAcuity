@@ -1,5 +1,5 @@
 function [imageBasisAbsorptions,imageBasisCurrent] = vaPCA(varargin)
-% Make the principal component images for the absorptions and photocurrent
+% VCPAC - Make the principal component images for VA absorptions and photocurrent
 %
 % The input argument is a struct that must include all the parameters
 % needed to produce a vernier stimulus.
@@ -24,6 +24,8 @@ fname = vaFname(params);
 if exist(fname,'file')
     disp('Loading image basis from file - parameters match')
     load(fname,'imageBasisAbsorptions','imageBasisCurrent');
+    imageBasisAbsorptions = imageBasisAbsorptions(:,1:params.nBasis); %#ok<*NODEF>
+    imageBasisCurrent     = imageBasisCurrent(:,1:params.nBasis);
     return;
 else 
     disp('Creating and saving image basis file - parameters do not match')
@@ -138,9 +140,12 @@ tCurrent = trial2Matrix(current,cMosaic);
 [~,~,V] = svd(tCurrent,'econ');
 imageBasisCurrent = V(:,1:nBasis);
 
-%% Save
+%% Save full basis set, but return the params.nBasis number
 
 save(fname,'imageBasisAbsorptions','imageBasisCurrent','params');
+
+imageBasisAbsorptions = imageBasisAbsorptions(:,1:params.nBasis); %#ok<*NODEF>
+imageBasisCurrent     = imageBasisCurrent(:,1:params.nBasis);
 
 %% Visualize
 % mx = max(imageBasis(:));
