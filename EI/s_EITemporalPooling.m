@@ -30,8 +30,8 @@ params.tsamples  = (-500:tStep:500)*1e-3;   % In second M/W was 200 ms
 
 [~, offset,scenes,tseries] = vaStimuli(params);
 
-ieAddObject(scenes{2}); sceneWindow;
-ieAddObject(offset.oiModulated); oiWindow;
+% ieAddObject(scenes{2}); sceneWindow;
+% ieAddObject(offset.oiModulated); oiWindow;
 degPerPixel = sceneGet(scenes{2},'degrees per sample');
 minPerPixel = degPerPixel * 60;
 secPerPixel = minPerPixel * 60;

@@ -12,7 +12,7 @@ nBasis  = 40;
 tStep   = 10;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.35;
+coneMosaicFOV = 0.5;
 
 % Original scene
 sceneFOV = 0.6;

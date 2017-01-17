@@ -37,15 +37,16 @@ P = zeros(1, numel(barOffset));
 %% Compute for each offset
 for bb = 1:numel(barOffset)
     params.vernier.offset = barOffset(bb);
+    fprintf('Bar offset %.1f length %.1f width %.1f fov %.2f\n',...
+        barOffset(bb),params.vernier.barLength,params.vernier.barWidth,params.cmFOV);
     [aligned, offset, ~, ~] = vaStimuli(params);
     
     %  Compute absorptions for multiple trials
     tSamples = aligned.length;
     cMosaic = coneMosaic;
     
-    % Set the mosaic size to 15 minutes (.25 deg) because that is the
-    % spatial pooling size found by Westheimer and McKee
-    fprintf('Setting cone mosaic FOV to %.2f\n',params.cmFOV);
+    % Sometimes we set the mosaic size to 15 minutes (.25 deg) because that is
+    % the spatial pooling size found by Westheimer and McKee
     cMosaic.setSizeToFOV(params.cmFOV);
     
     % Not sure why these have to match, but there is a bug if they don't.

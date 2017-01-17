@@ -29,8 +29,8 @@ s_EIParameters;
 
 [~, offset,scenes,tseries] = vaStimuli(params);
 
-ieAddObject(scenes{2}); sceneWindow;
-ieAddObject(offset.oiModulated); oiWindow;
+% ieAddObject(scenes{2}); sceneWindow;
+% ieAddObject(offset.oiModulated); oiWindow;
 degPerPixel = sceneGet(scenes{2},'degrees per sample');
 minPerPixel = degPerPixel * 60;
 secPerPixel = minPerPixel * 60;

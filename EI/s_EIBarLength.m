@@ -28,11 +28,11 @@ s_EIParameters;
 
 
 %%  Build the stimuli if you want to check stuff
-
+%
 [~, offset,scenes,tseries] = vaStimuli(params);
+% ieAddObject(scenes{2}); sceneWindow;
+% ieAddObject(offset.oiModulated); oiWindow;
 
-ieAddObject(scenes{2}); sceneWindow;
-ieAddObject(offset.oiModulated); oiWindow;
 degPerPixel = sceneGet(scenes{2},'degrees per sample');
 minPerPixel = degPerPixel * 60;
 secPerPixel = minPerPixel * 60;
@@ -40,19 +40,17 @@ secPerPixel = minPerPixel * 60;
 %% Summarize spatial parameters
 % Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
 % is higher.
-barLength  = params.vernier.barLength*minPerPixel;
-barWidth   = params.vernier.barWidth*minPerPixel;
-fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
-    (barLength),...
-    (params.vernier.barLength*degPerPixel),...
-    (barWidth));
-fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
+% barLength  = params.vernier.barLength*minPerPixel;
+% barWidth   = params.vernier.barWidth*minPerPixel;
+% fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
+%     (barLength),...
+%     (params.vernier.barLength*degPerPixel),...
+%     (barWidth));
+% fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 
 %% Initialize offsets and lengths
 
 barOffset  = [0 1 2 3 4];           % Pixels on the display
-% Make this less than
-% params.vernier.sceneSz(1)
 barLengths = [30 60 120 240 350];   % Bar length is the top and bottom
 if max(barLengths) > params.vernier.sceneSz(1)
     error('Bar length is too long');
