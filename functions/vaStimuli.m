@@ -102,7 +102,6 @@ clear sparams;
 % little bigger to allow for blur.
 sparams.fov      = sceneFOV;
 sparams.distance = distance;    % Meters
-if isfield(params,'defocus'), sparams.defocus = params.defocus; end
 
 % Basic vernier parameters for the oiSequence.  Reverse order forces the
 % allocation first so the array does not grow over the loop.
@@ -134,9 +133,6 @@ P.testParameters = vparams([1 2]);
 P.sceneParameters = sparams;
 if isfield(params,'oi'), P.oi = params.oi; end
 [offset, scenes] = oisCreate('vernier','add', tseries, P);
-%     'sampleTimes',tsamples, ...
-%     'testParameters',vparams([1 2]),...
-%     'sceneParameters',sparams);
 % offset.visualize;
 % ieAddObject(offset.oiFixed); ieAddObject(offset.oiModulated); oiWindow;
 % ieAddObject(scenesO{2}); sceneWindow;
@@ -144,9 +140,6 @@ if isfield(params,'oi'), P.oi = params.oi; end
 % Aligned lines
 P.testParameters = vparams([1 3]);
 aligned = oisCreate('vernier','add', tseries, P);
-%     'sampleTimes',tsamples, ...
-%     'testParameters',vparams([1 3]),...
-%     'sceneParameters',sparams);
 % aligned.visualize;
 
 %%
