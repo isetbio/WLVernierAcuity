@@ -3,6 +3,8 @@
 % match on bar length with behavior as an indicator of the spatial summation
 % region of the human eye
 
+disp('**** EI BarLength')
+
 nTrials = 1000;
 nBasis  = 40;
 
@@ -62,12 +64,13 @@ fprintf('Mosaic size %.2f\n',coneMosaicFOV);
 %% Run for all the bar lengths
 
 tic;
-c = gcp; if isempty(c), parpool('local'); end
+svmMdl = cell(1, length(barLengths));
 for pp=1:length(barLengths)
     fprintf('Starting %d of %d ...\n',pp, length(barLengths));
     thisParam = params;
     thisParam.vernier.barLength = barLengths(pp);
-    P = vaAbsorptions(barOffset,thisParam);
+    [P,thisMdl] = vaAbsorptions(barOffset,thisParam);
+    svmMdl{pp} = thisMdl;
     PC(:,pp) = P(:);
     fprintf('Finished %d\n',pp);
 end
@@ -94,7 +97,7 @@ set(l,'FontSize',12)
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['spatialBarLength-',str,'.mat']);
 fprintf('Saving %s\n',fname);
-save(fname, 'PC','params', 'barOffset', 'barLengths','scenes');
+save(fname, 'PC','params', 'svmMdl', 'barOffset', 'barLengths','scenes');
 
 %%
 

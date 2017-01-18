@@ -8,11 +8,11 @@ disp('**** EI Defocus VA Current')
 %%
 % Show the dependence on the cone mosaic size for the computational
 % observer.
-nTrials = 1000;
+nTrials = 800;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 1;  % Adequate for current (ms)
+tStep   = 10;  % Adequate for current (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.5;
@@ -48,6 +48,7 @@ fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 tic
 defocus = [0 0.5 1 1.5];
 PC = zeros(length(barOffset),length(defocus));
+svmMdl = cell(1,length(defocus));
 parfor pp = 1:length(defocus)
     fprintf('Starting %d ...\n',pp);
     thisParams = params;
@@ -61,9 +62,9 @@ parfor pp = 1:length(defocus)
     thisParams.oi = oiDefocus(defocus(pp));
     
     % Compute classification accuracy
-    P = vaCurrent(barOffset, thisParams);
+    [P, thisMdl] = vaCurrent(barOffset, thisParams);
     PC(:,pp) = P;
-    
+    svmMdl{pp} = thisMdl;
     fprintf('Finished defocus level %d\n',defocus(pp));
 end
 toc
@@ -100,6 +101,6 @@ legend(lStrings);
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['vaDefocus-Current-',str,'.mat']);
 fprintf('Saving %s\n',fname);
-save(fname, 'PC','params', 'barOffset','secPerPixel','defocus');
+save(fname, 'PC','params', 'svmMdl','barOffset','secPerPixel','defocus');
 
 %%

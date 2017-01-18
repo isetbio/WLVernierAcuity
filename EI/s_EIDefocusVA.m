@@ -47,6 +47,7 @@ fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 tic
 defocus = [0 0.5 1 1.5];
 PC = zeros(length(barOffset),length(defocus));
+svmMdl = cell(1, length(defocus));
 parfor pp = 1:length(defocus)
     fprintf('Starting %d ...\n',pp);
     thisParams = params;
@@ -60,9 +61,9 @@ parfor pp = 1:length(defocus)
     thisParams.oi = oiDefocus(defocus(pp));
     
     % Compute classification accuracy
-    P = vaAbsorptions(barOffset, thisParams);
+    [P, thisMdl] = vaAbsorptions(barOffset, thisParams);
     PC(:,pp) = P;
-    
+    svmMdl{pp} = thisMdl;
     fprintf('Finished defocus level %d\n',defocus(pp));
 end
 toc
@@ -98,6 +99,6 @@ legend(lStrings);
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['vaDefocus-',str,'.mat']);
 fprintf('Saving %s\n',fname);
-save(fname, 'PC','params', 'barOffset','secPerPixel','defocus');
+save(fname, 'PC','params', 'svmMdl','barOffset','secPerPixel','defocus');
 
 %%

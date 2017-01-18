@@ -3,6 +3,8 @@
 % This complements the bar length analysis.  It should tell a similar story.
 %
 
+disp('**** EI MosaicSize')
+
 % Show the dependence on spatial size of the cone mosaic for the computational
 % observer.
 nTrials = 1000;
@@ -49,18 +51,19 @@ fprintf('Bar offset per pixel is %.1f sec\n',secPerPixel);
 barOffset = [0 1 2 3 4];
 fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 
-cmFOV = [0.15 0.25 0.5]; % [0.2 0.4 0.80];    % Degress of visual angle
-PC = zeros(length(barOffset),length(cmFOV));
 
 %% Compute classification accuracy
+cmFOV = [0.15 0.25 0.5]; % [0.2 0.4 0.80];    % Degress of visual angle
+PC = zeros(length(barOffset),length(cmFOV));
+svmMdl = cell(1, length(cmFOV));
 tic;
-c = gcp; if isempty(c), parpool('local'); end
 parfor pp = 1:length(cmFOV)
     fprintf('Starting %d of %d ...\n',pp,length(cmFOV));
     thisParam = params;
     thisParam.cmFOV = cmFOV(pp);
-    P = vaAbsorptions(barOffset, thisParam);
+    [P, thisMdl] = vaAbsorptions(barOffset, thisParam);
     PC(:, pp) = P(:);
+    ssvmMdl{pp} = thisMdl;
     fprintf('Finished %d\n',pp);
 end
 toc

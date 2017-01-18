@@ -1,13 +1,15 @@
-function [P, X] = vaAbsorptions(barOffset, params)
-%% Vernier acuity experiment on cone absorptions
+function [P, mdl] = vaAbsorptions(barOffset, params)
+% VAABSORPTIONS - Vernier acuity experiment using cone absorptions
 %
-%    Testing if people can see the difference between two cases:
-%      1) A straight line
-%      2) Two straight lines barOffset pixels apart
+% Tests if we can use cone absorptions to detect the difference between a
+% straight line vs. two straight lines offset by barOffset pixels. 
 %
-%  Vernier acuity in human shows the positional acuity is around 6 sec of
-%  arc. Here, we are analyzing stimulus, optics, and eye movements and
-%  basing the calculation on absorptions.
+% The parameters for the display and stimulus are in params.vernier.
+% Other control parameters are attached to params.
+%
+% Vernier acuity in human shows the positional acuity is around 6 sec of
+% arc. Here, we are analyzing stimulus, optics, and eye movements and
+% basing the calculation on absorptions.
 %
 % Inputs:
 %   barOffset - list of bar offset
@@ -15,10 +17,9 @@ function [P, X] = vaAbsorptions(barOffset, params)
 %
 % Outputs:
 %   P      - classification accuracy
+%   mdl    - SVM model used to perform classification
 %
-% Note:
-%   This function is adopted from s_vaAbsorptions. We removed a lot of
-%   visualization code, discussion comment and print out info here.
+% See also s_EIDefocus and many others
 %
 % HJ/BW, ISETBIO TEAM, 2016
 

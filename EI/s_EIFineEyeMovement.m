@@ -4,6 +4,7 @@
 % 
 % It would be very nice to figure out a way to run this using parfor
 %
+disp('**** EI Fine Eye Movement')
 
 % Can be changed without recomputing everything
 nTrials = 1000;
@@ -53,13 +54,14 @@ PC = zeros(numel(barOffset),5);
 
 emTypes = [ 0 0 0 ; 1 0 0 ; 0 1 0 ; 0 0 1 ; 1 1 1]';
 tic;
-c = gcp; if isempty(c), parpool('local'); end
+svmMdl = cell(1,size(emTypes,2));
 parfor pp=1:size(emTypes,2)
     fprintf('Starting %d of %d ...\n',pp,size(emTypes,2));
     thisParam = params;
     thisParam.em.emFlag = emTypes(:,pp);
-    P = vaAbsorptions(barOffset,thisParam);
+    [P, thisMdl] = vaAbsorptions(barOffset,thisParam);
     PC(:,pp) = P(:);
+    svmMdl = thisMdl;
     fprintf('Finished %d\n',pp);
 end
 toc
@@ -79,7 +81,7 @@ set(gca,'ylim',[40 110]);
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
 fprintf('Saving %s\n',fname);
-save(fname, 'PC', 'params', 'barOffset', 'scenes');
+save(fname, 'PC', 'params', 'svmMdl', 'emType','barOffset', 'scenes');
 
 %%
 

@@ -18,7 +18,7 @@ coneMosaicFOV = 0.5;
 % Original scene
 sceneFOV = 1;
 
-defocus = 2;
+defocus = 0;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
@@ -80,12 +80,14 @@ contrasts   = logspace(-2.5,0,5);
 
 tic;
 PC = zeros(length(contrasts),length(freqSamples));
+svmMdl = cell(1, length(freqSamples));
 parfor pp=1:length(freqSamples)
     fprintf('Starting %d of %d ...\n',pp,length(freqSamples));
     thisParam = params;
     thisParam.harmonic.freq = freqSamples(pp);
-    P = csfAbsorptions(contrasts,thisParam);
+    [P, thisMdl] = csfAbsorptions(contrasts,thisParam);
     PC(:,pp) = P(:);
+    svmMdl{pp} = thisMdl;
     fprintf('Finished %d\n',pp);
 end
 toc
@@ -108,6 +110,6 @@ set(l,'FontSize',12)
 %%
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['csf-',str,'.mat']);
-save(fname, 'PC','params', 'contrasts', 'freqSamples','scenes');
+save(fname, 'PC','params','svmMdl', 'contrasts', 'freqSamples','scenes');
 
 %%

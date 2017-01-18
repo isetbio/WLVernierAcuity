@@ -2,7 +2,10 @@
 %
 % BW, ISETBIO Team, 2017
 
-%% Initialize parameters for s_EIParameters call
+%%
+disp('**** EI Temporal Pooling')
+
+% Initialize parameters for s_EIParameters call
 nTrials = 1000;
 nBasis  = 40;
 
@@ -53,14 +56,15 @@ fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 barOffset = 2;
 sd = [50 100 200 400 600]*1e-3;
 PC = zeros(1,length(sd));
-
+svmMdl = cell(1, length(sd));
 tic
 parfor pp=1:length(sd)
     fprintf('Starting %d of %d ...\n',pp,length(sd));
     thisParams = params;
     thisParams.timesd  = sd(pp);                  % In seconds                 
-    P = vaAbsorptions(barOffset,thisParams);
+    [P, thisMdl] = vaAbsorptions(barOffset,thisParams);
     PC(:,pp) = P(:);
+    svmMdl{pp} = thisMdl;
     fprintf('Finished %d\n',pp);
 end
 toc
@@ -78,6 +82,6 @@ grid on; set(l,'FontSize',12);
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['temporalPooling-',str,'.mat']);
 fprintf('Saving %s\n',fname);
-save(fname, 'PC', 'params', 'barOffset', 'sd');
+save(fname, 'PC', 'params','svmMdl', 'barOffset', 'sd');
 
 %%
