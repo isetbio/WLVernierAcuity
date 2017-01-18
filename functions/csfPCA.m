@@ -1,4 +1,4 @@
-function [imageBasisAbsorptions,imageBasisCurrent] = csfPCA(varargin)
+function [imageBasisAbsorptions,imageBasisCurrent] = csfPCA(params)
 % Make the principal component images for the absorptions and photocurrent
 %
 % The input argument is a struct that must include all the parameters
@@ -17,8 +17,11 @@ function [imageBasisAbsorptions,imageBasisCurrent] = csfPCA(varargin)
 % BW, ISETBIO Team, Copyright 2016
 
 %% Check if the PCA has already been computed
+p = inputParser;
+p.addRequired('params',@isstruct);
+p.parse(params);
 
-params = varargin{1};
+%%
 fname  = csfFname(params);
 
 if exist(fname,'file')
@@ -56,7 +59,7 @@ p.addParameter('tStep',10,@isscalar);
 p.addParameter('timesd',20*1e-3,@isscalar);
 p.addParameter('cmFOV',0.5,@isscalar);
 
-p.parse(varargin{:});
+p.parse(params);
 
 tStep      = p.Results.tStep;      % In ms right now, should be sec
 harmonic   = p.Results.harmonic;

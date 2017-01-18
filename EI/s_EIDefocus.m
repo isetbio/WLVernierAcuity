@@ -1,7 +1,10 @@
 %% Impact of blurring the optics on CSF
 %
 
-% Show the dependence on spatial size of the cone mosaic for the computational
+%%
+disp('**** EI Defocus')
+
+%% Show the dependence on spatial size of the cone mosaic for the computational
 % observer.
 nTrials = 1000;
 nBasis  = 40;
@@ -15,7 +18,7 @@ coneMosaicFOV = 0.5;
 % Original scene
 sceneFOV = 1;
 
-defocus = 1.5;
+defocus = 2;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35

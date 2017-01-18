@@ -1,24 +1,33 @@
-function [imageBasisAbsorptions,imageBasisCurrent] = vaPCA(varargin)
-% VCPAC - Make the principal component images for VA absorptions and photocurrent
+function [imageBasisAbsorptions,imageBasisCurrent] = vaPCA(params)
+% VAPAC - Make the principal component images for VA absorptions and photocurrent
 %
-% The input argument is a struct that must include all the parameters
-% needed to produce a vernier stimulus.
+%   [imageBasisAbsorptions,imageBasisCurrent] = vaPCA(params)
 %
-% We used to do this separately for absorptions and current, but no
-% longer. Now, it is done for both, here.
+% The input argument is a struct that includes all the parameters
+% needed to produce a vernier stimulus.  If these have already been created,
+% then the data are returned.  Otherwise, the data are created and stored in a
+% file with a name determined by vaFname(params).
 %
-% Steps:
+% The basis images for the pattern of absorptions and current are returned.
+%
+% Algorithm:
 %   Create a set of stimuli  with different offsets.
 %   Calculate the responses over time
 %   Combine the absorptions and currents into their large matrices
 %   Compute the PCA across all the stimuli
 %   Save two files with the parameters and the image bases.
 %
+% See also:  vaFname
+%
 % BW, ISETBIO Team, Copyright 2016
 
 %% Check if the PCA has already been computed
 
-params = varargin{1};
+p = inputParser;
+p.addRequired('params',@isstruct);
+p.parse(params);
+
+%%
 fname = vaFname(params);
 
 if exist(fname,'file')
@@ -59,7 +68,7 @@ p.addParameter('timesd',20*1e-3,@isscalar);
 p.addParameter('cmFOV',0.25,@isscalar);
 p.addParameter('maxOffset',7,@isscalar);
 
-p.parse(varargin{:});
+p.parse(params);
 
 % Stimulus parameters for the vernier target
 vernier   = p.Results.vernier;
