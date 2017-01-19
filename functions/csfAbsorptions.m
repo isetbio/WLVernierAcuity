@@ -1,4 +1,4 @@
-function [P, X] = csfAbsorptions(contrasts,params)
+function [P, mdl] = csfAbsorptions(contrasts,params)
 % CSFABSORPTIONS - SVM discriminability of harmonic and uniform using absorptions
 %
 % The harmonic has a frequency and a contrast.  We compare that with a 0
