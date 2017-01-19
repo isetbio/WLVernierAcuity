@@ -76,8 +76,7 @@ contrasts   = logspace(-2.5,0,5);
 %% Main compute loop
 
 % Could start the parallel pool
-% c = gcp; if isempty(c), parpool('local'); end
-
+if isempty(gcp), parpool('local'); end
 tic;
 PC = zeros(length(contrasts),length(freqSamples));
 svmMdl = cell(1, length(freqSamples));

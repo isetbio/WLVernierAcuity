@@ -62,6 +62,7 @@ fprintf('Max bar length %.2f\n',degPerPixel*max(barLengths));
 fprintf('Mosaic size %.2f\n',coneMosaicFOV);
 
 %% Run for all the bar lengths
+if isempty(gcp), parpool('local'); end
 
 tic;
 svmMdl = cell(1, length(barLengths));

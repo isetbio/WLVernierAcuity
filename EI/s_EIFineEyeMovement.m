@@ -51,7 +51,7 @@ fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 % the standard eye movement parameter
 barOffset = [0 1 2 4 6];
 PC = zeros(numel(barOffset),5);
-
+c  = gcp; if isempty(c), parpool('local'); end
 emTypes = [ 0 0 0 ; 1 0 0 ; 0 1 0 ; 0 0 1 ; 1 1 1]';
 tic;
 svmMdl = cell(1,size(emTypes,2));
@@ -81,7 +81,7 @@ set(gca,'ylim',[40 110]);
 str = datestr(now,30);
 fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
 fprintf('Saving %s\n',fname);
-save(fname, 'PC', 'params', 'svmMdl', 'emType','barOffset', 'scenes');
+save(fname, 'PC', 'params', 'svmMdl', 'emTypes','barOffset', 'scenes');
 
 %%
 

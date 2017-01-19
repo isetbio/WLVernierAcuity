@@ -1,5 +1,5 @@
 %% s_EIAllFigures
-% Runs over night
+% Runs in a few hours
 
 %
 s_EIBarLength;

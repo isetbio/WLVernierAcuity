@@ -58,6 +58,7 @@ sd = [50 100 200 400 600]*1e-3;
 PC = zeros(1,length(sd));
 svmMdl = cell(1, length(sd));
 tic
+if isempty(gcp), parpool('local'); end
 parfor pp=1:length(sd)
     fprintf('Starting %d of %d ...\n',pp,length(sd));
     thisParams = params;

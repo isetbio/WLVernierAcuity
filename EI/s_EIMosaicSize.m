@@ -56,6 +56,7 @@ fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 cmFOV = [0.15 0.25 0.5]; % [0.2 0.4 0.80];    % Degress of visual angle
 PC = zeros(length(barOffset),length(cmFOV));
 svmMdl = cell(1, length(cmFOV));
+if isempty(gcp), parpool('local'); end
 tic;
 parfor pp = 1:length(cmFOV)
     fprintf('Starting %d of %d ...\n',pp,length(cmFOV));

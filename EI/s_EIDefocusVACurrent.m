@@ -1,6 +1,6 @@
 %% Impact of defocus on the VA threshold using photocurrent
 %
-%
+%  Just using photocurrent itself is useful.
 
 %%
 disp('**** EI Defocus VA Current')
@@ -12,17 +12,17 @@ nTrials = 800;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 10;  % Adequate for current (ms)
+tStep   = 10;         % Adequate for photocurrent (ms)
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.5;
+coneMosaicFOV = 0.35;
 
 % Original scene
-sceneFOV = 0.6;
+sceneFOV = 0.4;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = 2*(sceneFOV/0.35);   % If you do not multiply by a scalar, offset is 6 arc sec
+sc = 3*(sceneFOV/0.35);   % If you do not multiply by a scalar, offset is 6 arc sec
 
 s_EIParameters;
 
@@ -44,9 +44,10 @@ fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 
 
 %% Compute for all defocus and store
+if isempty(gcp), parpool('local'); end
 
 tic
-defocus = [0 0.5 1 1.5];
+defocus = [0 1]; % [0 0.5 1 1.5];
 PC = zeros(length(barOffset),length(defocus));
 svmMdl = cell(1,length(defocus));
 parfor pp = 1:length(defocus)

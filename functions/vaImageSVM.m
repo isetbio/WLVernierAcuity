@@ -1,4 +1,4 @@
-function vaImageSVM(mdl,imageBasis,params)
+function img = vaImageSVM(mdl,imageBasis,params)
 % vaImageSVM Visualize the beta weights of the SVM
 %
 % See 'Support Vector Machines for Binary Classification' in fitcsvm
@@ -19,6 +19,8 @@ function vaImageSVM(mdl,imageBasis,params)
 %  of nBasis weights, multiply that vector times the image basis, and that
 %  provides the classifier weights at that moment in time.  Then move to
 %  the next moment in time and multiply again.
+%
+% TODO:  Make inputParser and arguments
 %
 % BW ISETBIO Team, 2017
 
@@ -48,7 +50,7 @@ for ii=1:nSamples
 end
 
 vcNewGraphWin;
-ieMovie(img);
+ieMovie(img,'FrameRate',2);
 
 end
 

@@ -14,7 +14,14 @@ dfiles = dir(fullfile(ddir,'spatialBarLength*'));
 
 % To return the scene and such you could read params and run
 chdir(ddir);
-d = load(dfiles(6).name);
+d = load(dfiles(end).name);
+
+%%
+imageBasis = vaPCA(d.params);
+img = vaImageSVM(d.svmMdl{3},imageBasis,params);
+vcNewGraphWin;
+colormap('default');
+imagesc(sum(img,3));
 
 %% To verify some of the parameters, you could do this
 [aligned, offset, scenes, tseries] = vaStimuli(d.params);
