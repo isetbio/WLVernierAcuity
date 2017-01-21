@@ -7,21 +7,20 @@
 %
 % Movie of the eye movements?
 
-%
+%%
 ddir  = '/Volumes/users/wandell/github/WL/WLVernierAcuity/EI/figures';
 % ddir = fullfile(wlvRootPath,'EI','figures');
-% dfiles = dir(fullfile(ddir,'spatialBarLength*'));
-dfiles = dir(fullfile(ddir,'csf*'));
+dfiles = dir(fullfile(ddir,'spatialBarLength*'));
+% dfiles = dir(fullfile(ddir,'csf*'));
 
 % To return the scene and such you could read params and run
 chdir(ddir);
-d = load('csf-20170118T155052.mat');
-d = load(dfiles(1).name);
+d = load(dfiles(end).name);
 
 %%
 
 % Either this
-imageBasis = csfPCA(d.params);
+% imageBasis = csfPCA(d.params);
 % Or this
 imageBasis = vaPCA(d.params);
 

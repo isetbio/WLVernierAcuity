@@ -18,7 +18,7 @@ coneMosaicFOV = 0.5;
 % Original scene
 sceneFOV = 1;
 
-defocus = 0;
+defocus = 1;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
@@ -75,8 +75,9 @@ contrasts   = logspace(-2.5,0,5);
 
 %% Main compute loop
 
-% Could start the parallel pool
+% Start the parallel pool
 if isempty(gcp), parpool('local'); end
+
 tic;
 PC = zeros(length(contrasts),length(freqSamples));
 svmMdl = cell(1, length(freqSamples));
