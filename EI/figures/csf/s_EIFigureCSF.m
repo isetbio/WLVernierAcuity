@@ -11,79 +11,115 @@ chdir(ddir);
 dfiles = dir('csf*');
 nFiles = length(dfiles);
 
+%%  Cleaned up the files
+%
+% defocusList = [0 .5 1 1.5 2];
+% nD = length(defocusList);
+% f = cell(nD,nFiles);
+% fileDefocus = zeros(1,nFiles);
+% hContrast = cell(nD,nFiles);
+% PCall = cell(nD,nFiles);
+% 
+% for ii = 1:nFiles  
+%     load(dfiles(ii).name,'params','PC','contrasts');  % PC, barOffset, params, scenes
+%     d = find(params.defocus == defocusList);
+%     fileDefocus(ii) = params.defocus;
+%     f{d,ii} = params.freqSamples;
+%     PCall{d,ii} = PC;
+%     hContrast{d,ii} = contrasts;
+% end
+
 %%
+
+% Set up the cell arrays
 defocusList = [0 .5 1 1.5 2];
 nD = length(defocusList);
-f = cell(nD,nFiles);
-fileDefocus = zeros(1,nFiles);
-hContrast = cell(nD,nFiles);
-PCall = cell(nD,nFiles);
+maxFiles = 7;  % Number of 0 defocus is longest
+% f = cell(nD,maxFiles);
+% hContrast = cell(nD,maxFiles);
+% PCall = cell(nD,maxFiles);
 
+fileDefocus = zeros(1,nFiles);
 for ii = 1:nFiles  
-    load(dfiles(ii).name,'params','PC','contrasts');  % PC, barOffset, params, scenes
+    load(dfiles(ii).name,'params');  % PC, barOffset, params, scenes
     d = find(params.defocus == defocusList);
     fileDefocus(ii) = params.defocus;
-    f{d,ii} = params.freqSamples;
-    PCall{d,ii} = PC;
-    hContrast{d,ii} = contrasts;
 end
 
-%%
-vcNewGraphWin;
-for ii=1:nFiles
-    fprintf('%d - %f \n',ii, params.defocus);
-    semilogx(hContrast{ii},PCall{ii}');
-    pause;
-end
+% for ii=1:length(lst)            % For each of the defocus groups
+%     thisLst = lst{ii};
+%     for jj=1:length(thisLst)    % This the data from a particular defocus
+%         load(dfiles(thisLst(jj)).name,'params','PC','contrasts','freqSamples');  % PC, barOffset, params, scenes
+%         fileDefocus = find(params.defocus == defocusList);
+%         % f{ii,jj} = freqSamples;
+%         % PCall{ii,jj} = PC;
+%         % hContrast{ii,jj} = contrasts;
+%     end
+% end
 
-defocus = cell2mat(defocus);
-for ii=1:length(defocusList)
-    for jj=1:nFiles
-    lst = ~isempty(f{ii,jj})
+% These are the files for each defocus
+lst{5} = find(fileDefocus == 2);
+lst{4} = find(fileDefocus == 1.5);
+lst{3} = find(fileDefocus == 1);
+lst{2} = find(fileDefocus == 0.5);   
+lst{1} = find(fileDefocus == 0); 
     
+%%
 
-%% Image parameters
-
-foo = load(dfiles(20).name);  % PC, barOffset, params, scenes
-barOffsetSec = barOffset*sceneGet(scenes{2},'degrees per sample')*3600;
-
-params.harmonic.freq = 10;
-% The scene is not saved correctly
-% ieAddObject(scenes{2}); sceneWindow;
-
-% This is the retinal irradiance
-[~,harmonic] = csfStimuli(params);
-oi = harmonic.frameAtIndex(20);
-ieAddObject(oi); oiWindow; 
-
-% oi2 = oiCrop(oi); ieAddObject(oi2); oiWindow;
+% A few minor deletions to make my life simpler
+lst{3} = [8 10 17 18];   % 
+lst{1} = [7  9 15 16];   %[2     3     4     7     9    15    16]
+lst{2} = 5;
 
 %%
-cm = coneMosaic;
-cm.setSizeToFOV(params.cmFOV);
-cm.integrationTime = params.tStep*1e-3;
-cm.emGenSequence(100);
-cm.compute(oi);
-cm.window;
+PCall = cell(1,length(lst));
+dFreqSamples = cell(1,length(lst));
+dContrasts = cell(1,length(lst));
+for dd = 1:5;   % Which defocus
+    for ii=1:length(lst{dd})
+        thisFile = lst{dd}(ii);
+        load(dfiles(thisFile).name,'params','PC','contrasts','freqSamples');  % PC, barOffset, params, scenes
+        dContrasts{dd} = contrasts;
+        dFreqSamples{dd} = freqSamples;
+        if ii==1, PCall{dd} = PC;
+        else      PCall{dd} = PCall{dd} + PC;
+        end
+        % Should check that all the contrasts and freqSamples are the same
+    end
+end
+for dd=1:5, PCall{dd} = PCall{dd}/length(lst{dd}); end
 
 %%
+for dd = 1:nD;
+    vcNewGraphWin;
+    p = semilogx(dContrasts{dd},PCall{dd},'-o','LineWidth',2);
+    set(gca,'FontSize',14);
+    grid on;
+    xlabel('Log contrast'); ylabel('Percent correct');
+end
+
+%%
+nD = length(lst);
+fThresh = zeros(nD,length(freqSamples));
+tContrasts = logspace(-2.5,0,50);
+for dd=1:5
+    for ii=1:size(PCall{dd},2)
+        % defocusList(dd), dFreqSamples{dd}(ii)
+        p = interp1(dContrasts{dd},PCall{dd}(:,ii),tContrasts,'pchip');
+        [v,idx] = min(abs(p - 75));
+        if v > 15, fThresh(dd,ii) = 1;
+        else fThresh(dd,ii) = tContrasts(idx);
+        end
+    end
+end
+%%
 vcNewGraphWin;
-plot(barOffsetSec,PC,'-o','LineWidth',2);
-xlabel('Offset arc sec'); ylabel('Percent correct')
-grid on; 
-set(l,'FontSize',18)
-set(gca,'ylim',[40 110]);
-
-%% Maybe for the talk?
-%
-% vaImageBasis(params);
-
-imageBasis = vaPCA(params);   % There is probably a way to load this from VCS
-img = vaImageSVM(svmMdl,imageBasis,params);
-vcNewGraphWin;
-imagesc(flipud(sum(img,3)));   % Not sure why the flipud
-colormap('default'); axis image
-colorbar
-
-
+for dd=1:nD
+    semilogy(freqSamples,1./fThresh(dd,:),'-o','LineWidth',2);
+    hold on;
+end
+grid on;
+xlabel('Frequency (cpd)'); ylabel('Contrast sensitivity')
+set(gca,'FontSize',14);
+legend({'0.0','0.5','1.0','1.5','2.0'});
 %%

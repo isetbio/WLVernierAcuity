@@ -17,7 +17,7 @@ coneMosaicFOV = 0.5;
 % Original scene
 sceneFOV = 1;
 
-defocus = 1;
+defocus = 0.5;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
@@ -108,7 +108,7 @@ set(l,'FontSize',12)
 
 %%
 str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['csf-',str,'.mat']);
+fname = fullfile(wlvRootPath,'EI','figures','csf',['csf-',str,'.mat']);
 save(fname, 'PC','params','svmMdl', 'contrasts', 'freqSamples','scenes');
 
 %%
