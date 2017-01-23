@@ -1,6 +1,8 @@
 function [aligned, offset, scenes, tseries, fname] = vaStimuli(varargin)
 % VASTIMULI - Create the pair of vernier stimuli (aligned and offset)
 %
+%  [aligned, offset, scenes, tseries, fname] = vaStimuli(varargin)
+%
 % There is one input argument that is a struct with these parameters
 %
 %  vernier   - Parameters for the vernier stimuli; Default is vernierP
