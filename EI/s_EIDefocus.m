@@ -4,8 +4,7 @@
 %%
 disp('**** EI Defocus')
 
-%% Show the dependence on spatial size of the cone mosaic for the computational
-% observer.
+%% CSF and blurring
 nTrials = 1000;
 nBasis  = 40;
 

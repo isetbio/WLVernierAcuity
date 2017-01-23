@@ -1,6 +1,8 @@
 function [stimUniform, stimHarmonic, scenes, tseries] = csfStimuli(varargin)
 % Create the pair of harmonic stimuli (uniform and harmonic)
 %
+%   [stimUniform, stimHarmonic, scenes, tseries] = csfStimuli(params)
+%
 % There is usually one input argument that is a struct with these
 % parameters
 %

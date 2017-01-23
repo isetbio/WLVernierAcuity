@@ -1,5 +1,5 @@
 %% Run a single example for figures and little tests
-
+% 
 %%
 disp('**** EI Single Example')
 
@@ -20,7 +20,7 @@ coneMosaicFOV = 0.35;
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. The scale factor in the front divides the 6, so
 % 6/1.5 is the secPerPixel here.
-sc = (sceneFOV/0.35);  
+sc = 2*(sceneFOV/0.35);  
                            
 s_EIParameters;
 % If you want to initiate imageBasis by hand, do this
@@ -31,7 +31,7 @@ s_EIParameters;
 %
 [~, offset,scenes,tseries] = vaStimuli(params);
 % scene = sceneAdd(scenes{1},scenes{2}); ieAddObject(scene); sceneWindow;
-% oi = offset.frameAtIndex(20); ieAddObject(oi); oiWindow;
+% oi = offset.frameAtIndex(20); ill = oiCalculateIlluminance(oi); oi = oiSet(oi,'illuminance',ill); ieAddObject(oi); oiWindow;
 
 degPerPixel = sceneGet(scenes{2},'degrees per sample');
 minPerPixel = degPerPixel * 60;
@@ -49,19 +49,21 @@ secPerPixel = minPerPixel * 60;
 %       pattern: []
 %       sceneSz: [240 240]
 
-% Darken the scene
+%% Darken the scene or not
+sceneLumFactor = 0.7;
 display = params.vernier.display;
-% mLum = displayGet(display,'peak luminance')
 spd  = displayGet(display,'spd');
-params.vernier.display = displaySet(display,'spd',spd/10);
-% mLum = displayGet(params.vernier.display,'peak luminance')
+params.vernier.display = displaySet(display,'spd',spd*sceneLumFactor);
+
+%%
+pLum = displayGet(params.vernier.display,'peak luminance');
+fprintf('Peak luminance %.2f\n',pLum);
 
 %% Run it
 
 barOffset  = [0 1 2 3 4];                  % Pixels on the display
 tic;
-thisParam = params;
-[PC,svmMdl] = vaAbsorptions(barOffset,thisParam);
+[PC,svmMdl] = vaAbsorptions(barOffset,params);
 fprintf('Finished %d\n',pp);
 toc
 
@@ -75,7 +77,7 @@ grid on;
 
 %% Save
 str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['example-',str,'.mat']);
+fname = fullfile(wlvRootPath,'EI','figures',['singleExample-',str,'.mat']);
 fprintf('Saving %s\n',fname);
 save(fname, 'PC','params', 'svmMdl', 'barOffset','scenes');
 

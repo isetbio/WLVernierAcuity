@@ -26,3 +26,5 @@ s_EIDefocusVA
 disp('VA defocus done')
 
 %%
+% I also used SingleExample to modify the display peak luminance and create a
+% series of curves as the display got brighter and darker.
