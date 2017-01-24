@@ -44,7 +44,7 @@ params = varargin{1};
 
 % Stored imageBasis filename with the same parameters as this
 [~,fname] = vaFname(params);
-
+if exist(fname,'file'), delete(fname); end  % Forcing create
 if exist(fname,'file')
     disp('Loading stimulus from file - parameters match')
     try

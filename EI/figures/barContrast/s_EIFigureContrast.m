@@ -9,22 +9,36 @@
 
 %%  Peak Luminance
 % ddir  = '/Volumes/users/wandell/github/WL/WLVernierAcuity/EI/figures/displayPeakLum';
-ddir = fullfile(wlvRootPath,'EI','figures','displayPeakLum');
+ddir = fullfile(wlvRootPath,'EI','figures','barContrast');
 chdir(ddir);
-dfiles = dir('example*');
+dfiles = dir('contrast*');
 nFiles = length(dfiles);
 
 %%
-peakLum = zeros(1,nFiles);
-PCall = zeros(numel(barOffset),nFiles);
-for ii=1:nFiles
-    load(dfiles(ii).name);
-    display = params.vernier.display;
-    peakLum(ii) = displayGet(display,'peak luminance');
-    PCall(:,ii) = PC(:);
-end
+load(dfiles(2).name);
+display = params.vernier.display;
+bgColors, params.vernier.barColor
 
-% mesh(PCall)
+%%
+barOffsetSec = barOffset*sceneGet(scenes{2},'degrees per sample')*3600;
+
+vcNewGraphWin;
+for ii=1:size(PC,2)
+    plot(barOffsetSec,PC(:,ii),'-o')
+    hold on
+end
+grid on
+set(gca,'FontSize',14);
+xlabel('Offset (arc sec)')
+ylabel('Percent correct')
+contrast = 1 ./ (bgColors);
+lstr = cell(1,numel(contrast));
+for ii=1:numel(contrast)
+    lstr{ii} = sprintf('%.3f',contrast(ii));
+end
+legend(lstr);
+
+%mesh(bgColors,barOffsetSec,PC)
 
 %%
 [p,idx] = sort(log10(peakLum));

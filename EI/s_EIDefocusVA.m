@@ -7,17 +7,17 @@
 
 % Show the dependence on the cone mosaic size for the computational
 % observer.
-nTrials = 1000;
+nTrials = 2000;
 nBasis  = 40;
 
 % Integration time 
 tStep   = 10;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.5;
+coneMosaicFOV = 0.35;
 
 % Original scene
-sceneFOV = 0.6;
+sceneFOV = 0.4;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
@@ -45,11 +45,12 @@ fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 %% Compute for all defocus and store
 
 tic
-defocus = [0 0.5 1 1.5];
+defocus = [0 0.5 1 1.5 2];   
 PC = zeros(length(barOffset),length(defocus));
 svmMdl = cell(1, length(defocus));
 parfor pp = 1:length(defocus)
     fprintf('Starting %d ...\n',pp);
+
     thisParams = params;
     thisParams.defocus = defocus(pp);
     
@@ -97,7 +98,7 @@ legend(lStrings);
 
 %%
 str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['vaDefocus-',str,'.mat']);
+fname = fullfile(wlvRootPath,'EI','figures','vaDefocus',['vaDefocus-',str,'.mat']);
 fprintf('Saving %s\n',fname);
 save(fname, 'PC','params', 'svmMdl','barOffset','secPerPixel','defocus');
 
