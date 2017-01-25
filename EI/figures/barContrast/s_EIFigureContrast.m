@@ -24,7 +24,7 @@ barOffsetSec = barOffset*sceneGet(scenes{2},'degrees per sample')*3600;
 
 vcNewGraphWin;
 for ii=1:size(PC,2)
-    plot(barOffsetSec,PC(:,ii),'-o')
+    plot(barOffsetSec,PC(:,ii),'-o','LineWidth',2)
     hold on
 end
 grid on

@@ -99,19 +99,46 @@ for dd = 1:nD;
 end
 
 %%
+dd = 1;
+fitLevels = logspace(log10(dContrasts{dd}(1)),log10(dContrasts{dd}(end)),100);
+[fitProbC,fitThresh,fitParams] = PALweibullFit(dContrasts{dd},PCall{dd}(:,3)/100,0.81,1000,fitLevels);
+vcNewGraphWin;
+semilogx(fitLevels,fitProbC,'-',dContrasts{dd},PCall{dd}(:,3)/100,'o')
+
+%%
 nD = length(lst);
 fThresh = zeros(nD,length(freqSamples));
 tContrasts = logspace(-2.5,0,50);
-for dd=1:5
+for dd=1:nD
+    probC = PCall{dd}/100;
+    vcNewGraphWin;
     for ii=1:size(PCall{dd},2)
         % defocusList(dd), dFreqSamples{dd}(ii)
-        p = interp1(dContrasts{dd},PCall{dd}(:,ii),tContrasts,'pchip');
-        [v,idx] = min(abs(p - 75));
-        if v > 15, fThresh(dd,ii) = 1;
-        else fThresh(dd,ii) = tContrasts(idx);
-        end
+        [fitProbC,fThresh(dd,ii)] = PALweibullFit(dContrasts{dd},probC(:,ii),0.81,1000,tContrasts);
+        p = interp1(dContrasts{dd},probC(:,ii),tContrasts,'pchip');
+        semilogx(dContrasts{dd},probC(:,ii),'o',tContrasts,p,'LineWidth',2); hold on;
     end
+    grid on; xlabel('Frequency (cpd)'); ylabel('Probability correct');
+    set(gca,'FontSize',14); title(sprintf('Defocus %1.1f',defocusList(dd)));
 end
+
+% Patch up the NaNs as if they are infinite threshold
+fThresh(isnan(fThresh)) = 1;
+
+%%
+% nD = length(lst);
+% fThresh = zeros(nD,length(freqSamples));
+% tContrasts = logspace(-2.5,0,50);
+% for dd=1:5
+%     for ii=1:size(PCall{dd},2)
+%         % defocusList(dd), dFreqSamples{dd}(ii)
+%         p = interp1(dContrasts{dd},PCall{dd}(:,ii),tContrasts,'pchip');
+%         [v,idx] = min(abs(p - 75));
+%         if v > 15, fThresh(dd,ii) = 1;
+%         else fThresh(dd,ii) = tContrasts(idx);
+%         end
+%     end
+% end
 %%
 vcNewGraphWin;
 for dd=1:nD
