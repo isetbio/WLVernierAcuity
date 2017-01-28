@@ -20,16 +20,15 @@ nFiles = length(dfiles);
 % secPerPixel = minPerPixel * 60;
 
 %%
-
-nD = length(defocus);
 PCall = zeros(5,4);
+tmp = zeros(5,1); kk = 0;
 % They all have the same defocus parameters
-for ii = 1:nFiles  
+for ii = 1:nFiles % nFiles  
    load(dfiles(ii).name,'params','defocus','secPerPixel','barOffset','PC');
    % params.vernier
-   % defocus
-   % barOffset
-   PCall = PCall + PC;
+   % sii, defocus
+   % barOffsets
+   PCall = PCall + PC(:,1:4);   
 end
 PCall = PCall/nFiles;
 
@@ -45,7 +44,7 @@ PCall(:,end+1) = PC*ones(3,1)*(1/3);
 
 %%
 vcNewGraphWin;
-plot(barOffset*secPerPixel,PCall,'-o');
+plot(barOffset*secPerPixel,PCall,'-o','LineWidth',2);
 xlabel('Offset (arc sec)');
 ylabel('Percent correct');
 grid on
@@ -55,6 +54,30 @@ lStrings = cell(1,length(length(defocus)));
 for pp=1:length(defocus)
     lStrings{pp} = sprintf('%.2f D',defocus(pp));
 end
-legend(lStrings);
+legend(lStrings,'Location','Southeast');
+set(gca,'fontsize',14)
+
+%%
+saveas(gcf,'defocusVA.png','png')
+
+%%
+barOffsetSec = barOffset*secPerPixel;
+barOffsetInterp = barOffsetSec(1):0.5:barOffsetSec(end);
+thresh = zeros(1,length(defocus));
+for ii=1:length(defocus)
+    p = interp1(barOffsetSec,PCall(:,ii), barOffsetInterp);
+    [v,idx] = min(abs(p - 75));
+    thresh(ii) = barOffsetInterp(idx);
+end
+vcNewGraphWin;
+plot(defocus,thresh,'-o','LineWidth',2);
+grid on
+xlabel('Zernike defocus parameter');
+ylabel('Threshold offset (arc sec)');
+grid on
+set(gca,'FontSize',14);
+saveas(gcf,'defocusThreshVA.png','png');
+
+%%
 
 %%

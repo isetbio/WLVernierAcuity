@@ -5,7 +5,7 @@
 % Movie of the eye movements?
 
 %%  Peak Luminance
-% ddir  = '/Volumes/users/wandell/github/WL/WLVernierAcuity/EI/figures/IntroFigure';
+ddir = fullfile(wlvRootPath,'EI','figures','IntroFigure');
 chdir(ddir);
 dfiles = dir('single*');
 nFiles = length(dfiles);
@@ -13,7 +13,7 @@ nFiles = length(dfiles);
 %% Image parameters
 
 load(dfiles(3).name);  % PC, barOffset, params, scenes
-barOffsetSec = barOffset*sceneGet(foo.scenes{2},'degrees per sample')*3600;
+barOffsetSec = barOffset*sceneGet(scenes{2},'degrees per sample')*3600;
 
 % Make the offset big so people can see it
 params.vernier.offset = 4;
@@ -22,15 +22,22 @@ params.vernier.offset = 4;
 I = imageVernier(params.vernier);
 imwrite(I,'vernierStimulus.png','png');
 
-% This is the retinal irradiance
-[~,offset] = vaStimuli(params);
+d = displayCreate('LCD-Apple');
+d = displaySet(d,'main image',I);
+ieAddObject(d); displayWindow;
+
+%% This is the retinal irradiance
+[aligned,offset,scenes] = vaStimuli(params);
 oi = offset.frameAtIndex(20); % save('offsetOI','oi');
 ieAddObject(oi); oiWindow; 
-
 oi2 = oiCrop(oi); ieAddObject(oi2); oiWindow;
 
-% I loaded up the oi 
-% load('offsetOI'); ieAddObject(oi); oi2 = oiCrop; oiAddObject(oi2); oiWindow;
+oi = aligned.frameAtIndex(24); % save('offsetOI','oi');
+ieAddObject(oi); oiWindow; 
+oi2 = oiCrop(oi); ieAddObject(oi2); oiWindow;
+
+scene = sceneAdd(scenes{1},scenes{2});
+ieAddObject(scene); sceneWindow;
 
 %%
 cm = coneMosaic;

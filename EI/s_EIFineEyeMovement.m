@@ -14,18 +14,24 @@ nBasis  = 40;
 tStep   = 10;  % Adequate for absorptions (ms)
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.25;
+coneMosaicFOV = 0.35;
 
 % Scene field of view
-sceneFOV = 0.35;
+sceneFOV = 0.4;
 
 % Spatial scale that controls visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = 3*(sceneFOV/0.35);  
+sc = 2*(sceneFOV/0.35);  
 
 s_EIParameters;
 
-% params.vernier.barLength = 360;   % This is 0.2 deg
+% Make the bar length a little less than the scene size
+% Long bar 
+params.vernier.barLength = (params.vernier.sceneSz(1)-1);
+
+% Short bar
+% params.vernier.barLength = round((params.vernier.sceneSz(1)-1)/4);
+
 %% Summarize
 
 [~, offset,scenes,tseries] = vaStimuli(params);
@@ -78,8 +84,10 @@ set(l,'FontSize',12)
 set(gca,'ylim',[40 110]);
 
 %%
-str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['FineEyeMovements-',str,'.mat']);
+str = datestr(now,30);ls
+
+
+fname = fullfile(wlvRootPath,'EI','figures','EyeMovements',['FineEyeMovements-',str,'.mat']);
 fprintf('Saving %s\n',fname);
 save(fname, 'PC', 'params', 'svmMdl', 'emTypes','barOffset', 'scenes');
 

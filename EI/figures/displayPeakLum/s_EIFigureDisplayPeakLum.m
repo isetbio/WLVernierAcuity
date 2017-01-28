@@ -62,10 +62,13 @@ for ii=1:size(PCInterp,2)
 end
 
 vcNewGraphWin;
-plot(peakInterp,thresh,'LineWidth',2)
+set(gca,'FontName','Georgia','FontSize',14)
+
+plot(peakInterp,thresh,'-o','LineWidth',2)
 xlabel('Log_{10} luminance (cd/m^2)')
 ylabel('Offset threshold (arc sec)')
 grid on
+saveas(gcf,'peakLuminance.png','png')
 
 % Why doesn't this work?  It does work in the CSF script, I think.
 % [fitProbC,thresh(ii),params] = PALweibullFit(barOffsetSec(:),PCInterp(:,3)/100,0.81,1000,barSteps);
@@ -81,4 +84,6 @@ xlabel('Offset (arc sec)')
 ylabel('Percent correct')
 set(gca,'FontSize',14)
 grid on
+
+%%
 

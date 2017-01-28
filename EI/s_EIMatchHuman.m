@@ -14,25 +14,32 @@ nBasis  = 40;
 tStep   = 10;       
 
 % Scene FOV.  Larger than usual to show the continuing pooling
-sceneFOV = 0.6;
+sceneFOV = 0.4;
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.5;
+coneMosaicFOV = 0.2;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
 % arc sec for a 0.35 deg scene. The scale factor in the front divides the 6, so
 % 6/1.5 is the secPerPixel here.
-sc = 3*(sceneFOV/0.35);  
+sc = 2*(sceneFOV/0.35);  
                            
 s_EIParameters;
 % If you want to initiate imageBasis by hand, do this
 % vaPCA(params);
 
-% More like the McKee-Westheimer condition
+%% More like the McKee-Westheimer condition
+
+% Helps find the ones that are like this 
+params.matchHuman = true;     % Black background, matching human
+
 params.vernier.bgColor = 0;   %  Bright bar on a zero background
+params.vernier.barLength = params.vernier.sceneSz(1) - 1;  % Each line about 6 arc min
 params.timesd    = 200e-3;    %  Reduce effect of eye movements
-params.westheimer = true;
-params.em.emFlag = [0 0 0];
+params.em.emFlag = [1 1 0];   % Microsaccades are suppressed for hyperacuity
+
+% Reduce the tremor amplitude
+% params.em = emSet(params.em,'tremor interval', 0.0120/2);
 
 %%  Build the stimuli if you want to check stuff
 %
@@ -58,10 +65,8 @@ secPerPixel = minPerPixel * 60;
 %% Initialize offsets and lengths
 
 barOffset  = [0 1 2 3 4];           % Pixels on the display
-barLengths = [30 60 120 240 350];   % Bar length is the top and bottom
-if max(barLengths) > params.vernier.sceneSz(1)
-    error('Bar length is too long');
-end
+tremorAmplitude = [0.0024, 0.0037, 0.0049, 0.0073]; 
+
 PC = zeros(length(barOffset),length(barLengths));
 fprintf('Max bar length %.2f\n',degPerPixel*max(barLengths));
 fprintf('Mosaic size %.2f\n',coneMosaicFOV);
@@ -70,11 +75,11 @@ fprintf('Mosaic size %.2f\n',coneMosaicFOV);
 if isempty(gcp), parpool('local'); end
 
 tic;
-svmMdl = cell(1, length(barLengths));
+svmMdl = cell(1, length(tremorAmplitude));
 parfor pp=1:length(barLengths)
     fprintf('Starting %d of %d ...\n',pp, length(barLengths));
     thisParam = params;
-    thisParam.vernier.barLength = barLengths(pp);
+    thisParam.em = emSet(thisParam.em,'tremor amplitude',tremorAmplitude(pp)); 
     [P,thisMdl] = vaAbsorptions(barOffset,thisParam);
     svmMdl{pp} = thisMdl;
     PC(:,pp) = P(:);
