@@ -84,8 +84,8 @@ if isempty(gcp), parpool('local'); end
 
 tic;
 svmMdl = cell(1, length(tremorAmplitude));
-parfor pp=1:length(barLengths)
-    fprintf('Starting %d of %d ...\n',pp, length(barLengths));
+parfor pp=1:length(tremorAmplitude)
+    fprintf('Starting %d of %d ...\n',pp, length(tremorAmplitude));
     thisParam = params;
     thisParam.em = emSet(thisParam.em,'tremor amplitude',tremorAmplitude(pp)); 
     [P,thisMdl] = vaAbsorptions(barOffset,thisParam);

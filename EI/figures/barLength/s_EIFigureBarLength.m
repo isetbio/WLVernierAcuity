@@ -1,15 +1,19 @@
-%% Initial figure to illustrate the basic measurement
-
+%% Show the dependency on bar length
+%
+%  This is from the first Results figure.  It includes an image of the display
+%  as well as the curves.
 %
 
-%%  
-% ddir  = '/Volumes/users/wandell/github/WL/WLVernierAcuity/EI/figures/displayPeakLum';
+%%  Find the files  
 ddir = fullfile(wlvRootPath,'EI','figures','barLength');
 chdir(ddir);
 dfiles = dir('spatial*');
 nFiles = length(dfiles);
 
-%%
+%% Load the probability correct matrices 
+% Each is PC vs. bar offset
+
+% Checking that the parameters match OK.  Chose the last bunch.
 % for ii=1:nFiles
 %     load(dfiles(ii).name);
 %     barLengths
@@ -23,18 +27,32 @@ for ii=5:nFiles
 end
 PCall = PCall/4;
 
-%%
+%%   Make images illustrating the scene
+
+% This is just show time
+params.vernier.offset = 8;
+[aligned, offset, scenes] = vaStimuli(params);
+scene = sceneAdd(scenes{1},scenes{2});
+ieAddObject(scene); sceneWindow;
+oi = offset.frameAtIndex(20); ieAddObject(oi); oiWindow;
+
+% This is the offset used for the demonstration
+secPerSample*params.vernier.offset
+
+%% Make the image showing the cures
+
 secPerSample = sceneGet(scenes{2},'degrees per sample')*3600;
 barOffsetSec = barOffset*secPerSample;
 thresh = zeros(1,size(PC,2));
 barSteps = barOffsetSec(1):barOffsetSec(end);
+
 vcNewGraphWin;
 for ii=1:size(PC,2)
     plot(barOffsetSec,PC(:,ii),'-o','LineWidth',2);
     % [fitProbC,thresh(ii)] = PALweibullFit(barOffsetSec,PC(:,ii)/100,0.81,1000,barSteps);
     p = interp1(barOffsetSec,PC(:,ii),barSteps);
     [v,idx] = min(abs(p - 75));
-    thresh(ii) = barSteps(idx)
+    thresh(ii) = barSteps(idx);
     hold on
 end
 
@@ -48,6 +66,8 @@ for ii=1:numel(barLengths)
 end
 legend(lstr);
 
+%% Now show the threshold curve.  Not used.
+
 vcNewGraphWin;
 plot(barLengths*secPerSample/60,thresh,'-o','LineWidth',2);
 grid on
@@ -56,7 +76,8 @@ ylabel('Offset threshold (arc sec)')
 
 %mesh(bgColors,barOffsetSec,PC)
 
-%%
+%% Screwing around with other representations
+
 [p,idx] = sort(log10(peakLum));
 PCsorted = PCall(:,idx);
 
@@ -91,3 +112,4 @@ ylabel('Percent correct')
 set(gca,'FontSize',14)
 grid on
 
+%%
