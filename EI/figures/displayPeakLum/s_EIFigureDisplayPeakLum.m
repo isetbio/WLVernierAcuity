@@ -37,7 +37,7 @@ barOffsetSec = barOffset*sceneGet(scenes{2},'degrees per sample')*3600;
 vcNewGraphWin; mesh(p,barOffsetSec,PCsorted)
 
 %% Interpolate the data
-peakInterp = p(1):0.1:p(end);
+peakInterp = p(1):0.3:p(end);
 [X,Y] = meshgrid(peakInterp,barOffsetSec(1):2:barOffsetSec(end));
 PCInterp = interp2(p,barOffsetSec,PCsorted,X,Y); 
 
@@ -68,6 +68,10 @@ plot(peakInterp,thresh,'-o','LineWidth',2)
 xlabel('Log_{10} luminance (cd/m^2)')
 ylabel('Offset threshold (arc sec)')
 grid on
+
+title(''); xlabel(''); ylabel('')
+
+%%
 saveas(gcf,'peakLuminance.png','png')
 
 % Why doesn't this work?  It does work in the CSF script, I think.
@@ -77,7 +81,7 @@ saveas(gcf,'peakLuminance.png','png')
 %%
 vcNewGraphWin;
 for ii=1:size(Y,2)
-    plot(Y(:,ii),PCInterp(:,ii),'-o')
+    plot(Y(:,ii),PCInterp(:,ii),'-o','LineWidth',2)
     hold on
 end
 xlabel('Offset (arc sec)')

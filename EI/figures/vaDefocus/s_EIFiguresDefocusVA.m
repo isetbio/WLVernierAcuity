@@ -75,7 +75,14 @@ grid on
 xlabel('Zernike defocus parameter');
 ylabel('Threshold offset (arc sec)');
 grid on
-set(gca,'FontSize',14);
+set(gca,'FontSize',16);
+set(gca,'FontName','Georgia');
+set(gca,'ylim',[0 10])
+set(gca,'xtick',[0 1 2],'ytick',[0:2:10]);
+
+xlabel(''), ylabel('')
+
+%%
 saveas(gcf,'defocusThreshVA.png','png');
 
 %%
