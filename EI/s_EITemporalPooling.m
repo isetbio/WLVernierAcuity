@@ -5,29 +5,38 @@
 %%
 disp('**** EI Temporal Pooling')
 
-% Initialize parameters for s_EIParameters call
 nTrials = 1000;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 10;  % Adequate for absorptions (ms)
+% Captures eye movements up to 100HZ
+% Adequate for absorptions (ms)
+tStep   = 10;       
+
+% Scene FOV.  
+sceneFOV = 0.5;
 
 % Cone mosaic field of view in degrees
-coneMosaicFOV = 0.25;
-
-% Original scene
-sceneFOV = 0.35;
+coneMosaicFOV = 0.12;
 
 % Spatial scale to control visual angle of each display pixel The rule is 6/sc
-% arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
-sc = (sceneFOV/0.35);  % 6 arc sec steps.
-
-maxOffset = 5;         % Out to 30 arc sec for vaPCA
-
+% arc sec for a 0.35 deg scene. The scale factor in the front divides the 6, so
+% 6/1.5 is the secPerPixel here.
+sc = 2*(sceneFOV/0.35);  
+                           
 s_EIParameters;
+% If you want to initiate imageBasis by hand, do this
+% vaPCA(params);
 
-params.vernier.barWidth = 10;
-params.tsamples  = (-500:tStep:500)*1e-3;   % In second M/W was 200 ms
+%% More like the McKee-Westheimer condition
+
+% Helps find the ones that are like this 
+params.matchHuman = true;     % Black background, matching human
+
+params.vernier.bgColor = 0;   % Bright bar on a zero background
+
+params.timesd    = 200e-3;    %  Reduce effect of eye movements
+params.em.emFlag = [1 1 0];   % Microsaccades are suppressed for hyperacuity
 
 %% Summnarize
 
@@ -41,10 +50,12 @@ secPerPixel = minPerPixel * 60;
 
 %% Summarize spatial parameters
 % Each pixel size is 6 arc sec per pixel when sc =  1.  Finer resolution when sc
-% is higher.
+% is higher
+barOffset = [0 1 2 4];
 barLength = params.vernier.barLength*minPerPixel;
 barWidth   = params.vernier.barWidth*minPerPixel;
-fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
+fprintf('\nOffset %.2f\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
+    (barOffset*secPerPixel),...
     (barLength),...
     (params.vernier.barLength*degPerPixel),...
     (barWidth));
@@ -53,9 +64,8 @@ fprintf('Bar offset %3.1f sec/pixel\n',secPerPixel);
 %%  Sweep out different durations
 
 % Total of 1 sec duration
-barOffset = 2;
 sd = [50 100 200 400 600]*1e-3;
-PC = zeros(1,length(sd));
+PC = zeros(length(barOffset),length(sd));
 svmMdl = cell(1, length(sd));
 tic
 if isempty(gcp), parpool('local'); end
@@ -72,16 +82,19 @@ toc
 
 %%
 vcNewGraphWin;
-plot(sd,squeeze(PC),'-o');
-xlabel('Duration (ms)'); ylabel('Percent correct')
-grid on; set(l,'FontSize',12);
+plot(barOffset*secPerPixel,PC,'-o','LineWidth',2);
+xlabel('Offset (arcsec)'); ylabel('Percent correct classification')
+grid on; 
+set(gca,'FontSize',16,'FontName','Georgia');
+barOffset*secPerPixel
+xlabel(''); ylabel(''); title('')
 
 % disp(params)
 % disp(params.vernier)
 
 %%
 str = datestr(now,30);
-fname = fullfile(wlvRootPath,'EI','figures',['temporalPooling-',str,'.mat']);
+fname = fullfile(wlvRootPath,'EI','figures','temporal',['temporalPooling-',str,'.mat']);
 fprintf('Saving %s\n',fname);
 save(fname, 'PC', 'params','svmMdl', 'barOffset', 'sd');
 
