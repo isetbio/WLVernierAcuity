@@ -37,7 +37,7 @@ params.em.emFlag = [0 0 0];
 %%  Build the stimuli if you want to check stuff
 %
 [~, offset,scenes,tseries] = vaStimuli(params);
-% ieAddObject(scenes{2}); sceneWindow;
+% scene = sceneAdd(scenes{1}, scenes{2}); ieAddObject(scene); sceneWindow;
 % ieAddObject(offset.oiModulated); oiWindow;
 
 degPerPixel = sceneGet(scenes{2},'degrees per sample');

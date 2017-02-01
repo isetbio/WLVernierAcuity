@@ -3,7 +3,55 @@
 % Should we also try to show the SVM classifier?
 %
 % Movie of the eye movements?
+%
+disp('**** EI Intro')
 
+nTrials = 1000;
+nBasis  = 40;
+
+% Integration time 
+% Captures eye movements up to 100HZ
+% Adequate for absorptions (ms)
+tStep   = 10;       
+
+% Scene FOV.  Larger than usual to show the continuing pooling
+sceneFOV = 0.6;
+
+% Cone mosaic field of view in degrees
+coneMosaicFOV = 0.5;
+
+% Spatial scale to control visual angle of each display pixel The rule is 6/sc
+% arc sec for a 0.35 deg scene. The scale factor in the front divides the 6, so
+% 6/1.5 is the secPerPixel here.
+sc = 3*(sceneFOV/0.35);  
+                           
+s_EIParameters;
+% If you want to initiate imageBasis by hand, do this
+% vaPCA(params);
+
+%% Make the vernier stimuli
+params.vernier.offset = 8;
+[~, offset,scenes,tseries] = vaStimuli(params);
+
+% Show it in a window.
+scene = sceneAdd(scenes{1}, scenes{2});
+scene = sceneSet(scene,'name','offset');
+ieAddObject(scene); sceneWindow;
+
+%% 
+oi = offset.frameAtIndex(20);
+ieAddObject(oi); oiWindow;
+oi = oiCrop(oi);
+oi = oiSet(oi,'name','offset');
+ieAddObject(oi); oiWindow;
+
+%%
+degPerPixel = sceneGet(scenes{2},'degrees per sample');
+minPerPixel = degPerPixel * 60;
+secPerPixel = minPerPixel * 60;
+
+
+%%
 %%  Peak Luminance
 ddir = fullfile(wlvRootPath,'EI','figures','IntroFigure');
 chdir(ddir);
