@@ -1,7 +1,16 @@
 function oi = oiDefocus(defocus)
-% OIDEFOCUS
+% OIDEFOCUS - Create an human wvf oi with some amount of defocus
 %
+% Input:
+%   Zernike defocus coefficient (in microns)
+% 
+% Output:
+%  oi - Human wvf structure with the defocus set
 %
+% See also:  wvfDefocusDioptersToMicrons and wvfDefocusDioptersToMicrons,
+%            oiCreate
+%
+% BW/HJ ISETBIO Team, 2017
 
 pupilMM = 3;
 zCoefs = wvfLoadThibosVirtualEyes(pupilMM);
