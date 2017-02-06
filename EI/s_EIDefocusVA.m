@@ -7,7 +7,7 @@
 
 % Show the dependence on the cone mosaic size for the computational
 % observer.
-nTrials = 2000;
+nTrials = 1000;
 nBasis  = 40;
 
 % Integration time 

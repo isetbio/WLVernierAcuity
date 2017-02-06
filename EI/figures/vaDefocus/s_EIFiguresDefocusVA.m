@@ -1,8 +1,8 @@
 %% s_EIFiguresDefocusVA
 % 
 
-%%  Peak Luminance
-% ddir  = '/Volumes/users/wandell/github/WL/WLVernierAcuity/EI/figures/IntroFigure';
+%%  Defocus for analyzing vernier acuity
+
 ddir = fullfile(wlvRootPath,'EI','figures','vaDefocus');
 chdir(ddir);
 dfiles = dir('vaDefocus*');
