@@ -8,7 +8,7 @@ disp('**** EI Defocus VA Current')
 %%
 % Show the dependence on the cone mosaic size for the computational
 % observer.
-nTrials = 800;
+nTrials = 200;
 nBasis  = 40;
 
 % Integration time 
@@ -39,18 +39,18 @@ fprintf('\nBar length %.1f min (%3.1f deg)\nBar width  %3.1f min\n',...
     (params.vernier.barLength*degPerPixel),...
     (params.vernier.barWidth*minPerPixel));
 fprintf('Bar offset per pixel is %.1f sec\n',secPerPixel);
-barOffset = [0 1 2 3 4];
+barOffset = [0 0 0 0 0];
 fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 
 
 %% Compute for all defocus and store
-if isempty(gcp), parpool('local'); end
+% if isempty(gcp), parpool('local'); end
 
 tic
-defocus = [0 1]; % [0 0.5 1 1.5];
+defocus = 0; % [0 0.5 1 1.5];
 PC = zeros(length(barOffset),length(defocus));
 svmMdl = cell(1,length(defocus));
-parfor pp = 1:length(defocus)
+for pp = 1:length(defocus)
     fprintf('Starting %d ...\n',pp);
     thisParams = params;
     thisParams.defocus = defocus(pp);
