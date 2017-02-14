@@ -38,7 +38,7 @@ emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
 bp = bipolar(cMosaic);
 bp.set('sRFcenter',10);
 bp.set('sRFsurround',0);
-bp.compute(cMosaic);
+[~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'nTrialsInput',alignedC);
 
 %%
 clear innerRetinaSU
@@ -59,7 +59,7 @@ nTrials = 1; innerRetinaSU = irSet(innerRetinaSU,'numberTrials',nTrials);
  
 %% Compute the inner retina response
  
-innerRetinaSU = irCompute(innerRetinaSU, bp); 
+[innerRetinaSU, nTrialsSpikes] = irCompute(innerRetinaSU, bp,'nTrialsInput',bpNTrialsCenter-bpNTrialsSurround); 
 lastTime = innerRetinaSU.mosaic{1}.get('last spike time');
  
 %% Make the PSTH movie
