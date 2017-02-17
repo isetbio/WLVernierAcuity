@@ -29,6 +29,15 @@ s_EIParameters;
 % Make the bar length a little less than the scene size
 params.vernier.barLength = params.vernier.sceneSz(1)-1;
 
+%%  Build the stimuli if you want to check stuff
+
+[~, offset,scenes,tseries] = vaStimuli(params);
+
+% ieAddObject(scenes{2}); sceneWindow;
+% ieAddObject(offset.oiModulated); oiWindow;
+degPerPixel = sceneGet(scenes{2},'degrees per sample');
+minPerPixel = degPerPixel * 60;
+secPerPixel = minPerPixel * 60;
 
 %% Summarize
 
