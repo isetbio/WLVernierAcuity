@@ -53,15 +53,25 @@ for bb = 1:numel(barOffset)
     cMosaic.integrationTime = aligned.timeStep;
     
     % For aligned or offset
-    cMosaic.noiseFlag = 'random';
+    cMosaic.noiseFlag    = 'random';
+    cMosaic.os.noiseFlag = 'random';
     emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
         'em', params.em);
     
+    % It is crucial that we use the same impulse response function for the
+    % current in these two cases.  So we first compute the absorptions for the
+    % two cases.  Then we assign the mean background rate (bgR) as a parameter
+    % that is part of the computeCurrent, which follows.
+    fprintf('Determining photocurrent filters\n');
+    cMosaic.compute(aligned);
+    [interpFilters,meanCur] = cMosaic.computeCurrent;
+    
     % compute absorptions for aligned and offset
+    fprintf('Determining photocurrent values\n');
     [~,alignedC] = cMosaic.compute(aligned, 'currentFlag', true, ...
-        'emPaths', emPaths);
+        'emPaths', emPaths,'meanCur',meanCur, 'interpFilters',interpFilters);
     [~,offsetC] = cMosaic.compute(offset, 'currentFlag', true, ...
-        'emPaths', emPaths);
+        'emPaths', emPaths, 'meanCur',meanCur, 'interpFilters',interpFilters);
     
     % Reformat the time series for the PCA analysis
     %
