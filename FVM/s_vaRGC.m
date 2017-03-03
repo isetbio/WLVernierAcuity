@@ -7,6 +7,30 @@
 % HJ, ISETBIO TEAm, 2016
 
 %%
+% Show the dependence on the cone mosaic size for the computational
+% observer.
+nTrials = 2;
+nBasis  = 40;
+
+% Integration time 
+tStep   = 10;         % Adequate for photocurrent (ms)
+
+% Cone mosaic field of view in degrees
+coneMosaicFOV = 0.35;
+
+% Original scene
+sceneFOV = 0.4;
+
+% Spatial scale to control visual angle of each display pixel The rule is 6/sc
+% arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg then 0.5/0.35
+sc = 3*(sceneFOV/0.35);   % If you do not multiply by a scalar, offset is 6 arc sec
+
+s_EIParameters;
+
+% Make the bar length a little less than the scene size
+params.vernier.barLength = params.vernier.sceneSz(1)-1;
+params.tsamples  = (-200:tStep:400)*1e-3;
+%%
 % Got the params from elsewhere ...
 %
 %  load ...
