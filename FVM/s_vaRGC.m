@@ -57,6 +57,8 @@ emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
 % compute absorptions for aligned and offset
 [~,alignedC] = cMosaic.compute(aligned, 'currentFlag', true, ...
     'emPaths', emPaths);
+
+% Have a look
 % cMosaic.window;
 
 %%
