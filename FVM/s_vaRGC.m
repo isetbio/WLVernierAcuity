@@ -70,9 +70,9 @@ bp.set('sRFsurround',0);
 % % Should make a loop option for the movie window;
 % % Should have the movie window force a new window with a stop button.
 vcNewGraphWin;
-while true
+% while true
     ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
-end
+% end
 
 %%
 clear innerRetina
