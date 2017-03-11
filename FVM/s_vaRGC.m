@@ -67,14 +67,12 @@ bp.set('sRFcenter',10);
 bp.set('sRFsurround',0);
 
 %
-[~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'nTrialsInput',alignedC);
+[~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
 
 % % Should make a loop option for the movie window;
 % % Should have the movie window force a new window with a stop button.
 vcNewGraphWin;
-% while true
-    ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
-% end
+ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
 
 %%
 clear innerRetina
@@ -99,10 +97,7 @@ nTrials = 1; innerRetina.set('numberTrials',nTrials);
 %% Compute the inner retina response
 
 % 
-[innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter-bpNTrialsSurround); 
-
-% [innerRetina, nTrialsSpikes] = irCompute(innerRetina, bp,'nTrialsInput',bpNTrialsCenter-bpNTrialsSurround); 
-
+[innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter - bpNTrialsSurround); 
 lastTime = innerRetina.mosaic{1}.get('last spike time');
  
 %% Make the PSTH movie
@@ -118,7 +113,6 @@ lastTime = innerRetina.mosaic{1}.get('last spike time');
 % or ...
 % innerRetina.plot('psth','mosaic',val);
 
-
 clear movieparams 
 movieparams.FrameRate = 5; movieparams.step = 2; movieparams.show = true;
  
@@ -128,9 +122,12 @@ vcNewGraphWin; ieMovie(innerRetina.mosaic{1}.responseLinear);
 % View movie of PSTH for mosaic
 steadyStateFrame = 50; % Get rid of transient spiking
 psth = innerRetina.mosaic{1}.get('psth');
-vcNewGraphWin; ieMovie(psth,movieparams);
+vcNewGraphWin; movieparams.step = 10;ieMovie(psth,movieparams);
 
-% Not yet working.  Could be
-% innerRetina.window{mosaicNumber);
+%% See the data
+
+% Could be - 
+%   innerRetina.window{mosaicNumber);
 innerRetina.mosaic{1}.window;
 
+%%
