@@ -88,8 +88,18 @@ rgcparams.eyeRadius = sqrt(sum(ecc.^2));
 rgcparams.eyeAngle = 0; ntrials = 0;
  
 % Create RGC object
+% TODO: Do the size/position randomness with a function like emGenerate();
+% That would take in (rows,cols) and noise parameters to generate the set
+% of ellipse parameters.
 innerRetina = ir(bp, rgcparams);
-innerRetina.mosaicCreate('type',cellType,'model','GLM');
+rgcParams.type = cellType;
+rgcParams.centerNoise = 1;
+rgcParams.model = 'GLM';
+rgcParams.ellipseParams = []; %[1 1 0];  % Principle, minor and theta
+innerRetina.mosaicCreate(rgcParams);
+% innerRetina.mosaic{1}.window;
+
+% innerRetina.mosaicCreate('type',cellType,'model','GLM','centerNoise',centerNoise);
 
 % Number of trials refers to number of repeats of the same stimulus
 nTrials = 1; innerRetina.set('numberTrials',nTrials);
