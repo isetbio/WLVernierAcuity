@@ -71,9 +71,9 @@ bp.set('sRFsurround',0);
 
 % % Should make a loop option for the movie window;
 % % Should have the movie window force a new window with a stop button.
-vcNewGraphWin;
-ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
-
+% vcNewGraphWin;
+% ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
+bp.window;
 %%
 clear innerRetina
 
@@ -93,11 +93,11 @@ rgcparams.eyeAngle = 0; ntrials = 0;
 % of ellipse parameters.
 innerRetina = ir(bp, rgcparams);
 rgcParams.type = cellType;
-rgcParams.centerNoise = 1;
+rgcParams.centerNoise = .2;
 rgcParams.model = 'GLM';
 rgcParams.ellipseParams = []; %[1 1 0];  % Principle, minor and theta
 innerRetina.mosaicCreate(rgcParams);
-% innerRetina.mosaic{1}.window;
+innerRetina.mosaic{1}.window;
 
 % innerRetina.mosaicCreate('type',cellType,'model','GLM','centerNoise',centerNoise);
 
