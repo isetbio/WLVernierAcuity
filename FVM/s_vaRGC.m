@@ -93,11 +93,11 @@ rgcparams.eyeAngle = 0; ntrials = 0;
 % of ellipse parameters.
 innerRetina = ir(bp, rgcparams);
 rgcParams.type = cellType;
-rgcParams.centerNoise = .2;
+rgcParams.centerNoise = 0;%.2;
 rgcParams.model = 'GLM';
 rgcParams.ellipseParams = []; %[1 1 0];  % Principle, minor and theta
 innerRetina.mosaicCreate(rgcParams);
-innerRetina.mosaic{1}.window;
+% innerRetina.mosaic{1}.window;
 
 % innerRetina.mosaicCreate('type',cellType,'model','GLM','centerNoise',centerNoise);
 
@@ -127,12 +127,12 @@ clear movieparams
 movieparams.FrameRate = 5; movieparams.step = 2; movieparams.show = true;
  
 % % View movie of RGC linear response
-vcNewGraphWin; ieMovie(innerRetina.mosaic{1}.responseLinear);
+% vcNewGraphWin; ieMovie(innerRetina.mosaic{1}.responseLinear);
  
 % View movie of PSTH for mosaic
-steadyStateFrame = 50; % Get rid of transient spiking
-psth = innerRetina.mosaic{1}.get('psth');
-vcNewGraphWin; movieparams.step = 10;ieMovie(psth,movieparams);
+% steadyStateFrame = 50; % Get rid of transient spiking
+% psth = innerRetina.mosaic{1}.get('psth');
+% vcNewGraphWin; movieparams.step = 10;ieMovie(psth,movieparams);
 
 %% See the data
 
