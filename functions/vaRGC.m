@@ -64,29 +64,29 @@ for bb = 1:numel(barOffset)
     [~,offsetC] = cMosaic.compute(offset, 'currentFlag', true, ...
         'emPaths', emPaths);    
       
-    % compute bipolar response
-    bp = bipolar(cMosaic);
-    bp.set('sRFcenter',10);
-    bp.set('sRFsurround',0);
-    [~, bpNTrialsCenterAligned, bpNTrialsSurroundAligned] = bp.compute(cMosaic,'nTrialsInput',alignedC);
-    [~, bpNTrialsCenterOffset,  bpNTrialsSurroundOffset]  = bp.compute(cMosaic,'nTrialsInput',offsetC);
-    
-    % create the RGC object
-    ecc = 0;
-    cellType = 'onParasol';
-    % cellType = 'offParasol';
-    rgcparams.name = 'macaque phys';
-    rgcparams.eyeSide = 'left';    
-    rgcparams.eyeRadius = sqrt(sum(ecc.^2));
-    rgcparams.eyeAngle = 0; 
-    
-    innerRetina = ir(bp, rgcparams);
-    innerRetina.mosaicCreate('type',cellType,'model','GLM');    
-    nTrials = 1; innerRetina = irSet(innerRetina,'numberTrials',nTrials);
+%     % compute bipolar response
+%     bp = bipolar(cMosaic);
+%     bp.set('sRFcenter',10);
+%     bp.set('sRFsurround',0);
+%     [~, bpNTrialsCenterAligned, bpNTrialsSurroundAligned] = bp.compute(cMosaic,'nTrialsInput',alignedC);
+%     [~, bpNTrialsCenterOffset,  bpNTrialsSurroundOffset]  = bp.compute(cMosaic,'nTrialsInput',offsetC);
+%     
+%     % create the RGC object
+%     ecc = 0;
+%     cellType = 'onParasol';
+%     % cellType = 'offParasol';
+%     rgcparams.name = 'macaque phys';
+%     rgcparams.eyeSide = 'left';    
+%     rgcparams.eyeRadius = sqrt(sum(ecc.^2));
+%     rgcparams.eyeAngle = 0; 
+%     
+%     innerRetina = ir(bp, rgcparams);
+%     innerRetina.mosaicCreate('type',cellType,'model','GLM');    
+%     nTrials = 1; innerRetina = irSet(innerRetina,'numberTrials',nTrials);
  
     % Compute the inner retina response 
-    [innerRetina, nTrialsSpikesAligned] = irCompute(innerRetina, bp,'nTrialsInput',bpNTrialsCenterAligned-bpNTrialsSurroundAligned);
-    [innerRetina, nTrialsSpikesOffset]  = irCompute(innerRetina, bp,'nTrialsInput',bpNTrialsCenterOffset -bpNTrialsSurroundOffset);
+%     [innerRetina, nTrialsSpikesAligned] = irCompute(innerRetina, bp,'bipolarTrials',bpNTrialsCenterAligned-bpNTrialsSurroundAligned);
+%     [innerRetina, nTrialsSpikesOffset]  = irCompute(innerRetina, bp,'bipolarTrials',bpNTrialsCenterOffset -bpNTrialsSurroundOffset);
     
     % Reformat the time series for the PCA analysis
     %
@@ -95,6 +95,8 @@ for bb = 1:numel(barOffset)
     % the temporal responses across all trials and time points.
     imgListAligned = trial2Matrix(alignedC,cMosaic);
     imgListOffset  = trial2Matrix(offsetC,cMosaic);
+%     imgListAligned = trial2Matrix(bpNTrialsCenterAligned,cMosaic);
+%     imgListOffset  = trial2Matrix(bpNTrialsCenterOffset,cMosaic);
     
     % Not-centered PCA (no demeaning, so first PC is basically the mean)
     imgList = cat(1,imgListAligned,imgListOffset);

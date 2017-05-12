@@ -1,6 +1,8 @@
 %% Impact of defocus on the VA threshold using photocurrent
 %
 %  Just using photocurrent itself is useful.
+% 
+%  Must be on rgcEllipse branch for this to work properly.
 
 %%
 disp('**** EI Defocus VA Current')
@@ -39,7 +41,7 @@ params.vernier.barLength = params.vernier.sceneSz(1)-1;
 %     (params.vernier.barLength*degPerPixel),...
 %     (params.vernier.barWidth*minPerPixel));
 % fprintf('Bar offset per pixel is %.1f sec\n',secPerPixel);
-barOffset = [0 0];%[0 0 0 0 0];
+barOffset = [0 25];%[0 0 0 0 0];
 % fprintf('Offsets in seconds %.1f\n',barOffset*secPerPixel);
 
 
@@ -78,7 +80,7 @@ delete(stimFile); delete(basisFile);
 
 [~, offset,scenes,tseries] = vaStimuli(params);
 
-ieAddObject(scenes{2}); sceneWindow;
+ieAddObject(scenes{1}); sceneWindow;
 ieAddObject(offset.oiModulated); oiWindow;
 degPerPixel = sceneGet(scenes{2},'degrees per sample');
 minPerPixel = degPerPixel * 60;

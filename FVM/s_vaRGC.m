@@ -48,7 +48,7 @@ cMosaic.setSizeToFOV(params.cmFOV);
 
 % Not sure why these have to match, but there is a bug if they don't.
 cMosaic.integrationTime = aligned.timeStep;
-
+cMosaic.os.timeStep = aligned.timeStep;
 % For aligned or offset
 cMosaic.noiseFlag = 'random';
 emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
@@ -75,7 +75,7 @@ bp.set('sRFsurround',0);
 % ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
 bp.window;
 %%
-clear innerRetina
+clear innerRetina rgcParams
 
 % Choose a cell type
 cellType = 'onParasol';
@@ -91,13 +91,16 @@ rgcparams.eyeAngle = 0; ntrials = 0;
 % TODO: Do the size/position randomness with a function like emGenerate();
 % That would take in (rows,cols) and noise parameters to generate the set
 % of ellipse parameters.
+rgcparams.eyeRadius = 0;
 innerRetina = ir(bp, rgcparams);
 rgcParams.type = cellType;
-rgcParams.centerNoise = 0;%.2;
+% rgcParams.centerNoise = 0;
+% rgcParams.ellipseParams = [1 1 0];  % Principle, minor and theta
+% rgcParams.axisVariance = .07;
 rgcParams.model = 'GLM';
-rgcParams.ellipseParams = []; %[1 1 0];  % Principle, minor and theta
+% rgcParams.ellipseParams = [1 1 0];  % Principle, minor and theta
 innerRetina.mosaicCreate(rgcParams);
-% innerRetina.mosaic{1}.window;
+innerRetina.mosaic{1}.window;
 
 % innerRetina.mosaicCreate('type',cellType,'model','GLM','centerNoise',centerNoise);
 
@@ -107,8 +110,8 @@ nTrials = 1; innerRetina.set('numberTrials',nTrials);
 %% Compute the inner retina response
 
 % 
-[innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter - bpNTrialsSurround); 
-lastTime = innerRetina.mosaic{1}.get('last spike time');
+% [innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter - bpNTrialsSurround); 
+% lastTime = innerRetina.mosaic{1}.get('last spike time');
  
 %% Make the PSTH movie
 % innerRetina.mosaic{1}.set('dt',1);
