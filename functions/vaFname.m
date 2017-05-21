@@ -15,8 +15,8 @@ params.nTrials = 300;
 % it so we only clear it when it is there.
 if isfield(params,'oi'), params.oi = []; end  % savejson has trouble.  
 
-fname = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'.mat']);
+fname = fullfile(wlvRootPath,'local',[md5(jsonwrite(params)),'.mat']);
 
-fnameStimulus = fullfile(wlvRootPath,'local',[md5(savejson([],params)),'-Stimulus.mat']);
+fnameStimulus = fullfile(wlvRootPath,'local',[md5(jsonwrite(params)),'-Stimulus.mat']);
 
 end

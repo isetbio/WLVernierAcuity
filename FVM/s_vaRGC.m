@@ -13,7 +13,7 @@ nTrials = 2;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 10;         % Adequate for photocurrent (ms)
+tStep   = 5;         % Adequate for photocurrent (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.35;
@@ -30,15 +30,12 @@ s_EIParameters;
 % Make the bar length a little less than the scene size
 params.vernier.barLength = params.vernier.sceneSz(1)-1;
 params.tsamples  = (-200:tStep:400)*1e-3;
-%%
-% Got the params from elsewhere ...
-%
-%  load ...
-params.vernier.offset = 0;
+%% Read the stimulus, which might have been saved
 
+params.vernier.offset = 0;
 [aligned, offset, ~, ~] = vaStimuli(params);
 
-%  Compute absorptions for multiple trials
+%%  Compute absorptions for multiple trials
 tSamples = aligned.length;
 cMosaic = coneMosaic;
 
@@ -48,13 +45,18 @@ cMosaic.setSizeToFOV(params.cmFOV);
 
 % Not sure why these have to match, but there is a bug if they don't.
 cMosaic.integrationTime = aligned.timeStep;
-cMosaic.os.timeStep = aligned.timeStep;
-% For aligned or offset
 cMosaic.noiseFlag = 'random';
+% cMosaic.plot('impulse response');
+% cMosaic.plot('os impulse response');
+
+%% For aligned or offset
+
+disp('Computing cone mosaic eye movements');
 emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
     'em', params.em);
 
 % compute absorptions for aligned and offset
+disp('Computing cone mosaic current');
 [~,alignedC] = cMosaic.compute(aligned, 'currentFlag', true, ...
     'emPaths', emPaths);
 
@@ -62,85 +64,53 @@ emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
 % cMosaic.window;
 
 %%
-bp = bipolar(cMosaic);
+bp = bipolar(cMosaic,'cellType','onmidget');   % offdiffuse
 bp.set('sRFcenter',10);
 bp.set('sRFsurround',0);
 
-%
+disp('Computing bipolar responses');
 [~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
 
-% % Should make a loop option for the movie window;
-% % Should have the movie window force a new window with a stop button.
-% vcNewGraphWin;
-% ieMovie(squeeze(bpNTrialsCenter(1,:,:,:)));
-bp.window;
-%%
-clear innerRetina rgcParams
+% bp.window;
+%% Retinal ganlion cell model
+
+clear innerRetina irParams mosaicParams innerRetina
 
 % Choose a cell type
-cellType = 'onParasol';
-% cellType = 'offParasol';
-rgcparams.name = 'macaque phys';
-rgcparams.eyeSide = 'left';
+cellType = 'OFF Midget';  % 'offParasol'; 'onMidget' ...
+irParams.name = 'macaque phys';
+irParams.eyeSide = 'left';
 
+% Create inner retina object
 ecc = 0;
-rgcparams.eyeRadius = sqrt(sum(ecc.^2)); 
-rgcparams.eyeAngle = 0; ntrials = 0;
- 
-% Create RGC object
-% TODO: Do the size/position randomness with a function like emGenerate();
-% That would take in (rows,cols) and noise parameters to generate the set
-% of ellipse parameters.
-rgcparams.eyeRadius = 0;
-innerRetina = ir(bp, rgcparams);
-rgcParams.type = cellType;
-% rgcParams.centerNoise = 0;
-% rgcParams.ellipseParams = [1 1 0];  % Principle, minor and theta
-% rgcParams.axisVariance = .07;
-rgcParams.model = 'GLM';
-% rgcParams.ellipseParams = [1 1 0];  % Principle, minor and theta
-innerRetina.mosaicCreate(rgcParams);
-innerRetina.mosaic{1}.window;
+irParams.eyeRadius = sqrt(sum(ecc.^2)); 
+irParams.eyeAngle = 0; ntrials = 0;
+irParams.eyeRadius = 0;
+innerRetina = ir(bp, irParams);
 
-% innerRetina.mosaicCreate('type',cellType,'model','GLM','centerNoise',centerNoise);
+% There are various parameters you could set.  We will write a script
+% illustrating these later.  We need a description.
+%
+mosaicParams.centerNoise = 0.2;
+% mosaicParams.ellipseParams = [1 .8 0];  % Principle, minor and theta
+% mosaicParams.axisVariance = .1;
+mosaicParams.type  = cellType;
+mosaicParams.model = 'GLM';
+innerRetina.mosaicCreate(mosaicParams);
+
+% innerRetina.mosaic{1}.set('rfDiameter',10);
+innerRetina.mosaic{1}.rgcInitSpace(innerRetina,cellType);
+
+nTrials = 1; innerRetina.set('numberTrials',nTrials);
+innerRetina.mosaic{1}.get('rfDiameter')
+
+%% Compute the inner retina response and visualize
 
 % Number of trials refers to number of repeats of the same stimulus
-nTrials = 1; innerRetina.set('numberTrials',nTrials);
+disp('Computing rgc responses');
+[innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter - bpNTrialsSurround); 
  
-%% Compute the inner retina response
-
-% 
-% [innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter - bpNTrialsSurround); 
-% lastTime = innerRetina.mosaic{1}.get('last spike time');
- 
-%% Make the PSTH movie
-% innerRetina.mosaic{1}.set('dt',1);
-% psth = innerRetina.mosaic{1}.get('psth');
-% allCells = mean(mean(psth,1),2);
-% allCells = squeeze(allCells);
-% vcNewGraphWin; plot(allCells)
-
-% Let's make this work.
-% vcNewGraphWin;
-% innerRetina.mosaic{1}.plot('psth');
-% or ...
-% innerRetina.plot('psth','mosaic',val);
-
-clear movieparams 
-movieparams.FrameRate = 5; movieparams.step = 2; movieparams.show = true;
- 
-% % View movie of RGC linear response
-% vcNewGraphWin; ieMovie(innerRetina.mosaic{1}.responseLinear);
- 
-% View movie of PSTH for mosaic
-% steadyStateFrame = 50; % Get rid of transient spiking
-% psth = innerRetina.mosaic{1}.get('psth');
-% vcNewGraphWin; movieparams.step = 10;ieMovie(psth,movieparams);
-
-%% See the data
-
-% Could be - 
-%   innerRetina.window{mosaicNumber);
+% Could become - innerRetina.window{mosaicNumber);
 innerRetina.mosaic{1}.window;
 
-%%
+%% 
