@@ -27,8 +27,11 @@ function [P, X] = vaRGC(barOffset, params)
 %% Generate image basis
 % If already computed, we load it from file. Otherwise, we make an image
 % basis and save it.
-[~,imageBasis] = vaPCA(params);
+
+% [~,imageBasis] = vaPCA(params);
 nTrials = params.nTrials;
+
+nBasis = 40;
 
 %% Create the aligned and offset vernier stimuli
 % This could loop here on the barOffset
@@ -63,46 +66,89 @@ for bb = 1:numel(barOffset)
         'emPaths', emPaths);
     [~,offsetC] = cMosaic.compute(offset, 'currentFlag', true, ...
         'emPaths', emPaths);    
-      
-%     % compute bipolar response
-%     bp = bipolar(cMosaic);
-%     bp.set('sRFcenter',10);
-%     bp.set('sRFsurround',0);
-%     [~, bpNTrialsCenterAligned, bpNTrialsSurroundAligned] = bp.compute(cMosaic,'nTrialsInput',alignedC);
-%     [~, bpNTrialsCenterOffset,  bpNTrialsSurroundOffset]  = bp.compute(cMosaic,'nTrialsInput',offsetC);
-%     
-%     % create the RGC object
-%     ecc = 0;
-%     cellType = 'onParasol';
-%     % cellType = 'offParasol';
-%     rgcparams.name = 'macaque phys';
-%     rgcparams.eyeSide = 'left';    
-%     rgcparams.eyeRadius = sqrt(sum(ecc.^2));
-%     rgcparams.eyeAngle = 0; 
-%     
-%     innerRetina = ir(bp, rgcparams);
-%     innerRetina.mosaicCreate('type',cellType,'model','GLM');    
-%     nTrials = 1; innerRetina = irSet(innerRetina,'numberTrials',nTrials);
- 
-    % Compute the inner retina response 
-%     [innerRetina, nTrialsSpikesAligned] = irCompute(innerRetina, bp,'bipolarTrials',bpNTrialsCenterAligned-bpNTrialsSurroundAligned);
-%     [innerRetina, nTrialsSpikesOffset]  = irCompute(innerRetina, bp,'bipolarTrials',bpNTrialsCenterOffset -bpNTrialsSurroundOffset);
+
+    %%%%%%%%%%% Bipolar cell
+    patchEccentricity = 2.5;
     
+    cellType = {'ondiffuse','offdiffuse','onmidget','offmidget','onSBC'};
+    for cellTypeInd = 1:4
+        clear bpParams
+        bpParams.cellType = cellType{cellTypeInd};
+        
+        bpParams.ecc = patchEccentricity;
+        bpParams.rectifyType = 1;
+        bpMosaic{cellTypeInd} = bipolar(cMosaic, bpParams);
+        bpMosaic{cellTypeInd}.set('sRFcenter',1);
+        bpMosaic{cellTypeInd}.set('sRFsurround',0);
+        
+        [~, bpNTrialsCenterTemp, bpNTrialsSurroundTemp] = bpMosaic{cellTypeInd}.compute(cMosaic,'coneTrials',alignedC);
+        bpNTrialsAligned{cellTypeInd} = bpNTrialsCenterTemp-bpNTrialsSurroundTemp;
+        clear bpNTrialsCenterTemp bpNTrialsSurroundTemp        
+        
+        [~, bpNTrialsCenterTemp, bpNTrialsSurroundTemp] = bpMosaic{cellTypeInd}.compute(cMosaic,'coneTrials',offsetC);
+        bpNTrialsOffset{cellTypeInd} = bpNTrialsCenterTemp-bpNTrialsSurroundTemp;
+        clear bpNTrialsCenterTemp bpNTrialsSurroundTemp
+    end
+    
+    %%%%%%%%%% Retinal ganlion cell model
+    irParams.name = 'macaque phys';
+    irParams.eyeSide = 'left';
+    
+    % Create inner retina object
+    ecc = patchEccentricity;
+    irParams.eyeRadius = sqrt(sum(ecc.^2));
+    irParams.eyeAngle = 0; ntrials = 0;
+    innerRetina = ir(bpMosaic, irParams);
+    
+    mosaicParams.centerNoise = 0;
+    mosaicParams.ellipseParams = [1 1 0];  % Principle, minor and theta
+    % mosaicParams.axisVariance = .1;
+    mosaicParams.type  = cellType;
+    mosaicParams.model = 'GLM';
+    
+    cellType = {'on parasol','off parasol','on midget','off midget'};
+    for cellTypeInd = 1:4
+        mosaicParams.type = cellType{cellTypeInd};
+        innerRetina.mosaicCreate(mosaicParams);
+    end
+    nTrials = 1; innerRetina.set('numberTrials',nTrials);
+    
+    % Compute the inner retina response and visualize
+    disp('Computing rgc responses');
+    [innerRetina, nTrialsSpikesAligned] = innerRetina.compute(bpMosaic,'bipolarTrials',bpNTrialsAligned);
+    [innerRetina, nTrialsSpikesOffset]  = innerRetina.compute(bpMosaic,'bipolarTrials',bpNTrialsOffset);
+       
+    % trialSortedSpikesAligned = spikes2trial(nTrialsSpikesAligned);
+    % trialSortedSpikesOffset = spikes2trial(nTrialsSpikesOffset);
+
     % Reformat the time series for the PCA analysis
     %
     % imgListX matrix contains the temporal response for a pixel in a
     % column The rows represent time samples by number of trials These are
     % the temporal responses across all trials and time points.
-    imgListAligned = trial2Matrix(alignedC,cMosaic);
-    imgListOffset  = trial2Matrix(offsetC,cMosaic);
-%     imgListAligned = trial2Matrix(bpNTrialsCenterAligned,cMosaic);
-%     imgListOffset  = trial2Matrix(bpNTrialsCenterOffset,cMosaic);
+    
+    % imgListAligned = trial2Matrix(alignedC,cMosaic);
+    % imgListOffset  = trial2Matrix(offsetC,cMosaic);
+    
+    % imgListAligned = trial2Matrix(bpNTrialsAligned,cMosaic);
+    % imgListOffset  = trial2Matrix(bpNTrialsOffset,cMosaic);
+    
+    imgListAligned = spikes2Matrix(nTrialsSpikesAligned);
+    imgListOffset  = spikes2Matrix(nTrialsSpikesOffset);
     
     % Not-centered PCA (no demeaning, so first PC is basically the mean)
-    imgList = cat(1,imgListAligned,imgListOffset);
+    imgList = cat(1,imgListAligned,imgListOffset);    
+    
+    % We make bases for each type of stimulus and then concatenate them.
+    [~,~,V] = svd(imgList,'econ');
+    imageBasisSpikes = V(:,1:nBasis);
     
     % Time series of weights
-    weightSeries  = imgList * imageBasis;
+    weightSeries  = imgList * imageBasisSpikes;
+    
+    b1 = 4; b2 = 3; b3 = 2;
+    figure; scatter3(weightSeries(1:194,b1),weightSeries(1:194,b2),weightSeries(1:194,b3))
+    hold on; scatter3(weightSeries(194+[1:194],b1),weightSeries(194+[1:194],b2),weightSeries(194+[1:194],b3),'r')
     
     % Start classification training
     %

@@ -4,16 +4,19 @@
 %
 % Deprecate the bottom
 %
-% HJ, ISETBIO TEAm, 2016
+% HJ,JRG,BW ISETBIO Team, 2016
 
 %%
+
+tic
+
 % Show the dependence on the cone mosaic size for the computational
 % observer.
-nTrials = 2;
+nTrials = 10;
 nBasis  = 40;
 
 % Integration time 
-tStep   = 5;         % Adequate for photocurrent (ms)
+tStep   = 10;         % Adequate for photocurrent (ms)
 
 % Cone mosaic field of view in degrees
 coneMosaicFOV = 0.35;
@@ -64,14 +67,33 @@ disp('Computing cone mosaic current');
 % cMosaic.window;
 
 %%
-bp = bipolar(cMosaic,'cellType','onmidget');   % offdiffuse
-bp.set('sRFcenter',10);
-bp.set('sRFsurround',0);
+clear bpParams
+% bp = bipolar(cMosaic,'cellType','onmidget');   % offdiffuse
+% bp.set('sRFcenter',10);
+% bp.set('sRFsurround',0);
+% 
+% disp('Computing bipolar responses');
+% [~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
+% 
+% % bp.window;
 
-disp('Computing bipolar responses');
-[~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
+patchEccentricity = 4;
 
-% bp.window;
+cellType = {'ondiffuse','offdiffuse','onmidget','offmidget','onSBC'};
+for cellTypeInd = 1:4
+    clear bpParams
+    bpParams.cellType = cellType{cellTypeInd};
+    
+    bpParams.ecc = patchEccentricity;
+    bpParams.rectifyType = 1;
+    bpMosaic{cellTypeInd} = bipolar(cMosaic, bpParams);
+    bpMosaic{cellTypeInd}.set('sRFcenter',1);
+    bpMosaic{cellTypeInd}.set('sRFsurround',0);
+    [~, bpNTrialsCenterTemp, bpNTrialsSurroundTemp] = bpMosaic{cellTypeInd}.compute(cMosaic,'coneTrials',alignedC);
+    bpNTrials{cellTypeInd} = bpNTrialsCenterTemp-bpNTrialsSurroundTemp;
+    clear bpNTrialsCenterTemp bpNTrialsSurroundTemp
+end
+
 %% Retinal ganlion cell model
 
 clear innerRetina irParams mosaicParams innerRetina
@@ -82,35 +104,42 @@ irParams.name = 'macaque phys';
 irParams.eyeSide = 'left';
 
 % Create inner retina object
-ecc = 0;
+ecc = patchEccentricity;
 irParams.eyeRadius = sqrt(sum(ecc.^2)); 
 irParams.eyeAngle = 0; ntrials = 0;
-irParams.eyeRadius = 0;
-innerRetina = ir(bp, irParams);
+innerRetina = ir(bpMosaic, irParams);
 
 % There are various parameters you could set.  We will write a script
 % illustrating these later.  We need a description.
 %
-mosaicParams.centerNoise = 0.2;
-% mosaicParams.ellipseParams = [1 .8 0];  % Principle, minor and theta
+mosaicParams.centerNoise = 0;
+mosaicParams.ellipseParams = [1 1 0];  % Principle, minor and theta
 % mosaicParams.axisVariance = .1;
 mosaicParams.type  = cellType;
 mosaicParams.model = 'GLM';
-innerRetina.mosaicCreate(mosaicParams);
 
-% innerRetina.mosaic{1}.set('rfDiameter',10);
-innerRetina.mosaic{1}.rgcInitSpace(innerRetina,cellType);
+cellType = {'on parasol','off parasol','on midget','off midget'};
+for cellTypeInd = 1:4
+    mosaicParams.type = cellType{cellTypeInd};
+    innerRetina.mosaicCreate(mosaicParams);
+end
+
+% % innerRetina.mosaic{1}.set('rfDiameter',10);
+% innerRetina.mosaic{1}.rgcInitSpace(innerRetina,cellType);
 
 nTrials = 1; innerRetina.set('numberTrials',nTrials);
-innerRetina.mosaic{1}.get('rfDiameter')
+% innerRetina.mosaic{1}.get('rfDiameter')
 
 %% Compute the inner retina response and visualize
 
 % Number of trials refers to number of repeats of the same stimulus
 disp('Computing rgc responses');
-[innerRetina, nTrialsSpikes] = innerRetina.compute(bp,'bipolarTrials',bpNTrialsCenter - bpNTrialsSurround); 
+[innerRetina, nTrialsSpikes] = innerRetina.compute(bpMosaic,'bipolarTrials',bpNTrials); 
  
+%% Inner retina window
 % Could become - innerRetina.window{mosaicNumber);
-innerRetina.mosaic{1}.window;
+innerRetina.mosaic{3}.window;
 
 %% 
+
+toc
