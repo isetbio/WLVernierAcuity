@@ -66,8 +66,9 @@ disp('Computing cone mosaic current');
 % Have a look
 % cMosaic.window;
 
-%%
-clear bpParams
+%% Create a set of bipolar cell types in the bipolar mosaic
+
+
 % bp = bipolar(cMosaic,'cellType','onmidget');   % offdiffuse
 % bp.set('sRFcenter',10);
 % bp.set('sRFsurround',0);
@@ -75,24 +76,43 @@ clear bpParams
 % disp('Computing bipolar responses');
 % [~, bpNTrialsCenter, bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
 % 
-% % bp.window;
+% % 
 
-patchEccentricity = 4;
+% Near fovea
+patchEccentricity = 1;
 
+% Make a cell of each type
 cellType = {'ondiffuse','offdiffuse','onmidget','offmidget','onSBC'};
-for cellTypeInd = 1:4
-    clear bpParams
-    bpParams.cellType = cellType{cellTypeInd};
+clear bpParams
+bpParams.ecc = patchEccentricity;
+bpParams.rectifyType = 1;
+
+bpMosaic  = cell(1,length(cellType));
+bpNTrials = cell(1,length(cellType));
+for ii = 1:length(cellType)
     
-    bpParams.ecc = patchEccentricity;
-    bpParams.rectifyType = 1;
-    bpMosaic{cellTypeInd} = bipolar(cMosaic, bpParams);
-    bpMosaic{cellTypeInd}.set('sRFcenter',1);
-    bpMosaic{cellTypeInd}.set('sRFsurround',0);
-    [~, bpNTrialsCenterTemp, bpNTrialsSurroundTemp] = bpMosaic{cellTypeInd}.compute(cMosaic,'coneTrials',alignedC);
-    bpNTrials{cellTypeInd} = bpNTrialsCenterTemp-bpNTrialsSurroundTemp;
-    clear bpNTrialsCenterTemp bpNTrialsSurroundTemp
+    bpParams.cellType = cellType{ii};
+    
+    bpMosaic{ii} = bipolar(cMosaic, bpParams);
+    bpMosaic{ii}.set('sRFcenter',1);
+    bpMosaic{ii}.set('sRFsurround',0);
+    
+    [~, bpNTrialsCenterTemp, bpNTrialsSurroundTemp] = ...
+        bpMosaic{ii}.compute(cMosaic,'coneTrials',alignedC);
+    bpNTrials{ii} = bpNTrialsCenterTemp - bpNTrialsSurroundTemp;
+    
+    % clear bpNTrialsCenterTemp bpNTrialsSurroundTemp
 end
+
+% TODO:  bpMosaic object to make this more like innerRetina.mosaic{1}.
+% After showing movie, the numbers on the mosaic axis are missing
+% The units on the center size may not be correct.
+% We need to allow changing the size of the center and surround on the
+% bipolar.
+% Maybe the size of the bipolar window got changed.
+% Can we change the sizes of the bipolar receptive fields
+bpMosaic{1}.window;
+bpMosaic{2}.window;
 
 %% Retinal ganlion cell model
 
@@ -118,14 +138,14 @@ mosaicParams.ellipseParams = [1 1 0];  % Principle, minor and theta
 mosaicParams.type  = cellType;
 mosaicParams.model = 'GLM';
 
-cellType = {'on parasol','off parasol','on midget','off midget'};
-for cellTypeInd = 1:4
-    mosaicParams.type = cellType{cellTypeInd};
+diameters = [5 5 3 3 10];  % In microns.
+
+cellType = {'on parasol','off parasol','on midget','off midget','smallbistratified'};
+for ii = 1:length(cellType)
+    mosaicParams.rfDiameter = diameters(ii);
+    mosaicParams.type = cellType{ii};
     innerRetina.mosaicCreate(mosaicParams);
 end
-
-% % innerRetina.mosaic{1}.set('rfDiameter',10);
-% innerRetina.mosaic{1}.rgcInitSpace(innerRetina,cellType);
 
 nTrials = 1; innerRetina.set('numberTrials',nTrials);
 % innerRetina.mosaic{1}.get('rfDiameter')
@@ -137,8 +157,24 @@ disp('Computing rgc responses');
 [innerRetina, nTrialsSpikes] = innerRetina.compute(bpMosaic,'bipolarTrials',bpNTrials); 
  
 %% Inner retina window
-% Could become - innerRetina.window{mosaicNumber);
+
+% TODO:
+%   Put up 'ieInWindowMessage() when the movie is playing
+%   Label the distances on the x and y axes
+%
+
+% I wish we could have two windows up at the same time.  Read the code to
+% see why it is always the same window.
+innerRetina.mosaic{1}.window;
 innerRetina.mosaic{3}.window;
+innerRetina.mosaic{5}.window;
+
+% Could become - innerRetina.window{mosaicNumber);
+innerRetina.mosaic{5}.window;
+innerRetina.mosaic{3}.window;
+innerRetina.mosaic{1}.window;
+innerRetina.mosaic{2}.window;
+
 
 %% 
 
