@@ -79,7 +79,7 @@ disp('Computing cone mosaic current');
 % % 
 
 % Near fovea
-patchEccentricity = 1;
+patchEccentricity = 0;
 
 % Make a cell of each type
 cellType = {'ondiffuse','offdiffuse','onmidget','offmidget','onSBC'};
@@ -101,7 +101,6 @@ for ii = 1:length(cellType)
         bpMosaic{ii}.compute(cMosaic,'coneTrials',alignedC);
     bpNTrials{ii} = bpNTrialsCenterTemp - bpNTrialsSurroundTemp;
     
-    % clear bpNTrialsCenterTemp bpNTrialsSurroundTemp
 end
 
 % TODO:  bpMosaic object to make this more like innerRetina.mosaic{1}.
