@@ -5,15 +5,13 @@
 % BW ISETBIO Team, 2016
 
 %%
-
+tic
 coneMosaicData = fullfile(isetbioRootPath,'local','coneMosaicData.mat');
 
 if exist(coneMosaicData,'file')
     load(coneMosaicData);
     disp('Loading saved cone mosaic data');
 else
-    
-    tic
     
     % Show the dependence on the cone mosaic size for the computational
     % observer.
@@ -165,7 +163,7 @@ nTrials = 1; rgcL.set('numberTrials',nTrials);
 disp('Computing rgc responses');
 [rgcL, nTrialsSpikes] = rgcL.compute(bpMosaic,'bipolarTrials',bpNTrials);
 
-%% Inner retina window
+%% Retinal ganglion cell layer window
 
 % TODO:
 %   Put up 'ieInWindowMessage() when the movie is playing Label the
@@ -177,13 +175,6 @@ disp('Computing rgc responses');
 rgcL.mosaic{1}.window;
 rgcL.mosaic{3}.window;
 rgcL.mosaic{5}.window;
-
-% Could become - innerRetina.window{mosaicNumber);
-rgcL.mosaic{5}.window;
-rgcL.mosaic{3}.window;
-rgcL.mosaic{1}.window;
-rgcL.mosaic{2}.window;
-
 
 %%
 
