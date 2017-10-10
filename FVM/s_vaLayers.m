@@ -5,95 +5,27 @@
 % BW ISETBIO Team, 2016
 
 %%
-tic
-coneMosaicData = fullfile(isetbioRootPath,'local','coneMosaicData.mat');
+ieInit;
 
-if exist(coneMosaicData,'file')
-    load(coneMosaicData);
-    disp('Loading saved cone mosaic data');
-else
-    
-    % Show the dependence on the cone mosaic size for the computational
-    % observer.
-    nTrials = 10;
-    nBasis  = 40;
-    
-    % Integration time
-    tStep   = 10;         % Adequate for photocurrent (ms)
-    
-    % Cone mosaic field of view in degrees
-    coneMosaicFOV = 0.35;
-    
-    % Original scene
-    sceneFOV = 0.4;
-    
-    % Spatial scale to control visual angle of each display pixel The rule is
-    % 6/sc arc sec for a 0.35 deg scene. If you change the scene to 0.5 deg
-    % then 0.5/0.35
-    sc = 3*(sceneFOV/0.35);   % If you do not multiply by a scalar, offset is 6 arc sec
-    
-    s_EIParameters;
-    
-    % Make the bar length a little less than the scene size
-    params.vernier.barLength = params.vernier.sceneSz(1)-1;
-    params.tsamples  = (-200:tStep:400)*1e-3;
-    %% Read the stimulus, which might have been saved
-    
-    params.vernier.offset = 0;
-    [aligned, offset, ~, ~] = vaStimuli(params);
-    
-    %%  Compute absorptions for multiple trials
-    tSamples = aligned.length;
-    cMosaic = coneMosaic;
-    
-    % Sometimes we set the mosaic size to 15 minutes (.25 deg) because that is
-    % the spatial pooling size found by Westheimer and McKee
-    cMosaic.setSizeToFOV(params.cmFOV);
-    
-    % Not sure why these have to match, but there is a bug if they don't.
-    cMosaic.integrationTime = aligned.timeStep;
-    cMosaic.noiseFlag = 'random';
-    % cMosaic.plot('impulse response'); cMosaic.plot('os impulse response');
-    
-    %% For aligned or offset
-    
-    disp('Computing cone mosaic eye movements');
-    emPaths  = cMosaic.emGenSequence(tSamples, 'nTrials', nTrials, ...
-        'em', params.em);
-    
-    % compute absorptions for aligned and offset
-    disp('Computing cone mosaic current');
-    [~,alignedC] = cMosaic.compute(aligned, 'currentFlag', true, ...
-        'emPaths', emPaths);
-    
-    % Have a look cMosaic.window;
-    
-    
-    % save(fullfile(isetbioRootPath,'local','coneMosaicData.mat'), 'cMosaic',
-    % 'alignedC');
-end
+%% Get the data from the RDT site
 
+rdt = RdtClient('isetbio');
+rdt.crp('/resources/data/cmosaics');
+rdt.listArtifacts('type','mat','print',true);
+
+data = rdt.readArtifact('vaConeMosaic', 'type', 'mat');
+cMosaic   = data.cMosaic;
+alignedC = data.alignedC;
 
 %% Create a set of bipolar cell types in the bipolar mosaic
 
-
-% bp = bipolar(cMosaic,'cellType','onmidget');   % offdiffuse
-% bp.set('sRFcenter',10); bp.set('sRFsurround',0);
-%
-% disp('Computing bipolar responses'); [~, bpNTrialsCenter,
-% bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
-%
-%
-
-clear bpLayerParams
-bpLayerParams.ecc = patchEccentricity;
-bpL = bipolarLayer(cMosaic,bpLayerParams);
-
+bpL = bipolarLayer(cMosaic);
 
 % Make each type of bipolar mosaic
 cellType = {'ondiffuse','offdiffuse','onmidget','offmidget','onSBC'};
+
 clear bpMosaicParams
-bpMosaicParams.rectifyType = 1;
+bpMosaicParams.rectifyType = 1;  % Experiment with this
 
 bpMosaic  = cell(1,length(cellType));
 bpNTrials = cell(1,length(cellType));
@@ -112,17 +44,33 @@ for ii = 1:length(cellType)
 end
 bpL.mosaic = bpMosaic;
 
+% Try varying some experimental parameters
 %
-% TODO:  bpMosaic object to make this more like innerRetina.mosaic{1}.
-% After showing movie, the numbers on the mosaic axis are missing The units
-% on the center size may not be correct. We need to allow changing the size
-% of the center and surround on the bipolar. Maybe the size of the bipolar
-% window got changed. Can we change the sizes of the bipolar receptive
-% fields
-%%
+% bpL.mosaic{1}.set('sRFcenter',5); bpL.mosaic{1}.set('sRFsurround',1);
+% Now compute and redisplay.
+%
+% disp('Computing bipolar responses'); [~, bpNTrialsCenter,
+% bpNTrialsSurround] = bp.compute(cMosaic,'coneTrials',alignedC);
+%
+%
+% TODO
+%
+% * After showing movie, the numbers on the mosaic axis are missing 
+% * The units on the center size may not be correct. 
+% * We need to allow changing the size of the center and surround on the bipolar.
+
+%% First mosaic shown directly
 bpL.mosaic{1}.window;
-%%
+
+%% Second mosaic shown directly
 bpL.mosaic{2}.window;
+
+%% The size of the RFs are surprising here
+
+% The bipolar sizes we model are all the same for all the types.  The
+% increaed RF size of the corresponding RGCs arise from spatial summation
+% at the next synapse in the model.
+bpL.window;
 
 %% Retinal ganlion cell model
 
@@ -157,6 +105,11 @@ nTrials = 1; rgcL.set('numberTrials',nTrials);
 disp('Computing rgc responses');
 [rgcL, nTrialsSpikes] = rgcL.compute(bpMosaic,'bipolarTrials',bpNTrials);
 
+
+%% Show the layer
+
+rgcL.window;
+
 %% Retinal ganglion cell layer window
 
 % TODO:
@@ -168,7 +121,7 @@ disp('Computing rgc responses');
 % see why it is always the same window.
 rgcL.mosaic{1}.window;
 rgcL.mosaic{3}.window;
-rgcL.mosaic{5}.window;
+rgcL.mosaic{5}.window;  % This seems off to BW, slanted line???
 
 %%
 
