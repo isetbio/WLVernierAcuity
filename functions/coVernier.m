@@ -44,7 +44,7 @@ for ii = 1 : 2
     scene{ii} = sceneSet(scene{ii}, 'h fov', imgFov);
     scene{ii} = sceneSet(scene{ii}, 'distance', vDist);
 end
-fprintf('Scene size %d\n',sceneGet(scene{1},'size'));
+% fprintf('Scene size %d\n',sceneGet(scene{1},'size'));
 
 %% Create Human optics
 oi = oiCreate('wvf human');
@@ -54,30 +54,43 @@ OIs{1} = oiCompute(scene{1}, oi);
 OIs{2} = oiCompute(scene{2}, oi);
 
 %% Create cone mosaic and eye movement sequence
-
-cm = coneMosaic;
+cm = p.Results.cm;
 cm.integrationTime = expTime;
-cm.setSizeToFOV(p.Results.spatialInt,'sceneDist',vDist,'focalLength',oiGet(oi,'optics focal length'));
+cm.setSizeToFOV(p.Results.spatialInt,'sceneDist', ...
+    vDist,'focalLength',oiGet(oi,'optics focal length'));
 sz = cm.mosaicSize;
 
 % Generate eye movements
 emPerExposure = expTime/cm.sampleTime;
 cm.emGenSequence(nFrames*emPerExposure,'em',em);
+cm.integrationTime = cm.sampleTime;
 
-%% Compute absorptions
-cm.compute(OIs{1});
-pSamples1 = cm.absorptions;
-pSamples1 = sum(reshape(pSamples1, [sz nFrames emPerExposure]), 4);
-% cm.plot('mean absorptions')
+%% Compute response
+resp = cell(2, 1);
+for ii = 1 : 2
+    cm.compute(OIs{ii});
+    switch ieParamFormat(p.Results.stage)
+        case 'absorptions'
+            resp{ii} = sum(reshape(cm.absorptions, ...
+                [sz nFrames emPerExposure]), 4);
+        case 'photocurrent'
+            resp{ii} = reshape(cm.current, [sz nFrames emPerExposure]);
+            resp{ii} = resp{ii}(:,:,:,10);
+        case 'bipolar'
+            bp = bipolar(cm.os);
+            bp.set('sRFcenter', 1);
+            bp.set(sRFsurround', 1);
+            bp.compute(cm.os);
+            resp{ii} = bp.responseCenter - bp.responseSurround;
+        case 'rgc'
+            error('NYI');
+    end
+end
 
-cm.compute(OIs{2});
-pSamples2 = cm.absorptions;
-pSamples2 = sum(reshape(pSamples2, [sz nFrames emPerExposure]), 4);
-% cm.plot('mean absorptions')
 %% prepare data for SVM linear classification
 nFolds = 5;
 labels = [ones(nFrames,1); -1*ones(nFrames,1)];
-data = cat(1, RGB2XWFormat(pSamples1)', RGB2XWFormat(pSamples2)');
+data = cat(1, RGB2XWFormat(resp{1})', RGB2XWFormat(resp{2})');
 
 % Normalize data
 data = bsxfun(@rdivide, bsxfun(@minus, data, mean(data)), std(data));
@@ -118,6 +131,8 @@ p.addParameter('expTime', 0.05, @isnumeric);
 p.addParameter('nFrames', 1000, @isnumeric);
 p.addParameter('vDist', 1.0, @isnumeric);
 p.addParameter('barColor', 0.99, @isnumeric);
+p.addParameter('stage', 'absorptions', @ischar);
+p.addParameter('cm', coneMosaic, @(x) isa(x, 'coneMosaic'));
 p.addParameter('em', emCreate, @isstruct);
 
 p.parse(varargin{:});
